@@ -133,3 +133,102 @@
 - [ ] 디자인 시스템 컴포넌트 라이브러리 구축
 - [ ] 사용자 테스트를 통한 UI/UX 개선점 도출
 - [ ] React Native에서 Figma 디자인 구현을 위한 라이브러리 조사
+
+---
+
+## 📅 2024년 9월 4일 (수요일)
+**주제**: React Native 하이브리드 vs 순수 네이티브 앱 개발
+
+### 🎯 학습 목표
+피로도 기반 경로추천 서비스를 React Native로 개발하기 위한 기술 스택 이해 및 개발 방향 결정
+
+**기술 스택**:
+- **FE**: React Native, TypeScript  
+- **BE**: Spring Boot, Kafka, Hadoop, Spark  
+- **DB**: MySQL, Redis  
+- **INFRA**: Ubuntu 20.04, Docker, EC2, Nginx  
+- **CI/CD**: Jenkins
+
+### 📖 오늘의 학습 내용
+
+#### 🛠️ React Native 개발 환경 설정
+- **필수 도구들**: Node.js, React Native CLI, Android Studio, Xcode
+- **주요 라이브러리**: react-native-maps, geolocation, permissions, Redux Toolkit, React Navigation
+- **Android Studio 터미널 사용법**: Alt + F12 단축키로 터미널 열기 및 프로젝트 실행
+
+#### 🔄 하이브리드 앱 vs 순수 React Native 비교
+
+**하이브리드 앱 구조**:
+```
+📱 React Native App (네이티브 껍데기)
+├── 헤더 (네이티브)
+├── 바텀 네비게이션 (네이티브) 
+└── 웹뷰 → 🌐 React Web App (실제 앱 로직)
+```
+
+**순수 React Native 구조**:
+```
+📱 React Native App (전체가 네이티브)
+├── 헤더 (네이티브)
+├── 바텀 네비게이션 (네이티브)
+└── 네이티브 컴포넌트들 (MapView, FlatList 등)
+```
+
+#### 🏗️ 앱 구조 설계
+- **기본 네비게이션**: Home, Map, Route, Settings 탭 구조
+- **프로젝트 구조**: components, screens, services, store, utils 폴더 구성
+- **API 통신**: axios를 활용한 피로도 데이터 전송 및 경로 추천 요청
+- **상태 관리**: Redux를 통한 전역 상태 관리로 네이티브 대비 편리한 데이터 공유
+
+### 💡 핵심 인사이트
+
+#### 1. **개발 방향 결정**: 순수 React Native 선택
+- 피로도 측정 서비스는 **실시간 센서 데이터**와 **GPS 추적**이 핵심
+- 삼성헬스 API 직접 접근 필요
+- 백그라운드 위치 추적 성능이 중요
+- 따라서 **순수 React Native**가 더 적합
+
+#### 2. **하이브리드 구조의 이해**
+- 네이티브 껍데기 + 웹뷰 내용물
+- 웹뷰 부분만 네이티브 컴포넌트로 교체하면 순수 RN
+- 앱의 전체적인 틀(헤더, 네비게이션)은 동일
+
+#### 3. **상태 관리의 편리함**
+- 네이티브 대비 전역 상태 관리가 훨씬 간편
+- Redux/Context로 앱 전체에서 사용자 정보 공유
+- Activity간 데이터 전달 불필요
+
+### 📋 다음 학습 계획
+
+#### 단기 계획 (1주일)
+- [ ] React Native 개발 환경 완전 구축
+- [ ] 기본 네비게이션 구조 구현
+- [ ] 삼성헬스 API 연동 테스트
+- [ ] GPS 위치 추적 기본 기능
+
+#### 중기 계획 (1개월)
+- [ ] 피로도 계산 알고리즘 구현
+- [ ] 지도 기반 경로 표시 기능
+- [ ] 백엔드 API 연동
+- [ ] 실시간 데이터 수집 및 전송
+
+#### 장기 계획 (3개월)
+- [ ] 경로 추천 알고리즘 고도화
+- [ ] 배터리 최적화
+- [ ] UI/UX 개선
+- [ ] 테스트 및 배포 준비
+
+### 🤔 고민중인 사항
+1. **배터리 최적화**: GPS와 헬스 데이터를 지속적으로 수집하면서 배터리 사용량을 어떻게 최소화할까?
+2. **크로스 플랫폼 호환성**: 삼성헬스는 삼성 기기에서만 작동하는데, iOS나 다른 안드로이드 기기는 어떻게 대응할까?
+3. **실시간 데이터 처리**: 피로도 계산을 클라이언트에서 할지, 서버에서 할지?
+
+### 💡 학습 리소스
+- [React Native 공식 문서](https://reactnative.dev/)
+- [React Navigation 가이드](https://reactnavigation.org/)
+- [삼성헬스 SDK 문서](https://developer.samsung.com/health)
+- [React Native Maps 라이브러리](https://github.com/react-native-maps/react-native-maps)
+
+---
+
+**오늘의 한줄 요약**: "하이브리드와 순수 React Native의 차이를 명확히 이해했고, 피로도 기반 서비스에는 순수 RN이 더 적합함을 확인했다!" ✨
