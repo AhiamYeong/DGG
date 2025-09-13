@@ -23,12 +23,40 @@ android {
     }
 
     buildTypes {
+
+        // 개발용 추가
+        debug {
+            isDebuggable = true
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-DEBUG"
+
+            // React 웹뷰용 URL
+            buildConfigField("String", "WEB_URL", "\"http://localhost:3000\"")
+
+            // native의 직접 API 호출용 URL
+            buildConfigField("String", "WEB_URL", "\"http://localhost:8080\"")
+
+            buildConfigField("boolean", "IS_DEBUG", "true")
+            resValue("string", "dgg", "DGG 개발")
+
+        }
+
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            // 웹뷰용 URL
+            buildConfigField("String", "WEB_URL", "\"https://dgg-frontend.netlify.app\"")
+            // API 호출용 URL
+            buildConfigField("String", "API_BASE_URL", "\"https://api.dgg.com\"")
+
+
+            buildConfigField("boolean", "IS_DEBUG", "false")
+
+            resValue("string", "dgg", "DGG")
         }
     }
     compileOptions {
@@ -40,6 +68,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
