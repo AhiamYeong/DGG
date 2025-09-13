@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -32,6 +33,7 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
 import com.ssafy.dgg.ui.screen.MainScreen
 import com.ssafy.dgg.ui.theme.DGGTheme
+import com.ssafy.dgg.viewModel.TestViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -86,8 +88,13 @@ class MainActivity : ComponentActivity() {
         // [END log_reg_token]
     }
 
+    // retrofit test
+    private val viewModel: TestViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        viewModel.fetchPost(1) // 앱 실행 동시에 호출
 
         askNotificationPermission()
         logRegToken()
