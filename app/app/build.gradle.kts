@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     // add google services gradle plugin
     id("com.google.gms.google-services")
+    id("kotlin-parcelize")
+    alias(libs.plugins.parcelize)
 }
 
 android {
@@ -68,4 +70,8 @@ dependencies {
     // Add the dependencies for any other desired Firebase products
     // https://firebase.google.com/docs/android/setup#available-libraries
     implementation("androidx.work:work-runtime-ktx:2.9.0")
+
+    // samsung health SDK
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
+    implementation(libs.gson)
 }
