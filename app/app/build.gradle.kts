@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "com.ssafy.dgg"
-        minSdk = 24
+        minSdk = 29
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -27,7 +27,7 @@ android {
         // 개발용 추가
         debug {
             isDebuggable = true
-            applicationIdSuffix = ".debug"
+            // applicationIdSuffix = ".debug"
             versionNameSuffix = "-DEBUG"
 
             // React 웹뷰용 URL
