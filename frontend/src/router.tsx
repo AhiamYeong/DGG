@@ -1,24 +1,32 @@
 import { createBrowserRouter } from 'react-router-dom';
 
-// Route imports
-import Layout from './routes/_layout/route';
-import IndexRoute from './routes/_index/route';
-import MapRoute from './routes/map/route';
-import PlanRoute from './routes/plan/route';
-import AlarmRoute from './routes/alarm/route';
-import MyPageRoute from './routes/mypage/route';
+// Page imports
+import FatiguePage from './pages/FatiguePage';
+import MainMapPage from './pages/MainMapPage';
+import PlanPage from './pages/PlanPage';
+import AlarmPage from './pages/AlarmPage';
+import MyPage from './pages/MyPage';
 
 // Create router
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Layout />,
-    children: [
-      { index: true, element: <IndexRoute /> },
-      { path: 'map', element: <MapRoute /> },
-      { path: 'plan', element: <PlanRoute /> },
-      { path: 'alarm', element: <AlarmRoute /> },
-      { path: 'mypage', element: <MyPageRoute /> }
-    ]
+    element: <FatiguePage />
+  },
+  {
+    path: '/map',
+    element: <MainMapPage />
+  },
+  {
+    path: '/plan',
+    element: <PlanPage />
+  },
+  {
+    path: '/alarm',
+    element: <AlarmPage />
+  },
+  {
+    path: '/mypage',
+    element: <MyPage />
   }
 ]);
