@@ -1,4 +1,4 @@
-package S13P21A305.backend;
+package S13P21A305.dgg;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

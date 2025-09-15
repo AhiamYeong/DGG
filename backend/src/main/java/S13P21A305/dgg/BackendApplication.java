@@ -1,4 +1,4 @@
-package S13P21A305.backend;
+package S13P21A305.dgg;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
