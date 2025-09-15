@@ -1,19 +1,16 @@
-import { Routes, Route } from 'react-router-dom'
-import Layout from './components/Layout'
-import Home from './pages/Home'
-import About from './pages/About'
-import MapTestPage from './pages/MapTestPage'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { RouterProvider } from 'react-router-dom';
+import { router } from './router';
+import './styles/index.css';
 
-function App() {
+export default function App() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/map-test" element={<MapTestPage />} />
-      </Routes>
-    </Layout>
-  )
+    <StrictMode>
+      <RouterProvider router={router} />
+    </StrictMode>
+  );
 }
 
-export default App
+// DOM에 렌더링
+createRoot(document.getElementById('root')!).render(<App />);
