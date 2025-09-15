@@ -11,5 +11,15 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true
+  },
+  define: {
+    'import.meta.env.VITE_NAVER_MAP_CLIENT_ID': JSON.stringify('it3tbo5evp'),
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify('http://localhost:3000/api')
+  },
+  worker: {
+    format: 'es'
+  },
+  optimizeDeps: {
+    exclude: ['msw']
   }
 })

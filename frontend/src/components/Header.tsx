@@ -22,6 +22,12 @@ const Header = () => {
               소개
             </Link>
             <Link 
+              to="/chat" 
+              className="text-sm sm:text-base text-gray-600 hover:text-primary-600 transition-colors px-2 py-1 rounded"
+            >
+              채팅
+            </Link>
+            <Link 
               to="/map-test" 
               className="text-sm sm:text-base text-gray-600 hover:text-primary-600 transition-colors px-2 py-1 rounded"
             >

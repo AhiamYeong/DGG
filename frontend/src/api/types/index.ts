@@ -31,3 +31,22 @@ export interface WebViewMessage {
   type: string
   payload: any
 }
+
+// 채팅 관련 타입
+export interface ChatMessage {
+  id: number
+  text: string
+  isUser: boolean
+  timestamp: Date
+  isLoading?: boolean
+}
+
+export interface ChatRequest {
+  message: string
+  sessionId: string
+}
+
+export interface ChatResponse {
+  response: string
+  sessionId: string
+}
