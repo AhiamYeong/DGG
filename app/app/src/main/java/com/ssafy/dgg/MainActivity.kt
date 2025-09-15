@@ -31,8 +31,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
+import com.ssafy.dgg.ui.screen.LoginScreen
 import com.ssafy.dgg.ui.screen.MainScreen
 import com.ssafy.dgg.ui.theme.DGGTheme
+import com.ssafy.dgg.viewModel.LoginState
 import com.ssafy.dgg.viewModel.TestViewModel
 
 class MainActivity : ComponentActivity() {
@@ -100,13 +102,26 @@ class MainActivity : ComponentActivity() {
         logRegToken()
 
         setContent {
+            // 로그인 상태 관리 변수
+            var loginState by remember { mutableStateOf<LoginState>(LoginState.LoggedOut) }
+
             DGGTheme {
                 Surface (
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ){
-//                    WebViewScreen(url = "https://www.naver.com") // 테스트용 URL
-                    MainScreen()
+                    when (loginState) {
+                        is LoginState.LoggedOut -> {
+                            LoginScreen(
+                                onLoginSuccess = { loginState = LoginState.LoggedIn },
+                                onSignUpClicked = { /* ... */ }
+                            )
+                        }
+
+                        is LoginState.LoggedIn -> {
+                            MainScreen()
+                        }
+                    }
                 }
             }
         }
