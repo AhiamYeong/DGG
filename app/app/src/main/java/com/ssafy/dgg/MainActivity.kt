@@ -30,6 +30,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
+import com.ssafy.dgg.ui.screen.MainScreen
 import com.ssafy.dgg.ui.theme.DGGTheme
 
 class MainActivity : ComponentActivity() {
@@ -97,7 +98,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ){
-                    WebViewScreen(url = "https://www.naver.com") // 테스트용 URL
+//                    WebViewScreen(url = "https://www.naver.com") // 테스트용 URL
+                    MainScreen()
                 }
             }
         }
