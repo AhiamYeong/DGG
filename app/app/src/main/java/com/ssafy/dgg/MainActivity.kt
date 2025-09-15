@@ -31,6 +31,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
+import com.ssafy.dgg.auth.GoogleSignInManager
 import com.ssafy.dgg.ui.screen.LoginScreen
 import com.ssafy.dgg.ui.screen.MainScreen
 import com.ssafy.dgg.ui.theme.DGGTheme
@@ -93,6 +94,8 @@ class MainActivity : ComponentActivity() {
     // retrofit test
     private val viewModel: TestViewModel by viewModels()
 
+    private lateinit var googleSignInManager: GoogleSignInManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -100,6 +103,20 @@ class MainActivity : ComponentActivity() {
 
         askNotificationPermission()
         logRegToken()
+
+        // googlesigninmanager 초기화
+        googleSignInManager = GoogleSignInManager(
+            this,
+            onSignInSuccess = { idToken ->
+                // 로그인 성공! 이제 로그인 상태를 변경합니다.
+                // screenState = ScreenState.LoggedIn
+                // 또는 ViewModel에 토큰을 전달하여 로그인 처리
+            },
+            onSignInFailure = { exception ->
+                // 로그인 실패! 사용자에게 메시지 표시 등
+                // Log.e("GoogleSignIn", "Failed", exception)
+            }
+        )
 
         setContent {
             // 로그인 상태 관리 변수
@@ -114,7 +131,8 @@ class MainActivity : ComponentActivity() {
                         is LoginState.LoggedOut -> {
                             LoginScreen(
                                 onLoginSuccess = { loginState = LoginState.LoggedIn },
-                                onSignUpClicked = { /* ... */ }
+                                onSignUpClicked = { /* ... */ },
+                                onGoogleSignInClicked = { googleSignInManager.startSignInIntent() }
                             )
                         }
 

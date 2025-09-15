@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onSignUpClicked: () -> Unit,
+    onGoogleSignInClicked: () -> Unit,
 ){
     // 사용자가 입력한 아이디와 비밀번호를 상태로 관리
     var userId by remember { mutableStateOf("") }
@@ -84,6 +85,13 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("회원가입")
+        }
+        
+        // google 로그인 버튼 추가
+        Button(
+            onClick = onGoogleSignInClicked
+        ) { 
+            Text("Google로 로그인")
         }
     }
 }
