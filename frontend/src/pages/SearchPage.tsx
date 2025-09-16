@@ -1,5 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import RecentSearchList from '../components/functional/Search/RecentSearchList';
+import FavoritePlacesList from '../components/functional/Search/FavoritePlacesList';
+import SearchResultsList from '../components/functional/Search/SearchResultsList';
 
 /**
  * SearchPage - 검색 전용 페이지
@@ -13,6 +16,65 @@ export default function SearchPage() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'recent' | 'favorite'>('recent');
+  const [isSearching] = useState(false); // 추후 API 연동 시 사용 예정
+
+  // 더미 데이터 (추후 API 연동으로 대체)
+  const [recentSearches] = useState([
+    {
+      id: '1',
+      name: '강남역',
+      address: '서울특별시 강남구 강남대로 396',
+      timestamp: new Date('2024-01-15 09:30:00')
+    },
+    {
+      id: '2',
+      name: '여의도',
+      address: '서울특별시 영등포구 여의도동',
+      timestamp: new Date('2024-01-14 18:00:00')
+    },
+    {
+      id: '3',
+      name: '홍대입구역',
+      address: '서울특별시 마포구 양화로 188',
+      timestamp: new Date('2024-01-13 14:20:00')
+    }
+  ]);
+
+  const [favoritePlaces] = useState([
+    {
+      id: 'fav-1',
+      name: '집',
+      address: '서울특별시 강남구 역삼동',
+      category: '집',
+      isFavorite: true
+    },
+    {
+      id: 'fav-2',
+      name: '회사',
+      address: '서울특별시 영등포구 여의도동',
+      category: '회사',
+      isFavorite: true
+    }
+  ]);
+
+  const [searchResults] = useState([
+    {
+      id: 'search-1',
+      name: '강남역 2호선',
+      address: '서울특별시 강남구 강남대로 396',
+      category: '지하철역',
+      distance: 150,
+      rating: 4.5
+    },
+    {
+      id: 'search-2',
+      name: '강남역 버스정류장',
+      address: '서울특별시 강남구 강남대로 396',
+      category: '버스정류장',
+      distance: 200,
+      rating: 4.2
+    }
+  ]);
   
   // 라우터 state에서 검색 타입과 현재 값 가져오기
   const searchType = location.state?.searchType || 'origin';
@@ -40,17 +102,29 @@ export default function SearchPage() {
     setActiveTab(tab);
   }, []);
 
-  // 위치 선택 핸들러 (추후 구현 예정)
-  // const handleLocationSelect = useCallback((location: string) => {
-  //   // TODO: 선택된 위치를 SearchStore에 반영
-  //   console.log('선택된 위치:', location, '타입:', searchType);
-  //   navigate(-1);
-  // }, [navigate, searchType]);
+  // 위치 선택 핸들러
+  const handleLocationSelect = useCallback((location: any) => {
+    console.log('선택된 위치:', location, '타입:', searchType);
+    // TODO: 선택된 위치를 SearchStore에 반영
+    navigate(-1);
+  }, [navigate, searchType]);
+
+  // 최근 검색 삭제 핸들러
+  const handleDeleteRecent = useCallback((id: string) => {
+    console.log('최근 검색 삭제:', id);
+    // TODO: 최근 검색 삭제 로직
+  }, []);
+
+  // 즐겨찾기 토글 핸들러
+  const handleToggleFavorite = useCallback((id: string) => {
+    console.log('즐겨찾기 토글:', id);
+    // TODO: 즐겨찾기 토글 로직
+  }, []);
 
   return (
     <div className="h-screen bg-background flex flex-col">
       {/* 헤더 */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
+      <div className="bg-background shadow-sm border-b border-gray-200">
         <div className="flex items-center justify-between px-4 py-3">
           {/* 뒤로가기 버튼 */}
           <button
@@ -76,7 +150,7 @@ export default function SearchPage() {
       </div>
 
       {/* 검색 입력창 */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
+      <div className="bg-background border-b border-gray-200 px-4 py-3">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,7 +180,7 @@ export default function SearchPage() {
       </div>
 
       {/* 탭 네비게이션 */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-background border-b border-gray-200">
         <div className="flex">
           <button
             onClick={() => handleTabChange('recent')}
@@ -138,40 +212,32 @@ export default function SearchPage() {
       {/* 탭 내용 영역 */}
       <div className="flex-1 overflow-y-auto">
         {searchQuery ? (
-          // 검색 결과 영역 (추후 구현)
-          <div className="p-4">
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <p className="text-gray-500 text-sm">검색 결과가 여기에 표시됩니다</p>
-              <p className="text-gray-400 text-xs mt-1">"{searchQuery}"</p>
-            </div>
+          // 검색 결과 영역
+          <div className="px-4">
+            <SearchResultsList
+              results={searchResults}
+              onSelect={handleLocationSelect}
+              onToggleFavorite={handleToggleFavorite}
+              isLoading={isSearching}
+            />
           </div>
         ) : (
-          // 탭 내용 (추후 구현)
-          <div className="p-4">
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                {activeTab === 'recent' ? (
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                ) : (
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                )}
-              </div>
-              <p className="text-gray-500 text-sm">
-                {activeTab === 'recent' ? '최근 검색 내역이 없습니다' : '즐겨찾는 장소가 없습니다'}
-              </p>
-              <p className="text-gray-400 text-xs mt-1">
-                {activeTab === 'recent' ? '검색한 장소가 여기에 표시됩니다' : '자주 가는 장소를 즐겨찾기에 추가해보세요'}
-              </p>
-            </div>
+          // 탭 내용
+          <div className="px-4">
+            {activeTab === 'recent' ? (
+              <RecentSearchList
+                items={recentSearches}
+                onSelect={handleLocationSelect}
+                onDelete={handleDeleteRecent}
+                onToggleFavorite={handleToggleFavorite}
+              />
+            ) : (
+              <FavoritePlacesList
+                items={favoritePlaces}
+                onSelect={handleLocationSelect}
+                onToggleFavorite={handleToggleFavorite}
+              />
+            )}
           </div>
         )}
       </div>
