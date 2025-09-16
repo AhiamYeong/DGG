@@ -98,7 +98,7 @@ export function useMapViewModel() {
             }
           });
 
-          // 마커 추가
+          // 마커 추가 (네이버 좌표계 사용)
           const marker = new naver.maps.Marker({
             position: new naver.maps.LatLng(center.lat, center.lng),
             map: mapInstance,

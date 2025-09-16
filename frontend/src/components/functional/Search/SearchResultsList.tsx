@@ -14,6 +14,8 @@ interface SearchResultsListProps {
   onSelect: (result: SearchResult) => void;
   onToggleFavorite: (id: string) => void;
   isLoading?: boolean;
+  error?: string | null;
+  total?: number;
   className?: string;
 }
 
@@ -28,6 +30,8 @@ const SearchResultsList = memo<SearchResultsListProps>(({
   onSelect,
   onToggleFavorite,
   isLoading = false,
+  error = null,
+  total = 0,
   className = ''
 }) => {
   const handleSelect = useCallback((result: SearchResult) => {
@@ -56,6 +60,21 @@ const SearchResultsList = memo<SearchResultsListProps>(({
     );
   }
 
+  // 에러 상태 표시
+  if (error) {
+    return (
+      <div className={`text-center py-8 ${className}`}>
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <p className="text-red-500 text-sm font-medium">검색 중 오류가 발생했습니다</p>
+        <p className="text-gray-400 text-xs mt-1">{error}</p>
+      </div>
+    );
+  }
+
   if (results.length === 0) {
     return (
       <div className={`text-center py-8 ${className}`}>
@@ -72,6 +91,13 @@ const SearchResultsList = memo<SearchResultsListProps>(({
 
   return (
     <div className={`${className}`}>
+      {/* 검색 결과 헤더 */}
+      {total > 0 && (
+        <div className="py-2 px-1 text-xs text-gray-500 border-b border-gray-100">
+          총 {total}개의 검색 결과
+        </div>
+      )}
+      
       {results.map((result) => (
         <div
           key={result.id}
