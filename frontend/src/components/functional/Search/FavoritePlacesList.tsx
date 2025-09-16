@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 
 interface FavoritePlace {
   id: string;
@@ -16,10 +16,7 @@ interface FavoritePlacesListProps {
 }
 
 /**
- * FavoritePlacesList - 즐겨찾는 장소 리스트 컴포넌트
- * React 19 최신 패턴 적용:
- * - memo를 활용한 성능 최적화
- * - useCallback을 통한 이벤트 핸들러 최적화
+ * 즐겨찾는 장소 리스트 컴포넌트
  */
 const FavoritePlacesList = memo<FavoritePlacesListProps>(({
   items,
@@ -27,14 +24,14 @@ const FavoritePlacesList = memo<FavoritePlacesListProps>(({
   onToggleFavorite,
   className = ''
 }) => {
-  const handleSelect = useCallback((item: FavoritePlace) => {
+  const handleSelect = (item: FavoritePlace) => {
     onSelect(item);
-  }, [onSelect]);
+  };
 
-  const handleToggleFavorite = useCallback((e: React.MouseEvent, id: string) => {
+  const handleToggleFavorite = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     onToggleFavorite(id);
-  }, [onToggleFavorite]);
+  };
 
   if (items.length === 0) {
     return (

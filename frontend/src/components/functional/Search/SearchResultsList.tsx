@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 
 interface SearchResult {
   id: string;
@@ -20,10 +20,7 @@ interface SearchResultsListProps {
 }
 
 /**
- * SearchResultsList - 검색 결과 리스트 컴포넌트
- * React 19 최신 패턴 적용:
- * - memo를 활용한 성능 최적화
- * - useCallback을 통한 이벤트 핸들러 최적화
+ * 검색 결과 리스트 컴포넌트
  */
 const SearchResultsList = memo<SearchResultsListProps>(({
   results,
@@ -34,14 +31,14 @@ const SearchResultsList = memo<SearchResultsListProps>(({
   total = 0,
   className = ''
 }) => {
-  const handleSelect = useCallback((result: SearchResult) => {
+  const handleSelect = (result: SearchResult) => {
     onSelect(result);
-  }, [onSelect]);
+  };
 
-  const handleToggleFavorite = useCallback((e: React.MouseEvent, id: string) => {
+  const handleToggleFavorite = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     onToggleFavorite(id);
-  }, [onToggleFavorite]);
+  };
 
   if (isLoading) {
     return (

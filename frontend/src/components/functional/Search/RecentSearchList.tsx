@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 
 interface RecentSearchItem {
   id: string;
@@ -16,10 +16,7 @@ interface RecentSearchListProps {
 }
 
 /**
- * RecentSearchList - 최근 검색 내역 리스트 컴포넌트
- * React 19 최신 패턴 적용:
- * - memo를 활용한 성능 최적화
- * - useCallback을 통한 이벤트 핸들러 최적화
+ * 최근 검색 내역 리스트 컴포넌트
  */
 const RecentSearchList = memo<RecentSearchListProps>(({
   items,
@@ -28,19 +25,19 @@ const RecentSearchList = memo<RecentSearchListProps>(({
   onToggleFavorite,
   className = ''
 }) => {
-  const handleSelect = useCallback((item: RecentSearchItem) => {
+  const handleSelect = (item: RecentSearchItem) => {
     onSelect(item);
-  }, [onSelect]);
+  };
 
-  const handleDelete = useCallback((e: React.MouseEvent, id: string) => {
+  const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     onDelete(id);
-  }, [onDelete]);
+  };
 
-  const handleToggleFavorite = useCallback((e: React.MouseEvent, id: string) => {
+  const handleToggleFavorite = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     onToggleFavorite(id);
-  }, [onToggleFavorite]);
+  };
 
   if (items.length === 0) {
     return (

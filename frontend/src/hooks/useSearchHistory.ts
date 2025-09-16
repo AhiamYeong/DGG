@@ -10,10 +10,6 @@ import {
 
 /**
  * 검색 내역 관리 훅
- * React 19 최신 패턴 적용:
- * - useState와 useEffect를 활용한 상태 관리
- * - useCallback을 통한 함수 최적화
- * - API 에러 처리 및 로딩 상태 관리
  */
 export function useSearchHistory() {
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
@@ -21,45 +17,47 @@ export function useSearchHistory() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 최근 검색 내역 불러오기
-  const loadRecentSearches = useCallback(async () => {
+  // 공통 API 호출 함수
+  const loadData = useCallback(async <T>(
+    apiCall: () => Promise<{ success: boolean; data: T; message: string }>,
+    setter: (data: T) => void,
+    errorMessage: string
+  ) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const response = await recentSearchApi.getRecentSearches();
+      const response = await apiCall();
       if (response.success) {
-        setRecentSearches(response.data);
+        setter(response.data);
       } else {
         setError(response.message);
       }
     } catch (err) {
-      setError('최근 검색 내역을 불러오는데 실패했습니다.');
-      console.error('최근 검색 내역 로드 실패:', err);
+      setError(errorMessage);
+      console.warn(`${errorMessage}:`, err);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+  // 최근 검색 내역 불러오기
+  const loadRecentSearches = useCallback(async () => {
+    await loadData(
+      recentSearchApi.getRecentSearches,
+      setRecentSearches,
+      '최근 검색 내역을 불러오는데 실패했습니다.'
+    );
+  }, [loadData]);
+
   // 즐겨찾기 장소 불러오기
   const loadFavoritePlaces = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await favoritePlacesApi.getFavoritePlaces();
-      if (response.success) {
-        setFavoritePlaces(response.data);
-      } else {
-        setError(response.message);
-      }
-    } catch (err) {
-      setError('즐겨찾기 장소를 불러오는데 실패했습니다.');
-      console.error('즐겨찾기 장소 로드 실패:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    await loadData(
+      favoritePlacesApi.getFavoritePlaces,
+      setFavoritePlaces,
+      '즐겨찾기 장소를 불러오는데 실패했습니다.'
+    );
+  }, [loadData]);
 
   // 최근 검색 내역 추가
   const addRecentSearch = useCallback(async (request: AddRecentSearchRequest) => {
@@ -96,7 +94,7 @@ export function useSearchHistory() {
     } catch (err) {
       const errorMessage = '최근 검색 내역 삭제에 실패했습니다.';
       setError(errorMessage);
-      console.error('최근 검색 내역 삭제 실패:', err);
+      console.warn('최근 검색 내역 삭제 실패:', err);
       return { success: false, error: errorMessage };
     }
   }, []);
@@ -116,7 +114,7 @@ export function useSearchHistory() {
     } catch (err) {
       const errorMessage = '즐겨찾기 장소 추가에 실패했습니다.';
       setError(errorMessage);
-      console.error('즐겨찾기 장소 추가 실패:', err);
+      console.warn('즐겨찾기 장소 추가 실패:', err);
       return { success: false, error: errorMessage };
     }
   }, []);
@@ -136,7 +134,7 @@ export function useSearchHistory() {
     } catch (err) {
       const errorMessage = '즐겨찾기 장소 삭제에 실패했습니다.';
       setError(errorMessage);
-      console.error('즐겨찾기 장소 삭제 실패:', err);
+      console.warn('즐겨찾기 장소 삭제 실패:', err);
       return { success: false, error: errorMessage };
     }
   }, []);
@@ -178,7 +176,7 @@ export function useSearchHistory() {
       ]);
     } catch (err) {
       setError('데이터를 새로고침하는데 실패했습니다.');
-      console.error('데이터 새로고침 실패:', err);
+      console.warn('데이터 새로고침 실패:', err);
     } finally {
       setIsLoading(false);
     }

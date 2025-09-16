@@ -13,11 +13,7 @@ import { testSearchHistoryApiConnection } from '../services/searchHistoryApi';
 import { useSearchStore } from '../stores/useSearchStore';
 
 /**
- * SearchPage - 검색 전용 페이지
- * React 19 최신 패턴 적용:
- * - useState를 활용한 로컬 상태 관리
- * - useCallback을 통한 이벤트 핸들러 최적화
- * - 접근성(a11y) 고려한 UI 구성
+ * 검색 전용 페이지
  */
 export default function SearchPage() {
   const navigate = useNavigate();
