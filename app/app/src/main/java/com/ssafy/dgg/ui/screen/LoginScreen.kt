@@ -22,7 +22,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
-/* 상태 직접 관리X, 요청을 외부에 전달 -> State Hoisting */
+/* 상태 직접 관리X, 요청을 외부에 전달 -> State Hoisting
+* 버튼  -> googlesigninmanager.signinIntent 실행
+* 결과(Activity result)에서 account.idToken추출 -> viewmodel에 전달
+* isLoggedIn에 따라 로그인 <> 메인화면 전달
+*
+* 인증 실패/로그아웃 플로우
+* 로그아웃 : viewmodel -> tokenstorage.clearToken() -> isloggedin = false
+* 401: tokeninterceptor에서 감지 -> 자동 로그아웃 or refresh token 플로우 추가
+* */
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
