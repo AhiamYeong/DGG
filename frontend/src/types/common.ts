@@ -12,11 +12,6 @@ export interface TimeSlot {
   minute: number;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-}
 
 export interface ErrorResponse {
   success: false;

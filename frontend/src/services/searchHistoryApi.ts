@@ -1,27 +1,18 @@
 import type { 
-  ApiSearchResult, 
-  AddSearchResultRequest
-} from '../types/search';
-import { createApiClient, apiCall, testApiConnection, type ApiResponse } from '../utils/apiUtils';
-
-// 최근 검색 내역 타입 (API 응답용)
-export interface RecentSearch {
-  id: string;
-  query: string;
-  resultCount: number;
-  timestamp: string;
-  userId?: string;
-}
-
-// 검색 내역 추가 요청 타입
-export interface AddRecentSearchRequest {
-  query: string;
-  resultCount: number;
-}
+  ApiResponse,
+  RecentSearchApiResponse,
+  FavoritePlaceApiResponse,
+  AddRecentSearchRequest,
+  AddFavoritePlaceRequest
+} from '../types/api';
+import { createApiClient, apiCall, testApiConnection } from '../utils/apiUtils';
 
 // 타입 별칭으로 통합
-export type FavoritePlace = ApiSearchResult;
-export type AddFavoritePlaceRequest = AddSearchResultRequest;
+export type RecentSearch = RecentSearchApiResponse;
+export type FavoritePlace = FavoritePlaceApiResponse;
+
+// API 요청 타입 재export
+export type { AddRecentSearchRequest, AddFavoritePlaceRequest };
 
 // API 설정
 const API_BASE_URL = process.env.NODE_ENV === 'production' 

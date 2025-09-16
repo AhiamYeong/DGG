@@ -47,34 +47,6 @@ export interface SearchResult extends BaseEntity {
   };
 }
 
-// API 응답용 타입 (서비스 레이어에서 사용)
-export interface ApiSearchResult {
-  id: string;
-  title: string;
-  category: string;
-  address: string;
-  roadAddress: string;
-  telephone: string;
-  coordinates: {
-    x: number;
-    y: number;
-  };
-  createdAt: string;
-  userId?: string;
-}
-
-// API 요청용 타입
-export interface AddSearchResultRequest {
-  title: string;
-  category: string;
-  address: string;
-  roadAddress: string;
-  telephone: string;
-  coordinates: {
-    x: number;
-    y: number;
-  };
-}
 
 export interface SearchParams {
   query: string;
