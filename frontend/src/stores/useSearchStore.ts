@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Location } from '../types/common';
+import { ROUTE_CONSTANTS } from '../constants';
 
 // 경유지 타입 정의
 export interface Waypoint {
@@ -43,7 +44,7 @@ export const useSearchStore = create<SearchState & SearchActions>()(
   
   addWaypoint: () => {
     const { waypoints } = get();
-    if (waypoints.length < 2) {
+    if (waypoints.length < ROUTE_CONSTANTS.MAX_WAYPOINTS) {
       const newWaypoint: Waypoint = {
         id: `waypoint-${Date.now()}`,
         value: ''

@@ -7,6 +7,7 @@ import {
   type AddRecentSearchRequest,
   type AddFavoritePlaceRequest
 } from '../services/searchHistoryApi';
+import { ERROR_MESSAGES } from '../constants';
 
 /**
  * 검색 내역 관리 훅
@@ -17,45 +18,47 @@ export function useSearchHistory() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 최근 검색 내역 불러오기
-  const loadRecentSearches = useCallback(async () => {
+  // 공통 API 호출 헬퍼
+  const handleApiCall = useCallback(async <T>(
+    apiCall: () => Promise<{ success: boolean; data: T; message: string }>,
+    setter: (data: T) => void,
+    errorMessage: string
+  ) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const response = await recentSearchApi.getRecentSearches();
+      const response = await apiCall();
       if (response.success) {
-        setRecentSearches(response.data);
+        setter(response.data);
       } else {
         setError(response.message);
       }
     } catch (err) {
-      setError('최근 검색 내역을 불러오는데 실패했습니다.');
-      console.warn('최근 검색 내역 로드 실패:', err);
+      setError(errorMessage);
+      console.warn(`${errorMessage}:`, err);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+  // 최근 검색 내역 불러오기
+  const loadRecentSearches = useCallback(async () => {
+    await handleApiCall(
+      recentSearchApi.getRecentSearches,
+      setRecentSearches,
+      ERROR_MESSAGES.SEARCH.LOAD_RECENT_FAILED
+    );
+  }, [handleApiCall]);
+
   // 즐겨찾기 장소 불러오기
   const loadFavoritePlaces = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await favoritePlacesApi.getFavoritePlaces();
-      if (response.success) {
-        setFavoritePlaces(response.data);
-      } else {
-        setError(response.message);
-      }
-    } catch (err) {
-      setError('즐겨찾기 장소를 불러오는데 실패했습니다.');
-      console.warn('즐겨찾기 장소 로드 실패:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    await handleApiCall(
+      favoritePlacesApi.getFavoritePlaces,
+      setFavoritePlaces,
+      ERROR_MESSAGES.SEARCH.LOAD_FAVORITES_FAILED
+    );
+  }, [handleApiCall]);
 
   // 최근 검색 내역 추가
   const addRecentSearch = useCallback(async (request: AddRecentSearchRequest) => {
