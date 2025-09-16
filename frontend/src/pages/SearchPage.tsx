@@ -11,6 +11,7 @@ import { useSearchHistory } from '../hooks/useSearchHistory';
 import { testNaverApiConnection } from '../services/naverSearchApi';
 import { testSearchHistoryApiConnection } from '../services/searchHistoryApi';
 import { useSearchStore } from '../stores/useSearchStore';
+import { transformRecentSearches, transformFavoritePlaces } from '../utils/dataTransformers';
 
 /**
  * 검색 전용 페이지
@@ -155,25 +156,6 @@ export default function SearchPage() {
     }
   }, [favoritePlaces, toggleFavoritePlace]);
 
-  // API 응답을 컴포넌트 타입으로 변환하는 함수들
-  const convertRecentSearches = useCallback((apiData: any[]) => {
-    return apiData.map(item => ({
-      id: item.id,
-      name: item.query, // API의 query를 name으로 매핑
-      address: `검색 결과 ${item.resultCount}개`, // 임시 주소
-      timestamp: new Date(item.timestamp || item.createdAt)
-    }));
-  }, []);
-
-  const convertFavoritePlaces = useCallback((apiData: any[]) => {
-    return apiData.map(item => ({
-      id: item.id,
-      name: item.title, // API의 title을 name으로 매핑
-      address: item.address,
-      category: item.category,
-      isFavorite: true // 즐겨찾기 목록에 있는 것은 모두 즐겨찾기 상태
-    }));
-  }, []);
 
   return (
     <div className="h-screen bg-background flex flex-col">
@@ -320,7 +302,7 @@ export default function SearchPage() {
                   />
                 ) : (
                   <RecentSearchList
-                    items={convertRecentSearches(recentSearches)}
+                    items={transformRecentSearches(recentSearches)}
                     onSelect={handleLocationSelect}
                     onDelete={handleDeleteRecent}
                     onToggleFavorite={handleToggleFavorite}
@@ -336,7 +318,7 @@ export default function SearchPage() {
                   />
                 ) : (
                   <FavoritePlacesList
-                    items={convertFavoritePlaces(favoritePlaces)}
+                    items={transformFavoritePlaces(favoritePlaces)}
                     onSelect={handleLocationSelect}
                     onToggleFavorite={handleToggleFavorite}
                   />
