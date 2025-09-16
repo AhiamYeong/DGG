@@ -41,13 +41,13 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
             <button
               type="button"
               onClick={addWaypoint}
-              disabled={waypoints.length >= 5}
+              disabled={waypoints.length >= 2}
               className={`w-12 h-12 bg-white border-2 rounded-full flex items-center justify-center transition-colors ${
-                waypoints.length >= 5 
+                waypoints.length >= 2 
                   ? 'border-secondary text-secondary cursor-not-allowed' 
                   : 'border-primary text-primary hover:border-primary hover:bg-primary hover:text-white'
               }`}
-              title={waypoints.length >= 5 ? "최대 5개까지 추가 가능" : "경유지 추가"}
+              title={waypoints.length >= 2 ? "최대 2개까지 추가 가능" : "경유지 추가"}
             >
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

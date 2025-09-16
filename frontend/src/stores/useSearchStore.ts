@@ -38,7 +38,7 @@ export const useSearchStore = create<SearchState & SearchActions>((set, get) => 
   
   addWaypoint: () => {
     const { waypoints } = get();
-    if (waypoints.length < 5) {
+    if (waypoints.length < 2) {
       const newWaypoint: Waypoint = {
         id: `waypoint-${Date.now()}`,
         value: ''
