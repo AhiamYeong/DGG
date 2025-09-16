@@ -45,6 +45,15 @@ dependencies {
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// jwt
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+	implementation 'org.projectlombok:lombok:1.18.20'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:JJWT_RELEASE_VERSION'
+	implementation 'com.google.api-client:google-api-client:2.6.0'
+
 	// .env 파일 자동 로드
 	implementation 'me.paulschwarz:spring-dotenv:3.0.0'
 	implementation 'io.github.cdimascio:dotenv-java:3.0.0'
