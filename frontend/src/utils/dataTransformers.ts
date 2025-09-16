@@ -1,4 +1,5 @@
-import type { ApiSearchResult, RecentSearch } from '../types/search';
+import type { ApiSearchResult } from '../types/search';
+import type { RecentSearch } from '../services/searchHistoryApi';
 
 // API 응답을 컴포넌트 타입으로 변환하는 유틸리티 함수들
 

@@ -67,7 +67,7 @@ export async function testApiConnection(
   endpoint: string = '/health'
 ): Promise<{ success: boolean; message: string; hasCredentials: boolean }> {
   try {
-    const response = await client.get(endpoint, { timeout: 1000 });
+    await client.get(endpoint, { timeout: 1000 });
     return {
       success: true,
       message: 'API 연결 성공',

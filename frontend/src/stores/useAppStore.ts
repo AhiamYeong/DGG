@@ -45,7 +45,7 @@ const initialState: AppState = {
 
 export const useAppStore = create<AppState & AppActions>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       ...initialState,
 
       // UI 상태 관리
