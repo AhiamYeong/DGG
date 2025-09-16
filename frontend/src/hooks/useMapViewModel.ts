@@ -81,24 +81,24 @@ export function useMapViewModel() {
 
     // API 로드 및 지도 초기화
     loadNaverMapAPI()
-      .then((naver: typeof window.naver) => {
+      .then((naver: any) => {
         if (mapRef.current && naver.maps) {
           const mapInstance = new naver.maps.Map(mapRef.current, {
             center: new naver.maps.LatLng(center.lat, center.lng),
             zoom: zoom,
             mapTypeControl: true,
             mapTypeControlOptions: {
-              style: naver.maps.MapTypeControlStyle.BUTTON,
-              position: naver.maps.Position.TOP_RIGHT
+              style: naver.maps.MapTypeControlStyle.BUTTON as any,
+              position: naver.maps.Position.TOP_RIGHT as any
             },
             zoomControl: true,
             zoomControlOptions: {
-              style: naver.maps.ZoomControlStyle.SMALL,
-              position: naver.maps.Position.RIGHT_CENTER
+              style: naver.maps.ZoomControlStyle.SMALL as any,
+              position: naver.maps.Position.RIGHT_CENTER as any
             }
           });
 
-          // 마커 추가
+          // 마커 추가 (네이버 좌표계 사용)
           const marker = new naver.maps.Marker({
             position: new naver.maps.LatLng(center.lat, center.lng),
             map: mapInstance,
@@ -139,7 +139,7 @@ export function useMapViewModel() {
   const updateMapLocation = useCallback((newLocation: NaverMapLocation) => {
     if (map && window.naver && window.naver.maps) {
       const newCenter = new window.naver.maps.LatLng(newLocation.lat, newLocation.lng);
-      map.setCenter(newCenter);
+      map.setCenter(newCenter as any);
     }
   }, [map]);
 

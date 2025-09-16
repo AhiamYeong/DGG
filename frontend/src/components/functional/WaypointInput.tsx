@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+
 interface Waypoint {
   id: string;
   value: string;
@@ -18,6 +20,26 @@ export default function WaypointInput({
   onRemove,
   onClear
 }: WaypointInputProps) {
+  const navigate = useNavigate();
+
+  const handleInputClick = () => {
+    navigate('/search', {
+      state: {
+        searchType: 'waypoint',
+        currentValue: waypoint.value,
+        waypointIndex: index
+      }
+    });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Enter 키나 Space 키로도 검색 페이지 이동 가능
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleInputClick();
+    }
+  };
+
   return (
     <div className="relative">
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -30,8 +52,14 @@ export default function WaypointInput({
         type="text"
         value={waypoint.value}
         onChange={(e) => onValueChange(waypoint.id, e.target.value)}
+        onClick={handleInputClick}
+        onKeyDown={handleKeyDown}
         placeholder={`경유지 ${index + 1} 검색`}
-        className="w-full h-9 pl-9 pr-16 bg-white border border-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-font"
+        className="w-full h-9 pl-9 pr-16 bg-white border border-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-font cursor-pointer hover:border-primary transition-colors"
+        readOnly
+        tabIndex={0}
+        aria-label={`경유지 ${index + 1} 검색 - 클릭하여 검색`}
+        role="button"
       />
       <div className="absolute inset-y-0 right-0 pr-2 flex items-center gap-1">
         {waypoint.value && (

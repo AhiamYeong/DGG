@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { RouteTabType } from '../types/routes';
 
 interface FavoriteRoute {
@@ -47,74 +48,17 @@ interface RouteActions {
   setCurrentStep: (step: number) => void;
 }
 
-export const useRouteStore = create<RouteState & RouteActions>((set, get) => ({
-  // State
-  selectedRoute: null,
-  favoriteRoutes: [
-    {
-      id: '1',
-      name: '출근길',
-      from: '강남역',
-      to: '여의도',
-      time: '08:30',
-      isBookmarked: true
-    },
-    {
-      id: '2',
-      name: '퇴근길',
-      from: '여의도',
-      to: '강남역',
-      time: '18:00',
-      isBookmarked: true
-    },
-    {
-      id: '3',
-      name: '주말 나들이',
-      from: '홍대입구역',
-      to: '명동',
-      time: '14:00',
-      isBookmarked: false
-    }
-  ],
-  reservedRoutes: [
-    {
-      id: 'reserved-1',
-      name: '내일 출근 예약',
-      from: '강남역',
-      to: '여의도',
-      time: '08:30',
-      isBookmarked: true,
-      reservationTime: '2024-01-15 08:30',
-      isActive: true,
-      reminderMinutes: 30
-    },
-    {
-      id: 'reserved-2',
-      name: '회의 예약',
-      from: '여의도',
-      to: '삼성역',
-      time: '14:00',
-      isBookmarked: false,
-      reservationTime: '2024-01-15 14:00',
-      isActive: true,
-      reminderMinutes: 15
-    },
-    {
-      id: 'reserved-3',
-      name: '약속 예약',
-      from: '삼성역',
-      to: '강남역',
-      time: '19:00',
-      isBookmarked: true,
-      reservationTime: '2024-01-15 19:00',
-      isActive: false,
-      reminderMinutes: 60
-    }
-  ],
-  activeTab: 'favorite',
-  isGuidanceMode: false,
-  currentStep: 0,
-  totalSteps: 0,
+export const useRouteStore = create<RouteState & RouteActions>()(
+  persist(
+    (set, get) => ({
+      // State
+      selectedRoute: null,
+      favoriteRoutes: [], // 더미 데이터 제거, API에서 로드
+      reservedRoutes: [], // 더미 데이터 제거, API에서 로드
+      activeTab: 'favorite',
+      isGuidanceMode: false,
+      currentStep: 0,
+      totalSteps: 0,
 
   // Actions
   selectRoute: (route) => set({ selectedRoute: route }),
@@ -184,5 +128,15 @@ export const useRouteStore = create<RouteState & RouteActions>((set, get) => ({
     }
   },
 
-  setCurrentStep: (step) => set({ currentStep: step })
-}));
+      setCurrentStep: (step) => set({ currentStep: step })
+    }),
+    {
+      name: 'route-store',
+      partialize: (state) => ({
+        favoriteRoutes: state.favoriteRoutes,
+        reservedRoutes: state.reservedRoutes,
+        activeTab: state.activeTab,
+      }),
+    }
+  )
+);

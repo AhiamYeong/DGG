@@ -47,6 +47,7 @@ export interface SearchResult extends BaseEntity {
   };
 }
 
+
 export interface SearchParams {
   query: string;
   location?: Location;

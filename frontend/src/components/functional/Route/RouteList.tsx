@@ -41,7 +41,7 @@ const RouteList = memo<RouteListProps>(({
   className = ''
 }) => {
   // 이벤트 핸들러들을 useCallback으로 최적화
-  const handleSelectRoute = useCallback((route: FavoriteRoute) => {
+  const handleSelectRoute = useCallback((route: SimpleRoute) => {
     onSelectRoute(route);
   }, [onSelectRoute]);
 

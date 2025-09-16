@@ -8,11 +8,11 @@ export default {
     extend: {
       colors: {
         // 기본 색상
-        primary: '#0F4C81',
+        primary: '#2597FA',
         secondary: '#A6BACC',
         accent: '#FFC107',
         font: '#2A2D34',
-        background: '#FAFAFA',
+        background: '#FFFFFF',
         
         // 끼임 정도 표현 색상
         'level-1': '#3DDC97',
