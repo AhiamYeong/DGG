@@ -64,6 +64,7 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
               placeholder="출발지 검색"
               onClear={clearOrigin}
               icon="search"
+              searchType="origin"
             />
 
             {/* 경유지 입력들 */}
@@ -85,6 +86,7 @@ export default function SearchBox({ onSearch }: SearchBoxProps) {
               placeholder="도착지 검색"
               onClear={clearDestination}
               icon="search"
+              searchType="destination"
             />
           </div>
 

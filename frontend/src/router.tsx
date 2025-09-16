@@ -6,6 +6,7 @@ import MainMapPage from './pages/MainMapPage';
 import PlanPage from './pages/PlanPage';
 import AlarmPage from './pages/AlarmPage';
 import MyPage from './pages/MyPage';
+import SearchPage from './pages/SearchPage';
 
 // Create router
 export const router = createBrowserRouter([
@@ -28,5 +29,9 @@ export const router = createBrowserRouter([
   {
     path: '/mypage',
     element: <MyPage />
+  },
+  {
+    path: '/search',
+    element: <SearchPage />
   }
 ]);
