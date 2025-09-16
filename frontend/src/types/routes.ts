@@ -81,6 +81,32 @@ export interface FavoriteRoute extends BaseEntity {
   tags?: string[];
 }
 
+// 예약 노선 타입 정의
+export interface ReservedRoute extends BaseEntity {
+  route: Route;
+  name: string;
+  description?: string;
+  reservationTime: TimeSlot;
+  isActive: boolean;
+  reminderMinutes?: number; // 알림 시간 (분 단위)
+  tags?: string[];
+}
+
+// 탭 타입 정의
+export type RouteTabType = 'favorite' | 'reserved';
+
+// 통합 노선 타입 (즐겨찾기 + 예약)
+export type RouteItem = FavoriteRoute | ReservedRoute;
+
+// 노선 타입 구분 함수
+export const isFavoriteRoute = (route: RouteItem): route is FavoriteRoute => {
+  return 'tags' in route && !('reservationTime' in route);
+};
+
+export const isReservedRoute = (route: RouteItem): route is ReservedRoute => {
+  return 'reservationTime' in route && 'isActive' in route;
+};
+
 export interface RouteHistory extends BaseEntity {
   route: Route;
   usedAt: Date;

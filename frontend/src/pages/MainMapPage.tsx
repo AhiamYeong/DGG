@@ -36,11 +36,6 @@ export default function MainMapPage() {
           <SearchBox onSearch={handleSearch} />
         </div>
 
-        {/* 하단 즐겨찾기 예약노선 바텀시트 */}
-        <div className="absolute bottom-0 left-0 right-0 pointer-events-auto">
-          <FavoriteRoutesBottomSheet />
-        </div>
-
         {/* 현재 위치 버튼 (우측 하단) */}
         <div className="absolute bottom-32 right-4 pointer-events-auto">
           <button
@@ -54,6 +49,11 @@ export default function MainMapPage() {
             </svg>
           </button>
         </div>
+      </div>
+
+      {/* 하단 즐겨찾기 예약노선 바텀시트 - 별도 레이어로 분리 */}
+      <div className="absolute bottom-0 left-0 right-0 z-20">
+        <FavoriteRoutesBottomSheet />
       </div>
     </div>
   );
