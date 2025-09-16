@@ -1,5 +1,6 @@
 package com.ssafy.dgg.ui.screen
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -77,9 +78,11 @@ fun LoginScreen(
         // 로그인 버튼
         Button(
             onClick = {
+                Log.d("LoginFlow", "구글 로그인 버튼 클릭")
+                onGoogleSignInClicked()
                 // TODO: 여기에 실제 로그인 로직(예: API 호출)을 구현합니다.
                 // 현재는 단순히 성공했다고 가정하고 onLoginSuccess 람다를 호출합니다.
-                onLoginSuccess()
+                // onLoginSuccess()
             },
             modifier = Modifier.fillMaxWidth()
         ) {

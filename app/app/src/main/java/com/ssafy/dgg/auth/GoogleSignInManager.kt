@@ -1,5 +1,6 @@
 package com.ssafy.dgg.auth
 
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.contract.ActivityResultContracts
@@ -45,6 +46,7 @@ class GoogleSignInManager(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        Log.d("GoogleSignIn", "Intent data: ${result.data}")
         try {
             val account = task.getResult(ApiException::class.java)
             // 로그인 성공 시 onSignInSuccess 콜백 호출

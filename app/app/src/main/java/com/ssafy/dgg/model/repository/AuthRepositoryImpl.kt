@@ -6,7 +6,7 @@ import com.ssafy.dgg.model.data.TokenResponse
 
 /* 실제 서버 통신 구현 */
 class AuthRepositoryImpl  (
-    private val authApi: AuthApi
+    private val authApi: AuthApi,
 ): AuthRepository {
     override suspend fun loginWithGoogle(request: GoogleLoginRequest): TokenResponse {
         val response = authApi.loginWithGoogle(request) // 객체 바로 전달
@@ -19,6 +19,7 @@ class AuthRepositoryImpl  (
         }
     }
 
+    // TODO: refresh token 로직 추가
     override suspend fun refreshToken(refreshToken: String): TokenResponse {
         val response = authApi.refreshToken(mapOf("refreshToken" to refreshToken))
         if (response.isSuccessful) {
