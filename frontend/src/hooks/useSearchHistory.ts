@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { 
   recentSearchApi, 
   favoritePlacesApi, 
@@ -7,141 +7,85 @@ import {
   type AddRecentSearchRequest,
   type AddFavoritePlaceRequest
 } from '../services/searchHistoryApi';
+import { useAsyncOperation } from './useAsyncOperation';
 
 /**
  * 검색 내역 관리 훅
  */
 export function useSearchHistory() {
-  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
-  const [favoritePlaces, setFavoritePlaces] = useState<FavoritePlace[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // 최근 검색 내역 관리
+  const recentSearchesOperation = useAsyncOperation(recentSearchApi.getRecentSearches);
+  const favoritePlacesOperation = useAsyncOperation(favoritePlacesApi.getFavoritePlaces);
+  
+  // 추가/삭제 작업들
+  const addRecentSearchOperation = useAsyncOperation(recentSearchApi.addRecentSearch);
+  const removeRecentSearchOperation = useAsyncOperation(recentSearchApi.deleteRecentSearch);
+  const addFavoritePlaceOperation = useAsyncOperation(favoritePlacesApi.addFavoritePlace);
+  const removeFavoritePlaceOperation = useAsyncOperation(favoritePlacesApi.deleteFavoritePlace);
 
-  // 공통 API 호출 함수
-  const loadData = useCallback(async <T>(
-    apiCall: () => Promise<{ success: boolean; data: T; message: string }>,
-    setter: (data: T) => void,
-    errorMessage: string
-  ) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await apiCall();
-      if (response.success) {
-        setter(response.data);
-      } else {
-        setError(response.message);
-      }
-    } catch (err) {
-      setError(errorMessage);
-      console.warn(`${errorMessage}:`, err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // 최근 검색 내역 불러오기
+  // 데이터 로드 함수들
   const loadRecentSearches = useCallback(async () => {
-    await loadData(
-      recentSearchApi.getRecentSearches,
-      setRecentSearches,
-      '최근 검색 내역을 불러오는데 실패했습니다.'
-    );
-  }, [loadData]);
+    const result = await recentSearchesOperation.execute();
+    if (result.success && result.data && result.data.success) {
+      recentSearchesOperation.setData(result.data.data);
+    }
+  }, [recentSearchesOperation]);
 
-  // 즐겨찾기 장소 불러오기
   const loadFavoritePlaces = useCallback(async () => {
-    await loadData(
-      favoritePlacesApi.getFavoritePlaces,
-      setFavoritePlaces,
-      '즐겨찾기 장소를 불러오는데 실패했습니다.'
-    );
-  }, [loadData]);
+    const result = await favoritePlacesOperation.execute();
+    if (result.success && result.data && result.data.success) {
+      favoritePlacesOperation.setData(result.data.data);
+    }
+  }, [favoritePlacesOperation]);
 
   // 최근 검색 내역 추가
   const addRecentSearch = useCallback(async (request: AddRecentSearchRequest) => {
-    try {
-      const response = await recentSearchApi.addRecentSearch(request);
-      if (response.success) {
-        // 로컬 상태 업데이트
-        setRecentSearches(prev => [response.data, ...prev]);
-        return { success: true, data: response.data };
-      } else {
-        // API 실패 시 에러를 설정하지 않고 조용히 실패 (사용자 경험 우선)
-        console.warn('검색 내역 추가 실패:', response.message);
-        return { success: false, error: response.message };
-      }
-    } catch (err) {
-      // 네트워크 오류 시에도 에러를 설정하지 않고 조용히 실패
-      console.warn('검색 내역 추가 실패 (네트워크 오류):', err);
-      return { success: false, error: 'NETWORK_ERROR' };
+    const result = await addRecentSearchOperation.execute(request);
+    if (result.success && result.data && result.data.success) {
+      // 로컬 상태 업데이트
+      const currentData = recentSearchesOperation.data || [];
+      recentSearchesOperation.setData([result.data.data, ...currentData]);
     }
-  }, []);
+    return result;
+  }, [addRecentSearchOperation, recentSearchesOperation]);
 
   // 최근 검색 내역 삭제
   const removeRecentSearch = useCallback(async (id: string) => {
-    try {
-      const response = await recentSearchApi.deleteRecentSearch(id);
-      if (response.success) {
-        // 로컬 상태 업데이트
-        setRecentSearches(prev => prev.filter(item => item.id !== id));
-        return { success: true };
-      } else {
-        setError(response.message);
-        return { success: false, error: response.message };
-      }
-    } catch (err) {
-      const errorMessage = '최근 검색 내역 삭제에 실패했습니다.';
-      setError(errorMessage);
-      console.warn('최근 검색 내역 삭제 실패:', err);
-      return { success: false, error: errorMessage };
+    const result = await removeRecentSearchOperation.execute(id);
+    if (result.success) {
+      // 로컬 상태 업데이트
+      const currentData = recentSearchesOperation.data || [];
+      recentSearchesOperation.setData(currentData.filter((item: RecentSearch) => item.id !== id));
     }
-  }, []);
+    return result;
+  }, [removeRecentSearchOperation, recentSearchesOperation]);
 
   // 즐겨찾기 장소 추가
   const addFavoritePlace = useCallback(async (request: AddFavoritePlaceRequest) => {
-    try {
-      const response = await favoritePlacesApi.addFavoritePlace(request);
-      if (response.success) {
-        // 로컬 상태 업데이트
-        setFavoritePlaces(prev => [response.data, ...prev]);
-        return { success: true, data: response.data };
-      } else {
-        setError(response.message);
-        return { success: false, error: response.message };
-      }
-    } catch (err) {
-      const errorMessage = '즐겨찾기 장소 추가에 실패했습니다.';
-      setError(errorMessage);
-      console.warn('즐겨찾기 장소 추가 실패:', err);
-      return { success: false, error: errorMessage };
+    const result = await addFavoritePlaceOperation.execute(request);
+    if (result.success && result.data && result.data.success) {
+      // 로컬 상태 업데이트
+      const currentData = favoritePlacesOperation.data || [];
+      favoritePlacesOperation.setData([result.data.data, ...currentData]);
     }
-  }, []);
+    return result;
+  }, [addFavoritePlaceOperation, favoritePlacesOperation]);
 
   // 즐겨찾기 장소 삭제
   const removeFavoritePlace = useCallback(async (id: string) => {
-    try {
-      const response = await favoritePlacesApi.deleteFavoritePlace(id);
-      if (response.success) {
-        // 로컬 상태 업데이트
-        setFavoritePlaces(prev => prev.filter(item => item.id !== id));
-        return { success: true };
-      } else {
-        setError(response.message);
-        return { success: false, error: response.message };
-      }
-    } catch (err) {
-      const errorMessage = '즐겨찾기 장소 삭제에 실패했습니다.';
-      setError(errorMessage);
-      console.warn('즐겨찾기 장소 삭제 실패:', err);
-      return { success: false, error: errorMessage };
+    const result = await removeFavoritePlaceOperation.execute(id);
+    if (result.success) {
+      // 로컬 상태 업데이트
+      const currentData = favoritePlacesOperation.data || [];
+      favoritePlacesOperation.setData(currentData.filter((item: FavoritePlace) => item.id !== id));
     }
-  }, []);
+    return result;
+  }, [removeFavoritePlaceOperation, favoritePlacesOperation]);
 
   // 즐겨찾기 토글 (추가/삭제)
   const toggleFavoritePlace = useCallback(async (place: FavoritePlace) => {
-    const isCurrentlyFavorite = favoritePlaces.some(fav => fav.id === place.id);
+    const currentData = favoritePlacesOperation.data || [];
+    const isCurrentlyFavorite = currentData.some((fav: FavoritePlace) => fav.id === place.id);
     
     if (isCurrentlyFavorite) {
       return await removeFavoritePlace(place.id);
@@ -156,7 +100,7 @@ export function useSearchHistory() {
       };
       return await addFavoritePlace(request);
     }
-  }, [favoritePlaces, addFavoritePlace, removeFavoritePlace]);
+  }, [favoritePlacesOperation.data, addFavoritePlace, removeFavoritePlace]);
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -166,26 +110,22 @@ export function useSearchHistory() {
 
   // 모든 데이터 새로고침
   const refreshAll = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      await Promise.all([
-        loadRecentSearches(),
-        loadFavoritePlaces()
-      ]);
-    } catch (err) {
-      setError('데이터를 새로고침하는데 실패했습니다.');
-      console.warn('데이터 새로고침 실패:', err);
-    } finally {
-      setIsLoading(false);
-    }
+    await Promise.all([
+      loadRecentSearches(),
+      loadFavoritePlaces()
+    ]);
   }, [loadRecentSearches, loadFavoritePlaces]);
+
+  // 통합된 로딩 상태
+  const isLoading = recentSearchesOperation.isLoading || favoritePlacesOperation.isLoading;
+  
+  // 통합된 에러 상태
+  const error = recentSearchesOperation.error || favoritePlacesOperation.error;
 
   return {
     // 상태
-    recentSearches,
-    favoritePlaces,
+    recentSearches: recentSearchesOperation.data || [],
+    favoritePlaces: favoritePlacesOperation.data || [],
     isLoading,
     error,
     
@@ -199,7 +139,10 @@ export function useSearchHistory() {
     toggleFavoritePlace,
     
     // 유틸리티
-    clearError: () => setError(null),
+    clearError: () => {
+      recentSearchesOperation.clearError();
+      favoritePlacesOperation.clearError();
+    },
     refreshAll
   };
 }

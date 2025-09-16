@@ -1,15 +1,19 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { Location } from '../types/common';
 
-interface Waypoint {
+// 경유지 타입 정의
+export interface Waypoint {
   id: string;
   value: string;
+  location?: Location;
 }
 
 interface SearchState {
   origin: string;
   destination: string;
   waypoints: Waypoint[];
-  recentSearches: string[];
+  // recentSearches는 API로 관리하므로 제거
 }
 
 interface SearchActions {
@@ -22,15 +26,16 @@ interface SearchActions {
   clearDestination: () => void;
   clearWaypoint: (id: string) => void;
   clearAll: () => void;
-  addRecentSearch: (search: string) => void;
+  // addRecentSearch는 API로 관리하므로 제거
 }
 
-export const useSearchStore = create<SearchState & SearchActions>((set, get) => ({
-  // State
-  origin: '',
-  destination: '',
-  waypoints: [],
-  recentSearches: [],
+export const useSearchStore = create<SearchState & SearchActions>()(
+  persist(
+    (set, get) => ({
+      // State
+      origin: '',
+      destination: '',
+      waypoints: [],
 
   // Actions
   setOrigin: (origin) => set({ origin }),
@@ -73,15 +78,19 @@ export const useSearchStore = create<SearchState & SearchActions>((set, get) => 
     });
   },
 
-  clearAll: () => set({ 
-    origin: '', 
-    destination: '', 
-    waypoints: [] 
-  }),
-
-  addRecentSearch: (search) => {
-    const { recentSearches } = get();
-    const updated = [search, ...recentSearches.filter(s => s !== search)].slice(0, 10);
-    set({ recentSearches: updated });
-  }
-}));
+      clearAll: () => set({ 
+        origin: '', 
+        destination: '', 
+        waypoints: [] 
+      }),
+    }),
+    {
+      name: 'search-store',
+      partialize: (state) => ({
+        origin: state.origin,
+        destination: state.destination,
+        waypoints: state.waypoints,
+      }),
+    }
+  )
+);
