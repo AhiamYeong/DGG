@@ -111,10 +111,11 @@ class MainActivity : ComponentActivity() {
                 // 로그인 성공! 이제 로그인 상태를 변경합니다.
                 // screenState = ScreenState.LoggedIn
                 // 또는 ViewModel에 토큰을 전달하여 로그인 처리
+                Log.d("GoogleSignIn", "idToken: $idToken")
             },
             onSignInFailure = { exception ->
                 // 로그인 실패! 사용자에게 메시지 표시 등
-                // Log.e("GoogleSignIn", "Failed", exception)
+                Log.e("GoogleSignIn", "Failed", exception)
             }
         )
 

@@ -28,7 +28,7 @@ android {
         buildConfigField(
             "String",
             "GOOGLE_CLIENT_ID",
-            "\"${localProperties.getProperty("ANDROID_CLIENT_ID")}\""        )
+            "\"${localProperties.getProperty("WEB_CLIENT_ID")}\""        )
 
         applicationId = "com.ssafy.dgg"
         minSdk = 29
