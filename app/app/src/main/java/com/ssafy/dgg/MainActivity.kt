@@ -41,7 +41,6 @@ import com.ssafy.dgg.viewModel.TestViewModel
 
 class MainActivity : ComponentActivity() {
 
-
     // FCM 런타임 권한 요청
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),

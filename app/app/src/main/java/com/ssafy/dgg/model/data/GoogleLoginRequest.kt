@@ -1,6 +1,8 @@
 package com.ssafy.dgg.model.data
 
-// TODO: loginRequest로 보낼 것 idToken -> authCode로 알아보기
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class GoogleLoginRequest (
     val idToken: String
 )

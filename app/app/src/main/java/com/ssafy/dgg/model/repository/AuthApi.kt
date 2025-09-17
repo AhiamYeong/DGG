@@ -11,8 +11,8 @@ import retrofit2.http.POST
 *   */
 
 interface AuthApi {
-    // 1️⃣ 구글 로그인: ID Token 전달 → Access/Refresh Token 발급
-    @POST("/auth/google-login")
+    // 로그인 검증
+    @POST("/auth/google")
     suspend fun loginWithGoogle(
         @Body request: GoogleLoginRequest
     ): Response<TokenResponse>

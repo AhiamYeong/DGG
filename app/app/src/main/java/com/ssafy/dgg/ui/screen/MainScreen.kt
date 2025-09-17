@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue // Added this import
 import androidx.compose.ui.platform.LocalContext
+import com.ssafy.dgg.BuildConfig
 
 data class Screen(val route: String, val title: String)
 
@@ -21,7 +22,7 @@ val items = listOf(
     Screen("mypage", "마이페이지"),
 )
 
-val BASE_URL = "http://70.12.247.55:3000" // 추후 util 분리
+val BASE_URL = BuildConfig.WEB_URL // 추후 util 분리
 
 // TODO: 웹뷰 사이즈 조절 & 키보드 입력 시 네비게이션 바 내리기
 // TODO: 네비게이션 바 컬러 및 폰트 조정
@@ -45,6 +46,7 @@ fun MainScreen() {
         }
     ) { innerPadding ->
 //        네비게이션 바 클릭에 따라 웹뷰 URL 변경
+        // TODO: 네비게이션 바 웹뷰로 이동
         val currentUrl = when (selectedItem.route) {
             // base URL
             "fatigue" -> BASE_URL

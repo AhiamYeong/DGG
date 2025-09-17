@@ -48,7 +48,7 @@ android {
             versionNameSuffix = "-DEBUG"
 
             // React 웹뷰용 URL
-            buildConfigField("String", "WEB_URL", "\"http://localhost:3000\"")
+            buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io\"")
 
             // native의 직접 API 호출용 URL
             buildConfigField("String", "API_BASE_URL", "\"http://localhost:8080\"")
@@ -66,7 +66,7 @@ android {
             )
 
             // 웹뷰용 URL
-            buildConfigField("String", "WEB_URL", "\"https://dgg-frontend.netlify.app\"")
+            buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io/\"")
             // API 호출용 URL
             buildConfigField("String", "API_BASE_URL", "\"https://api.dgg.com\"")
 

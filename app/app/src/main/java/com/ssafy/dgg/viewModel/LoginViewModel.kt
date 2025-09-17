@@ -34,7 +34,7 @@ class LoginViewModel(
                 val request = GoogleLoginRequest(idToken = idToken)
 
                 // 로그 찍기
-                Log.d("LoginFlow", "viewModel Repository 호출 전 idToken=$idToken")
+                // Log.d("LoginFlow", "viewModel Repository 호출 전 idToken=$idToken")
 
                 // 서버에 ID Token 전달 → Access/Refresh Token 발급
                 val tokens = authRepository.loginWithGoogle(request)
@@ -44,15 +44,15 @@ class LoginViewModel(
 
                 // 토큰 저장: access Token만 발급 기준 & 추후 reissue를 염두
                 tokenStorage.saveAccessToken(tokens.accessToken)
-                Log.d("LoginViewModel", "AccessToken 저장됨: ${tokenStorage.getAccessToken()}")
+                Log.d("LoginFlow", "AccessToken 저장됨: ${tokenStorage.getAccessToken()}")
 
                 // 상태 업데이트
                 _loginState.value = LoginState.LoggedIn
-                Log.d("LoginViewModel", "loginState: ${_loginState.value}")
+                Log.d("LoginFlow", "loginState: ${_loginState.value}")
 
             } catch (e: Exception) {
                 _loginState.value = LoginState.Error(e.message ?: "로그인 실패")
-                Log.e("LoginViewModel", "로그인 실패", e)
+                Log.e("LoginFlow", "로그인 실패", e)
             }
         }
     }
