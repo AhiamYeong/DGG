@@ -1,5 +1,6 @@
 package com.ssafy.dgg.ui.screen
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,7 +23,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
-/* 상태 직접 관리X, 요청을 외부에 전달 -> State Hoisting */
+/* 상태 직접 관리X, 요청을 외부에 전달 -> State Hoisting
+* 버튼  -> googlesigninmanager.signinIntent 실행
+* 결과(Activity result)에서 account.idToken추출 -> viewmodel에 전달
+* isLoggedIn에 따라 로그인 <> 메인화면 전달
+*
+* 인증 실패/로그아웃 플로우
+* 로그아웃 : viewmodel -> tokenstorage.clearToken() -> isloggedin = false
+* 401: tokeninterceptor에서 감지 -> 자동 로그아웃 or refresh token 플로우 추가
+* */
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
@@ -69,9 +78,11 @@ fun LoginScreen(
         // 로그인 버튼
         Button(
             onClick = {
+                Log.d("LoginFlow", "구글 로그인 버튼 클릭")
+                onGoogleSignInClicked()
                 // TODO: 여기에 실제 로그인 로직(예: API 호출)을 구현합니다.
                 // 현재는 단순히 성공했다고 가정하고 onLoginSuccess 람다를 호출합니다.
-                onLoginSuccess()
+                // onLoginSuccess()
             },
             modifier = Modifier.fillMaxWidth()
         ) {

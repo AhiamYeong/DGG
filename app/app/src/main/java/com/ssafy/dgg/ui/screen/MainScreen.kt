@@ -23,6 +23,8 @@ val items = listOf(
 
 val BASE_URL = "http://70.12.247.55:3000" // 추후 util 분리
 
+// TODO: 웹뷰 사이즈 조절 & 키보드 입력 시 네비게이션 바 내리기
+// TODO: 네비게이션 바 컬러 및 폰트 조정
 @Composable
 fun MainScreen() {
     val context = LocalContext.current
@@ -47,7 +49,7 @@ fun MainScreen() {
             // base URL
             "fatigue" -> BASE_URL
             "plan" -> "$BASE_URL/plan"
-            "route" -> "$BASE_URL/map-test"
+            "route" -> "$BASE_URL/map"
             "alarm" -> "$BASE_URL/alarm"
             "mypage" -> "$BASE_URL/mypage"
             else -> BASE_URL

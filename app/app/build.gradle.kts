@@ -51,7 +51,7 @@ android {
             buildConfigField("String", "WEB_URL", "\"http://localhost:3000\"")
 
             // native의 직접 API 호출용 URL
-            buildConfigField("String", "WEB_URL", "\"http://localhost:8080\"")
+            buildConfigField("String", "API_BASE_URL", "\"http://localhost:8080\"")
 
             buildConfigField("boolean", "IS_DEBUG", "true")
             resValue("string", "dgg", "DGG 개발")

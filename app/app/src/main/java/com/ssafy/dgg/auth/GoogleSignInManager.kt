@@ -1,5 +1,6 @@
 package com.ssafy.dgg.auth
 
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,7 +27,7 @@ class GoogleSignInManager(
 
     // DEFAULT_SIGN_IN: 기본 정보 (이름, 이메일 등)
     // TODO: 우리 서비스에서 받는 정보 (닉네임, 이메일 2가지) 로 변경 필요??
-    // 1. google 로그인 클라이언트 초기화
+    // 1. google sign in client로 네이티브 로그인 -> UI에서만 실행
     private val googleSignInClient by lazy {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(BuildConfig.GOOGLE_CLIENT_ID) // 서버에서 사용자 인증시 사용할 ID 토큰
@@ -39,11 +40,13 @@ class GoogleSignInManager(
 
     // 2. 로그인 결과 받을 activityresultlauncher 생성
     // google 로그인은 앱 activity가 하나고 뭐고 관계없이 새 액티비티를 열어야 한다더라
+    // Activity Result API :
     // TODO: deprecated 대체
     private val signInLauncher = activityResultCaller.registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        Log.d("GoogleSignIn", "Intent data: ${result.data}")
         try {
             val account = task.getResult(ApiException::class.java)
             // 로그인 성공 시 onSignInSuccess 콜백 호출
