@@ -1,7 +1,11 @@
+import { useState, useCallback } from 'react';
 import { useMapViewModel } from '../hooks/useMapViewModel';
 import SearchBox from '../components/functional/SearchBox';
 import FavoriteRoutesBottomSheet from '../components/functional/Route/FavoriteRoutesBottomSheet';
+import RouteResultsBottomSheet from '../components/functional/Route/RouteResultsBottomSheet';
 import NaverMap from '../components/functional/NaverMap';
+import { generateRouteRecommendations, getActionLabel } from '../utils/routeDataGenerator';
+import type { SimpleRoute } from '../types/routes';
 
 export default function MainMapPage() {
   const {
@@ -13,6 +17,39 @@ export default function MainMapPage() {
     initializeMap,
     cleanupMap
   } = useMapViewModel();
+
+  // 경로 결과 바텀시트 상태
+  const [isRouteResultsOpen, setIsRouteResultsOpen] = useState(false);
+  const [routeResults, setRouteResults] = useState<SimpleRoute[]>([]);
+  const [actionLabel, setActionLabel] = useState('안내 시작');
+
+  // 길찾기 핸들러
+  const handleRouteSearch = useCallback((origin: string, destination: string, waypoints?: string[]) => {
+    console.log('길찾기 요청:', { origin, destination, waypoints });
+    
+    // 더미 경로 데이터 생성
+    const routes = generateRouteRecommendations(origin, destination);
+    setRouteResults(routes);
+    
+    // CTA 라벨 결정
+    const label = getActionLabel();
+    setActionLabel(label);
+    
+    // 바텀시트 열기
+    setIsRouteResultsOpen(true);
+  }, []);
+
+  // 경로 선택 핸들러
+  const handleRouteSelect = useCallback((route: SimpleRoute) => {
+    console.log('경로 선택:', route);
+    // TODO: 선택된 경로로 네비게이션 시작
+    setIsRouteResultsOpen(false);
+  }, []);
+
+  // 경로 결과 바텀시트 닫기
+  const handleCloseRouteResults = useCallback(() => {
+    setIsRouteResultsOpen(false);
+  }, []);
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
@@ -33,7 +70,7 @@ export default function MainMapPage() {
       <div className="absolute inset-0 z-10 pointer-events-none">
         {/* 상단 검색 박스 - 전체 화면을 가림 */}
         <div className="absolute top-0 left-0 right-0 pointer-events-auto">
-          <SearchBox onSearch={handleSearch} />
+          <SearchBox onSearch={handleRouteSearch} />
         </div>
 
         {/* 현재 위치 버튼 (우측 하단) */}
@@ -55,6 +92,15 @@ export default function MainMapPage() {
       <div className="absolute bottom-0 left-0 right-0 z-20">
         <FavoriteRoutesBottomSheet />
       </div>
+
+      {/* 경로 결과 바텀시트 - 최상위 레이어 */}
+      <RouteResultsBottomSheet
+        open={isRouteResultsOpen}
+        onClose={handleCloseRouteResults}
+        routes={routeResults}
+        actionLabel={actionLabel}
+        onSelect={handleRouteSelect}
+      />
     </div>
   );
 }

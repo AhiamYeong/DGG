@@ -1,15 +1,6 @@
 import { memo, useCallback, useMemo } from 'react';
 import RouteCard from './RouteCard';
-
-// 간단한 노선 타입 정의 (스토어와 호환)
-interface SimpleRoute {
-  id: string;
-  name: string;
-  from: string;
-  to: string;
-  time: string;
-  isBookmarked: boolean;
-}
+import type { SimpleRoute } from '../../../types/routes';
 
 interface RouteListProps {
   routes: SimpleRoute[];
@@ -19,6 +10,7 @@ interface RouteListProps {
   onAddNewRoute?: () => void;
   emptyMessage?: string;
   showAddButton?: boolean;
+  actionLabel?: string;
   className?: string;
 }
 
@@ -38,6 +30,7 @@ const RouteList = memo<RouteListProps>(({
   onAddNewRoute,
   emptyMessage = '등록된 노선이 없습니다',
   showAddButton = true,
+  actionLabel = '선택',
   className = ''
 }) => {
   // 이벤트 핸들러들을 useCallback으로 최적화
