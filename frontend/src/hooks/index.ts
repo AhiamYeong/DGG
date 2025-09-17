@@ -7,6 +7,7 @@ export { useBottomSheetSwipe } from './useBottomSheetSwipe';
 // 검색 관련 훅들
 export { useDebounce, useSearchDebounce } from './useDebounce';
 export { useNaverSearch } from './useNaverSearch';
+export { usePlaceSearch } from './usePlaceSearch';
 export { useSearchHistory } from './useSearchHistory';
 
 // 공통 유틸리티 훅들

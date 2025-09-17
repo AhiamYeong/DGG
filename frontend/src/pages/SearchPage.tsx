@@ -6,9 +6,9 @@ import SearchResultsList from '../components/functional/Search/SearchResultsList
 import ErrorState from '../components/functional/Search/ErrorState';
 import LoadingState from '../components/functional/Search/LoadingState';
 import EmptyState from '../components/functional/Search/EmptyState';
-import { useNaverSearch } from '../hooks/useNaverSearch';
+import { usePlaceSearch } from '../hooks/usePlaceSearch';
 import { useSearchHistory } from '../hooks/useSearchHistory';
-import { testNaverApiConnection } from '../services/naverSearchApi';
+import { testPlaceSearchApiConnection } from '../services/placeSearchApi';
 import { testSearchHistoryApiConnection } from '../services/searchHistoryApi';
 import { useSearchStore } from '../stores/useSearchStore';
 import { transformRecentSearches, transformFavoritePlaces } from '../utils/dataTransformers';
@@ -41,13 +41,13 @@ export default function SearchPage() {
     refreshAll
   } = useSearchHistory();
   
-  // 네이버 지역 검색 API 훅 사용
+  // 장소 검색 API 훅 사용
   const {
     searchQuery,
     searchState,
     handleSearchChange,
     clearSearch
-  } = useNaverSearch({
+  } = usePlaceSearch({
     display: 10, // 최대 10개 결과
     sort: 'random' // 정확도순 정렬
   });
@@ -64,12 +64,12 @@ export default function SearchPage() {
     // API 연결 확인을 백그라운드에서 처리 (사용자 경험에 영향 없음)
     const checkApiConnections = async () => {
       try {
-        // 네이버 검색 API 연결 확인
-        const naverResult = await testNaverApiConnection();
-        if (naverResult.hasCredentials) {
-          console.log('🔍 네이버 API 연결 상태:', naverResult.message);
+        // 장소 검색 API 연결 확인
+        const placeResult = await testPlaceSearchApiConnection();
+        if (placeResult.success) {
+          console.log('🔍 장소 검색 API 연결 상태:', placeResult.message);
         } else {
-          console.warn('⚠️ 네이버 API 설정 필요:', naverResult.message);
+          console.warn('⚠️ 장소 검색 API 연결 실패:', placeResult.message);
         }
         
         // 검색 내역 API 연결 확인
