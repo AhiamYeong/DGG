@@ -2,14 +2,10 @@ package S13P21A305.dgg.auth.config;
 
 import S13P21A305.dgg.auth.jwt.JWTFilter;
 import S13P21A305.dgg.auth.jwt.JWTUtil;
-import S13P21A305.dgg.auth.oauth2.CustomSuccessHandler;
-import S13P21A305.dgg.auth.service.CustomOAuth2UserService;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,14 +20,10 @@ import java.util.Collections;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
-    private final CustomSuccessHandler customSuccessHandler;
     private final JWTUtil jwtUtil;
 
-    public SecurityConfig(CustomOAuth2UserService customOAuth2UserService, CustomSuccessHandler customSuccessHandler, JWTUtil jwtUtil) {
+    public SecurityConfig(JWTUtil jwtUtil) {
 
-        this.customOAuth2UserService = customOAuth2UserService;
-        this.customSuccessHandler = customSuccessHandler;
         this.jwtUtil = jwtUtil;
     }
 
@@ -54,11 +46,6 @@ public class SecurityConfig {
         http
                 .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
-        //oauth2
-        http
-                .oauth2Login((oauth2) -> oauth2
-                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
-                                .userService(customOAuth2UserService)));
 
         //경로별 인가 작업
         http

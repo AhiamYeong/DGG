@@ -1,15 +1,11 @@
 package S13P21A305.dgg.auth.jwt;
 
-import S13P21A305.dgg.auth.dto.CustomOAuth2User;
-import S13P21A305.dgg.auth.dto.UserDTO;
+import S13P21A305.dgg.auth.dto.MemberDTO;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
@@ -64,17 +60,17 @@ public class JWTFilter extends OncePerRequestFilter {
         String role = jwtUtil.getRole(token);
 
         //userDTO를 생성하여 값 set
-        UserDTO userDTO = new UserDTO();
-        userDTO.setUsername(username);
-        userDTO.setRole(role);
+        MemberDTO memberDTO = new MemberDTO();
+        memberDTO.setMembername(username);
+        memberDTO.setRole(role);
 
         //UserDetails에 회원 정보 객체 담기
-        CustomOAuth2User customOAuth2User = new CustomOAuth2User(userDTO);
+//        CustomOAuth2User customOAuth2User = new CustomOAuth2User(memberDTO);
 
         //스프링 시큐리티 인증 토큰 생성
-        Authentication authToken = new UsernamePasswordAuthenticationToken(customOAuth2User, null, customOAuth2User.getAuthorities());
+//        Authentication authToken = new UsernamePasswordAuthenticationToken(customOAuth2User, null, customOAuth2User.getAuthorities());
         //세션에 사용자 등록
-        SecurityContextHolder.getContext().setAuthentication(authToken);
+//        SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);
     }
