@@ -1,4 +1,4 @@
-import { Location, BaseEntity } from './common';
+import { Location, BaseEntity } from './common-types';
 
 // 검색 관련 타입 정의
 

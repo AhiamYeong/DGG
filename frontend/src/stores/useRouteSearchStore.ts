@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { generateRouteRecommendations } from '../utils/routeDataGenerator';
 import { getActionLabel } from '../utils/timeUtils';
-import type { SimpleRoute } from '../types/routes';
+import { useNavigationStore } from './useNavigationStore';
+import type { SimpleRoute } from '../types/route-types';
 
 interface RouteSearchState {
   // 검색 결과 관련
@@ -154,7 +155,10 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
       // 경로 선택
       selectRoute: (route: SimpleRoute) => {
         console.log('경로 선택:', route);
-        // TODO: 선택된 경로로 네비게이션 시작
+        // 네비게이션 시작
+        useNavigationStore.getState().startNavigation(route);
+        // 검색 결과 화면 닫기
+        get().closeRouteResults();
       },
 
       // 검색 히스토리 추가

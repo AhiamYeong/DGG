@@ -1,4 +1,4 @@
-import type { FavoritePlaceApiResponse, RecentSearchApiResponse } from '../types/api';
+import type { FavoritePlaceApiResponse, RecentSearchApiResponse } from '../types/api-types';
 
 // API 응답을 컴포넌트 타입으로 변환하는 유틸리티 함수들
 

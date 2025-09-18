@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useSearchStore } from '../../stores/useSearchStore';
 import { IconButton } from '../ui';
-import SearchInputField from './SearchInputField';
+import SearchInput from './SearchInput';
 import WaypointInput from './WaypointInput';
 import { ROUTE_CONSTANTS } from '../../constants';
 
@@ -84,7 +84,7 @@ export default function SearchBox({ onSearch, onDepartureOptionChange, selectedD
           {/* 가운데 구역: 출발지/경유지/도착지 입력 */}
           <div className="flex-1 space-y-2">
             {/* 출발지 입력 */}
-            <SearchInputField
+            <SearchInput
               value={origin}
               onChange={setOrigin}
               placeholder="출발지 검색"
@@ -106,7 +106,7 @@ export default function SearchBox({ onSearch, onDepartureOptionChange, selectedD
             ))}
 
             {/* 도착지 입력 */}
-            <SearchInputField
+            <SearchInput
               value={destination}
               onChange={setDestination}
               placeholder="도착지 검색"

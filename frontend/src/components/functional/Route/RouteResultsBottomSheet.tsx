@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 // import { useBottomSheetSwipe } from '../../../hooks/useBottomSheetSwipe';
 import RouteList from './RouteList';
-import type { SimpleRoute } from '../../../types/routes';
+import type { SimpleRoute } from '../../../types/route-types';
 
 interface RouteResultsBottomSheetProps {
   open: boolean;

@@ -49,10 +49,19 @@ export const getActionLabel = (
 /**
  * 시간을 한국어 형식으로 포맷팅
  */
-export const formatTime = (date: Date): string => {
-  return date.toLocaleTimeString('ko-KR', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: true 
-  });
+export const formatTime = (date: Date | { hour: number; minute: number }): string => {
+  if (date instanceof Date) {
+    return date.toLocaleTimeString('ko-KR', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  } else {
+    // TimeSlot 타입 처리
+    const hour = date.hour;
+    const minute = date.minute;
+    const period = hour >= 12 ? '오후' : '오전';
+    const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+    return `${period} ${displayHour}:${minute.toString().padStart(2, '0')}`;
+  }
 };

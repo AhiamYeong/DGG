@@ -1,6 +1,6 @@
 import { generateRouteRecommendations } from '../utils/routeDataGenerator';
 import { isCurrentTime, getActionLabel } from '../utils/timeUtils';
-import type { SimpleRoute } from '../types/routes';
+import type { SimpleRoute } from '../types/route-types';
 
 /**
  * 경로 검색 관련 비즈니스 로직을 담당하는 서비스 클래스

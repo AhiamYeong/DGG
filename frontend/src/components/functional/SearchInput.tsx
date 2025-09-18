@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { LocationInput } from '../ui/Input';
 
-interface SearchInputFieldProps {
+interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
@@ -10,14 +10,13 @@ interface SearchInputFieldProps {
   searchType?: 'origin' | 'destination' | 'waypoint';
 }
 
-export default function SearchInputField({
+export default function SearchInput({
   value,
   onChange,
   placeholder,
   onClear,
-  icon = 'search',
   searchType = 'origin'
-}: SearchInputFieldProps) {
+}: SearchInputProps) {
   const navigate = useNavigate();
 
   const handleSearch = () => {
@@ -35,7 +34,7 @@ export default function SearchInputField({
     <LocationInput
       type={searchType}
       value={value}
-      onChange={onChange}
+      onChange={(e) => onChange(e.target.value)}
       onSearch={handleSearch}
       onClear={onClear}
       showClear={!!value}

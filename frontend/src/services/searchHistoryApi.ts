@@ -4,7 +4,7 @@ import type {
   FavoritePlaceApiResponse,
   AddRecentSearchRequest,
   AddFavoritePlaceRequest
-} from '../types/api';
+} from '../types/api-types';
 import { createApiClient, apiCall, testApiConnection } from '../utils/apiUtils';
 
 // 타입 별칭으로 통합

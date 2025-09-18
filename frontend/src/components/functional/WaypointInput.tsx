@@ -40,7 +40,7 @@ export default function WaypointInput({
         type="waypoint"
         waypointIndex={index}
         value={waypoint.value}
-        onChange={(value) => onValueChange(waypoint.id, value)}
+        onChange={(e) => onValueChange(waypoint.id, e.target.value)}
         onSearch={handleSearch}
         onClear={() => onClear(waypoint.id)}
         showClear={!!waypoint.value}

@@ -1,5 +1,5 @@
 import { memo, useCallback } from 'react';
-import type { RouteTabType } from '../../../types/routes';
+import type { RouteTabType } from '../../../types/route-types';
 
 interface RouteTabsProps {
   activeTab: RouteTabType;
