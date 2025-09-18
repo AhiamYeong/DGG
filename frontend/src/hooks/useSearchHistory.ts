@@ -6,8 +6,9 @@ import {
   type FavoritePlace,
   type AddRecentSearchRequest,
   type AddFavoritePlaceRequest
-} from '../services/searchHistoryApi';
+} from '../api/searchHistoryApi';
 import { ERROR_MESSAGES } from '../constants';
+import { log } from '../utils/logger';
 
 /**
  * 검색 내역 관리 훅
@@ -20,7 +21,7 @@ export function useSearchHistory() {
 
   // 공통 API 호출 헬퍼
   const handleApiCall = useCallback(async <T>(
-    apiCall: () => Promise<{ success: boolean; data: T; message: string }>,
+    apiCall: () => Promise<{ success: boolean; data: T; message?: string }>,
     setter: (data: T) => void,
     errorMessage: string
   ) => {
@@ -32,11 +33,11 @@ export function useSearchHistory() {
       if (response.success) {
         setter(response.data);
       } else {
-        setError(response.message);
+        setError(response.message || '알 수 없는 오류가 발생했습니다.');
       }
     } catch (err) {
       setError(errorMessage);
-      console.warn(`${errorMessage}:`, err);
+      log.warn(errorMessage, err);
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +88,7 @@ export function useSearchHistory() {
         setRecentSearches(prev => prev.filter(item => item.id !== id));
         return { success: true };
       } else {
-        setError(response.message);
+        setError(response.message || '알 수 없는 오류가 발생했습니다.');
         return { success: false, error: response.message };
       }
     } catch (err) {
@@ -107,7 +108,7 @@ export function useSearchHistory() {
         setFavoritePlaces(prev => [response.data, ...prev]);
         return { success: true, data: response.data };
       } else {
-        setError(response.message);
+        setError(response.message || '알 수 없는 오류가 발생했습니다.');
         return { success: false, error: response.message };
       }
     } catch (err) {
@@ -127,7 +128,7 @@ export function useSearchHistory() {
         setFavoritePlaces(prev => prev.filter(item => item.id !== id));
         return { success: true };
       } else {
-        setError(response.message);
+        setError(response.message || '알 수 없는 오류가 발생했습니다.');
         return { success: false, error: response.message };
       }
     } catch (err) {
@@ -175,7 +176,7 @@ export function useSearchHistory() {
       ]);
     } catch (err) {
       setError('데이터를 새로고침하는데 실패했습니다.');
-      console.warn('데이터 새로고침 실패:', err);
+      log.warn('데이터 새로고침 실패', err);
     } finally {
       setIsLoading(false);
     }

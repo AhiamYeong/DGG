@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useNavigationStore } from './useNavigationStore';
 import type { SimpleRoute } from '../types/route-types';
+import { log } from '../utils/logger';
 
 interface RouteSearchState {
   // 검색 결과 관련
@@ -63,11 +64,7 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
 
       // 검색 시작
       startRouteSearch: (origin: string, destination: string, waypoints?: string[]) => {
-        console.log('=== 길찾기 요청 ===');
-        console.log('출발지:', origin);
-        console.log('도착지:', destination);
-        console.log('경유지:', waypoints);
-        console.log('==================');
+        log.route('길찾기 요청', { origin, destination, waypoints });
         
         // 검색 히스토리 추가
         get().addSearchHistory(origin, destination, waypoints);
@@ -87,12 +84,12 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
           // 최근 검색 기록에서 출발지/도착지 가져오기
           const lastSearch = searchHistory[0];
           if (!lastSearch) {
-            console.error('검색 기록이 없습니다');
+            log.error('검색 기록이 없습니다');
             return;
           }
           
           // RouteService를 통한 실제 API 호출
-          const { RouteService } = await import('../services/routeService');
+          const { RouteService } = await import('../api/routeService');
           const result = await RouteService.executeRouteSearchFlow(
             lastSearch.origin,
             lastSearch.destination,
@@ -101,7 +98,7 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
             lastSearch.waypoints
           );
           
-          console.log('API 호출 결과:', result);
+          log.route('API 호출 결과', result);
           
           set({ 
             routeResults: result.routes,
@@ -110,7 +107,7 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
             showDepartureOptions: true
           });
         } catch (error) {
-          console.error('경로 검색 실패:', error);
+          log.error('경로 검색 실패', error);
         }
       },
 
@@ -147,7 +144,7 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
 
       // 경로 선택
       selectRoute: (route: SimpleRoute) => {
-        console.log('경로 선택:', route);
+        log.route('경로 선택', route);
         // 네비게이션 시작
         useNavigationStore.getState().startNavigation(route);
         // 검색 결과 화면 닫기

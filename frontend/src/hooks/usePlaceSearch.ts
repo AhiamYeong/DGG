@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
-import { searchPlacesWithApi } from '../services/placeSearchApi';
+import { searchPlacesWithApi } from '../api/placeSearchApi';
 import type { SearchResult } from './useNaverSearch';
+import { UI_CONSTANTS } from '../constants';
 
 interface UsePlaceSearchOptions {
   display?: number;
@@ -23,7 +24,7 @@ interface UsePlaceSearchReturn {
  * 장소 검색 훅
  */
 export const usePlaceSearch = (options: UsePlaceSearchOptions = {}): UsePlaceSearchReturn => {
-  const { debounceMs = 300 } = options;
+  const { debounceMs = UI_CONSTANTS.DEBOUNCE_DELAY } = options;
   
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);

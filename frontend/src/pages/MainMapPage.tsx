@@ -4,7 +4,7 @@ import { useRouteSearchStore } from '../stores/useRouteSearchStore';
 import { useNavigationStore } from '../stores/useNavigationStore';
 import { MapContainer } from '../components/map';
 import { NavigationMode, SearchMode } from '../components/navigation';
-import TimePicker from '../components/functional/TimePicker';
+import { TimePicker } from '../components/ui';
 
 export default function MainMapPage() {
   // 지도 관련 로직
@@ -75,7 +75,6 @@ export default function MainMapPage() {
             onPositionChange={setSideSheetPosition}
             onClose={closeSideSheet}
             onStopNavigation={stopNavigation}
-            headerHeight={140}
           />
         ) : (
           <SearchMode
@@ -87,8 +86,6 @@ export default function MainMapPage() {
             routeResults={routeResults}
             actionLabel={actionLabel}
             onSelectRoute={selectRoute}
-            onToggleBookmark={() => {}}
-            onShowOptions={() => {}}
             onCloseRouteResults={closeRouteResults}
             showTimePicker={showTimePicker}
             onLocationClick={getCurrentLocation}

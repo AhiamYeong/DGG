@@ -1,16 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import RecentSearchList from '../components/functional/Search/RecentSearchList';
-import FavoritePlacesList from '../components/functional/Search/FavoritePlacesList';
-import SearchResultsList from '../components/functional/Search/SearchResultsList';
-import ErrorState from '../components/functional/Search/ErrorState';
-import LoadingState from '../components/functional/Search/LoadingState';
-import EmptyState from '../components/functional/Search/EmptyState';
-import { useNaverSearch } from '../hooks/useNaverSearch';
+import { RecentSearchList, FavoritePlacesList, SearchResultsList } from '../components/search';
+import { ErrorState, LoadingState, EmptyState } from '../components/ui';
+import { useNaverSearch, type SearchResult } from '../hooks/useNaverSearch';
 import { useSearchHistory } from '../hooks/useSearchHistory';
-import { testSearchHistoryApiConnection } from '../services/searchHistoryApi';
+import { testSearchHistoryApiConnection } from '../api/searchHistoryApi';
 import { useSearchStore } from '../stores/useSearchStore';
 import { transformRecentSearches, transformFavoritePlaces } from '../utils/dataTransformers';
+import { log } from '../utils/logger';
 
 /**
  * 검색 전용 페이지
@@ -66,12 +63,12 @@ export default function SearchPage() {
         // 검색 내역 API 연결 확인
         const historyResult = await testSearchHistoryApiConnection();
         if (historyResult.success) {
-          console.log('📚 검색 내역 API 연결 상태:', historyResult.message);
+          log.info('📚 검색 내역 API 연결 상태:', historyResult.message);
         } else {
-          console.warn('⚠️ 검색 내역 API 연결 실패:', historyResult.message);
+          log.warn('⚠️ 검색 내역 API 연결 실패:', historyResult.message);
         }
       } catch (error) {
-        console.warn('API 연결 확인 중 오류 (사용자 경험에 영향 없음):', error);
+        log.warn('API 연결 확인 중 오류 (사용자 경험에 영향 없음):', error);
       }
     };
     
@@ -97,8 +94,8 @@ export default function SearchPage() {
   }, []);
 
   // 위치 선택 핸들러
-  const handleLocationSelect = useCallback((location: any) => {
-    console.log('선택된 위치:', location, '타입:', searchType);
+  const handleLocationSelect = useCallback((location: SearchResult) => {
+    log.search('선택된 위치', searchType, location);
     
     // 1. 즉시 SearchStore에 반영 (동기적 처리)
     // 장소명만 표시하고, 도로명 주소는 별도 저장
@@ -126,24 +123,24 @@ export default function SearchPage() {
         query: searchQuery,
         resultCount: searchState.results.length
       }).then(() => {
-        console.log(`✅ ${location.name}이(가) ${searchType === 'origin' ? '출발지' : searchType === 'destination' ? '도착지' : '경유지'}로 설정되었습니다.`);
+        log.search('위치 설정 완료', `${location.name}이(가) ${searchType === 'origin' ? '출발지' : searchType === 'destination' ? '도착지' : '경유지'}로 설정되었습니다.`);
       }).catch((error) => {
-        console.warn('검색 내역 추가 실패 (사용자 경험에 영향 없음):', error);
+        log.warn('검색 내역 추가 실패 (사용자 경험에 영향 없음):', error);
       });
     } else {
-      console.log(`✅ ${location.name}이(가) ${searchType === 'origin' ? '출발지' : searchType === 'destination' ? '도착지' : '경유지'}로 설정되었습니다.`);
+      log.search('위치 설정 완료', `${location.name}이(가) ${searchType === 'origin' ? '출발지' : searchType === 'destination' ? '도착지' : '경유지'}로 설정되었습니다.`);
     }
   }, [navigate, searchType, waypointIndex, waypoints, setOrigin, setDestination, updateWaypoint, searchQuery, searchState.results.length, addRecentSearch]);
 
   // 최근 검색 삭제 핸들러
   const handleDeleteRecent = useCallback(async (id: string) => {
-    console.log('최근 검색 삭제:', id);
+    log.search('최근 검색 삭제', id);
     await removeRecentSearch(id);
   }, [removeRecentSearch]);
 
   // 즐겨찾기 토글 핸들러
   const handleToggleFavorite = useCallback(async (id: string) => {
-    console.log('즐겨찾기 토글:', id);
+    log.search('즐겨찾기 토글', id);
     // 즐겨찾기 목록에서 해당 장소 찾기
     const place = favoritePlaces.find(fav => fav.id === id);
     if (place) {
@@ -298,7 +295,15 @@ export default function SearchPage() {
                 ) : (
                   <RecentSearchList
                     items={transformRecentSearches(recentSearches)}
-                    onSelect={handleLocationSelect}
+                    onSelect={(item) => handleLocationSelect({
+                      id: item.id,
+                      name: item.name,
+                      address: item.address,
+                      roadAddress: item.address,
+                      category: '',
+                      description: '',
+                      location: { lat: 0, lng: 0 }
+                    })}
                     onDelete={handleDeleteRecent}
                     onToggleFavorite={handleToggleFavorite}
                   />
@@ -314,7 +319,15 @@ export default function SearchPage() {
                 ) : (
                   <FavoritePlacesList
                     items={transformFavoritePlaces(favoritePlaces)}
-                    onSelect={handleLocationSelect}
+                    onSelect={(item) => handleLocationSelect({
+                      id: item.id,
+                      name: item.name,
+                      address: item.address,
+                      roadAddress: item.address,
+                      category: item.category || '',
+                      description: '',
+                      location: { lat: 0, lng: 0 }
+                    })}
                     onToggleFavorite={handleToggleFavorite}
                   />
                 )

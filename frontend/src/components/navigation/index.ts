@@ -1,3 +1,3 @@
-// Navigation 관련 컴포넌트 통합 export
-export { NavigationMode } from './NavigationMode';
-export { SearchMode } from './SearchMode';
+// 네비게이션 관련 컴포넌트들
+export { default as NavigationMode } from './NavigationMode';
+export { default as SearchMode } from './SearchMode';

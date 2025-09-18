@@ -3,15 +3,14 @@
 // UI Components
 export * from './ui';
 
-// Functional Components
-export { default as SearchBox } from './functional/SearchBox';
-export { default as SearchInput } from './functional/SearchInput';
-export { default as WaypointInput } from './functional/WaypointInput';
-export { default as NaverMap } from './functional/NaverMap';
-export { default as FavoriteRoutesBottomSheet } from './functional/Route/FavoriteRoutesBottomSheet';
-export { default as TimePicker } from './functional/TimePicker';
-export { default as RouteResultsContainer } from './functional/RouteResults';
-export * from './functional/Navigation';
+// Route Components
+export * from './route';
 
 // Search Components
-export * from './functional/Search';
+export * from './search';
+
+// Map Components
+export * from './map';
+
+// Navigation Components
+export * from './navigation';
