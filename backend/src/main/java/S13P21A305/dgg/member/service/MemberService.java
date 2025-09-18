@@ -17,16 +17,21 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
 
+    /**
+     * 사용자 nickname, email 조회
+     */
     @Transactional
     public ProfileResponseDto getProfile(Long memberId){
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new EntityNotFoundException(memberId + "에 해당하는 사용자가 없습니다."));
-        String nickname = member.getNickname();
-        String email = member.getEmail();
 
         return ProfileResponseDto.builder()
-                .nickname(nickname)
-                .email(email)
+                .nickname(member.getNickname())
+                .email(member.getEmail())
                 .build();
     }
+
+//    @Transactional
+//    public ProfileResponseDto
+
 }

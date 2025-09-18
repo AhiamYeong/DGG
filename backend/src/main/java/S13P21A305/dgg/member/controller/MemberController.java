@@ -20,12 +20,21 @@ public class MemberController {
 
     private final MemberService memberService;
 
+    /**
+     * 사용자 정보(마이페이지) 조회
+     */
     @GetMapping("/profile")
     public ResponseEntity<ProfileResponseDto> getProfile(@AuthenticationPrincipal CustomOAuth2User oAuth2User){
         Long memberId = oAuth2User.getMemberId();
         return ResponseEntity.ok(memberService.getProfile(memberId));
     }
 
+
+
+
+    /**
+     * 디버깅 컨트롤러
+     */
     @GetMapping("/debug/me")
     public Map<String,Object> me(Authentication auth, @AuthenticationPrincipal CustomOAuth2User user) {
 
