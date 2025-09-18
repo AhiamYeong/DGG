@@ -1,5 +1,6 @@
 package com.ssafy.dgg
 
+import LoginViewModel
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -26,6 +27,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.ssafy.dgg.auth.GoogleSignInManager
+import com.ssafy.dgg.auth.TokenStorage
+import com.ssafy.dgg.model.repository.AuthRepositoryImpl
+import com.ssafy.dgg.model.repository.api.RetrofitClient
+import com.ssafy.dgg.ui.screen.LoginScreen
+import com.ssafy.dgg.ui.screen.MainScreen
+import com.ssafy.dgg.ui.theme.DGGTheme
+import com.ssafy.dgg.viewModel.LoginState
+import com.ssafy.dgg.viewModel.TestViewModel
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
@@ -82,8 +92,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+<<<<<<< app/app/src/main/java/com/ssafy/dgg/MainActivity.kt
+    /*    private fun logRegToken() {
+=======
     val TAG = "FCM"
     private fun logRegToken() {
+>>>>>>> app/app/src/main/java/com/ssafy/dgg/MainActivity.kt
         // [START log_reg_token]
         Firebase.messaging.getToken().addOnCompleteListener { task ->
             if (!task.isSuccessful) {
@@ -100,7 +114,7 @@ class MainActivity : ComponentActivity() {
             Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
         }
         // [END log_reg_token]
-    }
+    }*/
 
     // 삼성헬스 ViewModel 호출
     private val healthViewModel: HealthViewModel by lazy {
@@ -112,15 +126,39 @@ class MainActivity : ComponentActivity() {
         HealthViewModel(permissionRepo, dataRepo)
     }
 
+    private lateinit var googleSignInManager: GoogleSignInManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
 
+<<<<<<< app/app/src/main/java/com/ssafy/dgg/MainActivity.kt
+        // 로그인 토큰 저장용 앱 내 스토리지
+        val tokenStorage = TokenStorage(this)
+        val authRepository = AuthRepositoryImpl(
+            authApi = RetrofitClient.authApiService,
+        )
+        // UI ~ 비즈니스 로직 연결 -> compose UI가 viewmodel의 loginState를 관찰
+        val loginViewModel = LoginViewModel(tokenStorage, authRepository)
+=======
         healthViewModel.loadHealthDatas(this)
+>>>>>>> app/app/src/main/java/com/ssafy/dgg/MainActivity.kt
 
         askNotificationPermission()
-        logRegToken()
+        // logRegToken()
 
+<<<<<<< app/app/src/main/java/com/ssafy/dgg/MainActivity.kt
+        // googlesigninmanager 초기화
+        googleSignInManager = GoogleSignInManager(
+            this,
+            onSignInSuccess = { idToken ->
+                // 로그인 성공! 이제 로그인 상태를 변경합니다.
+                Log.d("LoginFlow", "ID token 획득: $idToken")
+                loginViewModel.loginWithGoogle(idToken)
+                // screenState = ScreenState.LoggedIn
+                // 또는 ViewModel에 토큰을 전달하여 로그인 처리
+                Log.d("GoogleSignIn", "idToken: $idToken")
+=======
         setContent {
             DGGTheme {
                 Surface (
@@ -162,17 +200,98 @@ fun WebViewScreen(
                         }
                     }
                 }
+>>>>>>> app/app/src/main/java/com/ssafy/dgg/MainActivity.kt
             },
-            update = { webView ->
-                webView.loadUrl(url)
+            onSignInFailure = { exception ->
+                Log.e("LoginFlow", "구글 로그인 실패", exception)
+                // 로그인 실패! 사용자에게 메시지 표시 등
+                Log.e("GoogleSignIn", "Failed", exception)
             }
         )
 
-        // 로딩 중일 때 프로그레스 표시
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center)
+        setContent {
+            // 로그인 상태 관리 변수
+            var loginState by remember { mutableStateOf<LoginState>(LoginState.LoggedOut) }
+
+            DGGTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    when (loginState) {
+                        is LoginState.LoggedOut -> {
+                            LoginScreen(
+                                onLoginSuccess = { loginState = LoginState.LoggedIn },
+                                onSignUpClicked = { /* ... */ },
+                                onGoogleSignInClicked = { googleSignInManager.startSignInIntent() }
+                            )
+                        }
+
+                        is LoginState.LoggedIn -> {
+                            MainScreen()
+                        }
+
+                        is LoginState.Loading -> {
+                            CircularProgressIndicator()
+                        }
+
+                        is LoginState.Error -> {
+                            Text("에러 발생")
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /* companion object {
+        private const val TAG = "MainActivity"
+    }*/
+
+
+    @Composable
+    fun WebViewScreen(
+        url: String,
+        modifier: Modifier = Modifier
+    ) {
+        var isLoading by remember { mutableStateOf(true) }
+
+        Box(
+            modifier = modifier.fillMaxSize()
+        ) {
+            AndroidView(
+                factory = { context ->
+                    WebView(context).apply {
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.loadWithOverviewMode = true
+                        settings.useWideViewPort = true
+
+                        webViewClient = object : WebViewClient() {
+                            override fun onPageStarted(
+                                view: WebView?,
+                                url: String?,
+                                favicon: Bitmap?
+                            ) {
+                                isLoading = true
+                            }
+
+                            override fun onPageFinished(view: WebView?, url: String?) {
+                                isLoading = false
+                            }
+                        }
+                    }
+                },
+                update = { webView ->
+                    webView.loadUrl(url)
+                }
             )
+
+            // 로딩 중일 때 프로그레스 표시
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
         }
     }
 }

@@ -1,3 +1,12 @@
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -16,6 +25,11 @@ android {
     compileSdk = 36
 
     defaultConfig {
+        buildConfigField(
+            "String",
+            "GOOGLE_CLIENT_ID",
+            "\"${localProperties.getProperty("WEB_CLIENT_ID")}\""        )
+
         applicationId = "com.ssafy.dgg"
         minSdk = 29
         targetSdk = 36
@@ -33,10 +47,7 @@ android {
             // applicationIdSuffix = ".debug"
             versionNameSuffix = "-DEBUG"
 
-            // React 웹뷰용 URL
-            buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io\"")
-
-            // native의 직접 API 호출용 URL
+            buildConfigField("String", "API_BASE_URL", "\"http://localhost:8080/api/v1/\"")
             buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io\"")
 
             buildConfigField("boolean", "IS_DEBUG", "true")
@@ -52,7 +63,7 @@ android {
             )
 
             // 웹뷰용 URL
-            buildConfigField("String", "WEB_URL", "\"https://dgg-frontend.netlify.app\"")
+            buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io/\"")
             // API 호출용 URL
             buildConfigField("String", "API_BASE_URL", "\"https://api.dgg.com\"")
 
@@ -118,6 +129,11 @@ dependencies {
     // Recommended: Add OkHttp logging interceptor for debugging API calls
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+    // gemini 추천...
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
 
     // Unit Test용
     testImplementation("junit:junit:4.13.2")
