@@ -7,17 +7,24 @@ export interface SearchResult {
   id: string;
   name: string;
   address: string;
+  roadAddress?: string;
   category: string;
   description: string;
   distance?: number;
   rating?: number;
   isFavorite?: boolean;
-  coordinates: {
+  location: {
     lat: number;
     lng: number;
   };
   phone?: string;
   link?: string;
+  // 네이버 API 관련 필드
+  title?: string;
+  telephone?: string;
+  mapx?: number;
+  mapy?: number;
+  type?: string;
 }
 
 // 검색 상태 타입
