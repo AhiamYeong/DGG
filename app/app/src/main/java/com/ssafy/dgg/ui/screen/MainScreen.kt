@@ -22,7 +22,7 @@ val items = listOf(
     Screen("mypage", "마이페이지"),
 )
 
-val BASE_URL = BuildConfig.WEB_URL // 추후 util 분리
+val BASE_URL = BuildConfig.WEB_URL
 
 // TODO: 웹뷰 사이즈 조절 & 키보드 입력 시 네비게이션 바 내리기
 // TODO: 네비게이션 바 컬러 및 폰트 조정
