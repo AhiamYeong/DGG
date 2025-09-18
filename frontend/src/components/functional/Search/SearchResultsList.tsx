@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { SearchResult } from '../../../types/search-types';
+import { SearchResult } from '../../../hooks/useNaverSearch';
 
 interface SearchResultsListProps {
   results: SearchResult[];
