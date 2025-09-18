@@ -1,24 +1,14 @@
 import { memo, useCallback, useMemo } from 'react';
 import RouteCard from './RouteCard';
-
-// 간단한 노선 타입 정의 (스토어와 호환)
-interface SimpleRoute {
-  id: string;
-  name: string;
-  from: string;
-  to: string;
-  time: string;
-  isBookmarked: boolean;
-}
+import type { SimpleRoute } from '../../../types/routes';
 
 interface RouteListProps {
   routes: SimpleRoute[];
   onSelectRoute: (route: SimpleRoute) => void;
   onToggleBookmark?: (id: string) => void;
   onShowOptions?: (id: string) => void;
-  onAddNewRoute?: () => void;
   emptyMessage?: string;
-  showAddButton?: boolean;
+  actionLabel?: string;
   className?: string;
 }
 
@@ -35,9 +25,8 @@ const RouteList = memo<RouteListProps>(({
   onSelectRoute,
   onToggleBookmark,
   onShowOptions,
-  onAddNewRoute,
   emptyMessage = '등록된 노선이 없습니다',
-  showAddButton = true,
+  actionLabel = '선택',
   className = ''
 }) => {
   // 이벤트 핸들러들을 useCallback으로 최적화
@@ -53,9 +42,6 @@ const RouteList = memo<RouteListProps>(({
     onShowOptions?.(id);
   }, [onShowOptions]);
 
-  const handleAddNewRoute = useCallback(() => {
-    onAddNewRoute?.();
-  }, [onAddNewRoute]);
 
   // 빈 상태 메시지 렌더링을 useMemo로 최적화
   const emptyState = useMemo(() => (
@@ -80,41 +66,20 @@ const RouteList = memo<RouteListProps>(({
           onSelect={handleSelectRoute}
           onToggleBookmark={handleToggleBookmark}
           onShowOptions={handleShowOptions}
+          actionLabel={actionLabel}
         />
       ))}
     </div>
-  ), [routes, handleSelectRoute, handleToggleBookmark, handleShowOptions]);
+  ), [routes, handleSelectRoute, handleToggleBookmark, handleShowOptions, actionLabel]);
 
-  // 새 경로 추가 버튼을 useMemo로 최적화
-  const addButton = useMemo(() => (
-    showAddButton && (
-      <button 
-        onClick={handleAddNewRoute}
-        className="w-full mt-4 p-4 border-2 border-dashed border-secondary rounded-lg text-secondary hover:border-primary hover:text-primary transition-colors"
-        aria-label="새 경로 추가"
-      >
-        <div className="flex items-center justify-center gap-2">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          새 경로 추가
-        </div>
-      </button>
-    )
-  ), [showAddButton, handleAddNewRoute]);
+  // 새 경로 추가 버튼 제거됨
 
   return (
-    <div className={`px-6 pb-6 ${className}`}>
+    <div className={`p-8 ${className}`}>
       {routes.length > 0 ? (
-        <>
-          {routeItems}
-          {addButton}
-        </>
+        routeItems
       ) : (
-        <>
-          {emptyState}
-          {addButton}
-        </>
+        emptyState
       )}
     </div>
   );

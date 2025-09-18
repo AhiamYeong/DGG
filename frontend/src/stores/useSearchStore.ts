@@ -34,8 +34,8 @@ export const useSearchStore = create<SearchState & SearchActions>()(
   persist(
     (set, get) => ({
       // State
-      origin: '',
-      destination: '',
+      origin: '강남역',
+      destination: '성수역',
       waypoints: [],
 
   // Actions

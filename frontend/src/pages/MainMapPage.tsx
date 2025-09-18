@@ -1,18 +1,43 @@
 import { useMapViewModel } from '../hooks/useMapViewModel';
+import { useRouteSearchStore } from '../stores/useRouteSearchStore';
 import SearchBox from '../components/functional/SearchBox';
+import TimePicker from '../components/functional/TimePicker';
+import RouteResults from '../components/functional/RouteResults';
 import FavoriteRoutesBottomSheet from '../components/functional/Route/FavoriteRoutesBottomSheet';
 import NaverMap from '../components/functional/NaverMap';
 
 export default function MainMapPage() {
+  // 지도 관련 로직
   const {
     currentLocation,
     mapRef,
     isLoaded,
     getCurrentLocation,
-    handleSearch,
     initializeMap,
     cleanupMap
   } = useMapViewModel();
+
+  // 경로 검색 관련 상태 및 액션 (스토어에서 직접 사용)
+  const {
+    routeResults,
+    actionLabel,
+    showDepartureOptions,
+    showTimePicker,
+    departureTime,
+    selectedDepartureOption,
+    startRouteSearch,
+    confirmTimeSelection,
+    cancelTimeSelection,
+    closeRouteResults,
+    setDepartureTime,
+    setSelectedDepartureOption,
+    selectRoute
+  } = useRouteSearchStore();
+
+  // 출발 옵션 탭 닫기 핸들러
+  const handleCloseDepartureOptions = () => {
+    closeRouteResults();
+  };
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
@@ -31,10 +56,29 @@ export default function MainMapPage() {
 
       {/* 레이어 2: UI 컴포넌트들 */}
       <div className="absolute inset-0 z-10 pointer-events-none">
-        {/* 상단 검색 박스 - 전체 화면을 가림 */}
+        {/* 상단 검색 박스 */}
         <div className="absolute top-0 left-0 right-0 pointer-events-auto">
-          <SearchBox onSearch={handleSearch} />
+          <SearchBox 
+            onSearch={startRouteSearch}
+            onDepartureOptionChange={setSelectedDepartureOption}
+            selectedDepartureOption={selectedDepartureOption}
+            showDepartureOptions={false}
+            onCloseDepartureOptions={handleCloseDepartureOptions}
+          />
         </div>
+
+        {/* 경로 결과 컴포넌트 */}
+        <RouteResults
+          isOpen={showDepartureOptions}
+          routes={routeResults}
+          actionLabel={actionLabel}
+          selectedDepartureOption={selectedDepartureOption}
+          onSelectRoute={selectRoute}
+          onToggleBookmark={() => {}}
+          onShowOptions={() => {}}
+          onDepartureOptionChange={setSelectedDepartureOption}
+          onClose={closeRouteResults}
+        />
 
         {/* 현재 위치 버튼 (우측 하단) */}
         <div className="absolute bottom-32 right-4 pointer-events-auto">
@@ -51,10 +95,21 @@ export default function MainMapPage() {
         </div>
       </div>
 
-      {/* 하단 즐겨찾기 예약노선 바텀시트 - 별도 레이어로 분리 */}
-      <div className="absolute bottom-0 left-0 right-0 z-20">
-        <FavoriteRoutesBottomSheet />
-      </div>
+      {/* 타임픽커 모달 - pointer-events-none 컨테이너 밖으로 이동 */}
+      <TimePicker
+        isOpen={showTimePicker}
+        departureTime={departureTime}
+        onTimeChange={setDepartureTime}
+        onConfirm={confirmTimeSelection}
+        onCancel={cancelTimeSelection}
+      />
+
+      {/* 하단 즐겨찾기 예약노선 바텀시트 - 처음 지도 화면에서만 표시 */}
+      {routeResults.length === 0 && !showTimePicker && !showDepartureOptions && (
+        <div className="absolute bottom-0 left-0 right-0 z-20">
+          <FavoriteRoutesBottomSheet />
+        </div>
+      )}
     </div>
   );
 }

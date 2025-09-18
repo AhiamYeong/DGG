@@ -2,6 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
+/* React DatePicker 커스텀 스타일 */
+.react-datepicker {
+  @apply border border-gray-300 rounded-lg shadow-lg;
+}
+
+.react-datepicker__header {
+  @apply bg-white border-b border-gray-200 rounded-t-lg;
+}
+
+.react-datepicker__time-container {
+  @apply border-l border-gray-200;
+}
+
+.react-datepicker__time {
+  @apply bg-white;
+}
+
+.react-datepicker__time-box {
+  @apply w-full;
+}
+
+.react-datepicker__time-list {
+  @apply max-h-60;
+}
+
+.react-datepicker__time-list-item {
+  @apply px-3 py-2 text-sm hover:bg-gray-100;
+}
+
+.react-datepicker__time-list-item--selected {
+  @apply bg-primary text-white;
+}
+
+.react-datepicker__time-list-item--disabled {
+  @apply text-gray-400 cursor-not-allowed;
+}
+
+.react-datepicker__input-container input {
+  @apply w-full p-3 border border-gray-300 rounded-lg text-center text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+}
+
+.react-datepicker__input-container {
+  @apply flex justify-center;
+}
+
+/* 애니메이션 */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
 /* 기본 스타일 */
 body {
   margin: 0;
