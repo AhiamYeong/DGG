@@ -30,6 +30,7 @@ public class AuthController {
         if (idToken == null || idToken.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error","ID_TOKEN_REQUIRED"));
         }
+
         return authService.loginWithGoogle(idToken.trim().startsWith("Bearer ")
                 ? idToken.trim().substring(7) : idToken.trim(), response);
     }

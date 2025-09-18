@@ -20,9 +20,14 @@ public class JWTUtil {
         );
     }
 
-    public String getUsername(String token) {
+    public Long getMemberId(String token) {
 
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("username", String.class);
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("memberId", Long.class);
     }
 
     //role을 string 타입으로 꺼냄
@@ -49,10 +54,10 @@ public class JWTUtil {
     }
 
     // 새 jwt 발급
-    public String createJwt(String username, String role, Long expiredMs) {
+    public String createJwt(Long memberId, String role, Long expiredMs) {
 
         return Jwts.builder()
-                .claim("username", username)
+                .claim("memberId", memberId)
                 .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))
