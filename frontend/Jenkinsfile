@@ -23,7 +23,12 @@ pipeline {
         dir("${FE_DIR}") {
           sh '''
             set -eu
-            if grep -RIn "your-backend-server.com" .; then
+            # md, Jenkinsfile, node_modules, .git 은 제외하여 오탐 제거
+            if grep -RIn "your-backend-server.com" . \
+                --exclude=Jenkinsfile \
+                --exclude-dir=node_modules \
+                --exclude-dir=.git \
+                --exclude="*.md"; then
               echo "[ERROR] Found placeholder domain 'your-backend-server.com'. Replace with import.meta.env.VITE_API_BASE";
               exit 1
             fi
