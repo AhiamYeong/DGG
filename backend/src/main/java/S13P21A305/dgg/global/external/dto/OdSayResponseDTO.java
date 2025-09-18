@@ -34,6 +34,7 @@ public class OdSayResponseDTO {
 		private int totalTime;
 		private int busTransitCount;
 		private int subwayTransitCount;
+		private int totalDistance;
 		private String firstStartStation;
 		private String lastEndStation;
 	}
