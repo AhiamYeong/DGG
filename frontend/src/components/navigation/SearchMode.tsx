@@ -2,7 +2,6 @@ import { memo } from 'react';
 import SearchBox from '../functional/SearchBox';
 import RouteResultsContainer from '../functional/RouteResults';
 import FavoriteRoutesBottomSheet from '../functional/Route/FavoriteRoutesBottomSheet';
-import TimePicker from '../functional/TimePicker';
 import { MapControls } from '../ui';
 import type { SimpleRoute } from '../../types/route-types';
 
@@ -24,10 +23,6 @@ interface SearchModeProps {
   
   // 시간 선택 관련 props
   showTimePicker: boolean;
-  departureTime: Date;
-  onTimeChange: (time: Date) => void;
-  onConfirmTime: () => void;
-  onCancelTime: () => void;
   
   // 지도 컨트롤 관련 props
   onLocationClick: () => void;
@@ -53,10 +48,6 @@ export const SearchMode = memo<SearchModeProps>(({
   onShowOptions,
   onCloseRouteResults,
   showTimePicker,
-  departureTime,
-  onTimeChange,
-  onConfirmTime,
-  onCancelTime,
   onLocationClick,
   onPolylineClick,
   onRemoveClick
@@ -101,14 +92,6 @@ export const SearchMode = memo<SearchModeProps>(({
         </div>
       </div>
 
-      {/* 타임픽커 모달 */}
-      <TimePicker
-        isOpen={showTimePicker}
-        departureTime={departureTime}
-        onTimeChange={onTimeChange}
-        onConfirm={onConfirmTime}
-        onCancel={onCancelTime}
-      />
 
       {/* 하단 즐겨찾기 예약노선 바텀시트 - 처음 지도 화면에서만 표시 */}
       {routeResults.length === 0 && !showTimePicker && !showDepartureOptions && (

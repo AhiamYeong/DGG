@@ -1,3 +1,1 @@
-// Layout 컴포넌트 통합 export
-export { MapLayout } from './MapLayout';
-export { LayerContainer } from './LayerContainer';
+// Layout components removed - using direct div structure for simplicity
