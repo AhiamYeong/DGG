@@ -14,10 +14,8 @@ export type FavoritePlace = FavoritePlaceApiResponse;
 // API 요청 타입 재export
 export type { AddRecentSearchRequest, AddFavoritePlaceRequest };
 
-// API 설정
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-backend-server.com/api'
-  : 'http://localhost:8080/api';
+// API 설정 — 배포/개발 모두 Vite 환경변수 사용, 기본값은 '/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE || '/api';
 
 // API 클라이언트 생성
 const searchHistoryApi = createApiClient(API_BASE_URL, 3000);
