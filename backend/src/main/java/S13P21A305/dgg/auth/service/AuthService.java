@@ -1,7 +1,8 @@
 package S13P21A305.dgg.auth.service;
 
 import S13P21A305.dgg.auth.jwt.JWTUtil;
-import S13P21A305.dgg.auth.entity.MemberEntity;
+import S13P21A305.dgg.member.domain.Member;
+import S13P21A305.dgg.member.domain.enums.MemberRole;
 import S13P21A305.dgg.member.repository.MemberRepository;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import jakarta.servlet.http.Cookie;
@@ -35,29 +36,31 @@ public class AuthService {
         String name = (String) payload.getOrDefault("name", "");
 
         //서비스 회원키 규칙
-        String memberKey = "google" + sub;
+        String googleKey = "google" + sub;
 
         // DB 조회/신규 저장
-        MemberEntity member = memberRepository.findByMembername(sub);
+        Member member = memberRepository.findByGoogleKey(sub);
         if (member == null) {
-            member = MemberEntity.builder()
-                    .membername(memberKey)     // ✅ 우리 서비스 식별자(고정 규칙)
-                    .name(name)                // 닉네임/표시명
+            member = Member.builder()
+                    .googleKey(googleKey)     // ✅ 우리 서비스 식별자(고정 규칙)
+                    .nickname(name)                // 닉네임/표시명
                     .email(email)
-                    .role("ROLE_MEMBER")       // 가입=로그인 허용이면 MEMBER로 통일
+                    .role(MemberRole.GUEST)       // 가입=로그인 허용이면 MEMBER로 통일
                     .build();
         } else {
             member.setEmail(email);
-            member.setName(name);
+            member.setNickname(name);
             memberRepository.save(member);
         }
 
-        String principle = memberKey;
-        String role = member.getRole();
+        Long memberId = member.getId();
+        String role = member.getRole().toString();
+
+        memberRepository.save(member);
 
         // 3) 서버 자체 JWT 발급 (만료시간은 ms 단위)
         long expiresMs = 60L * 60L * 24 * 1000L; // 24시간
-        String jwt = jwtUtil.createJwt(principle, role, expiresMs);
+        String jwt = jwtUtil.createJwt(memberId, role, expiresMs);
 
         // 4) 쿠키 발급 (JWTFilter가 Authorization 쿠키만 읽으므로 이름을 그대로 맞춘다)
         response.addCookie(createAuthCookie("Authorization", jwt, (int) (expiresMs / 1000)));
@@ -69,7 +72,7 @@ public class AuthService {
                 "expiresIn", expiresMs / 1000,
                 "sub", sub,
                 "email", email,
-                "name", name
+                "nickname", name
         ));}
 
         private Cookie createAuthCookie(String name, String value, int maxAgeSeconds) {
