@@ -7,18 +7,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-        },
+        // 기본 색상
+        primary: '#2597FA',
+        secondary: '#A6BACC',
+        accent: '#FFC107',
+        font: '#2A2D34',
+        background: '#FFFFFF',
+        
+        // 끼임 정도 표현 색상
+        'level-1': '#3DDC97',
+        'level-2': '#88E26F',
+        'level-3': '#FFD95E',
+        'level-4': '#FF8A50',
+        'level-5': '#E53945',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

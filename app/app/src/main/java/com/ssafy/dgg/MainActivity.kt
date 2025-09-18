@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,12 +24,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
+import com.ssafy.dgg.model.repository.api.HealthDataRepository
+import com.ssafy.dgg.model.repository.api.HealthPermissionRepository
+import com.ssafy.dgg.ui.screen.MainScreen
 import com.ssafy.dgg.ui.theme.DGGTheme
+import com.ssafy.dgg.util.HealthStoreProvider
+import com.ssafy.dgg.viewModel.HealthViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -66,6 +69,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    val TAG = "FCM"
     private fun logRegToken() {
         // [START log_reg_token]
         Firebase.messaging.getToken().addOnCompleteListener { task ->
@@ -85,8 +89,35 @@ class MainActivity : ComponentActivity() {
         // [END log_reg_token]
     }
 
+    // 삼성헬스 ViewModel 호출
+    private val healthViewModel: HealthViewModel by lazy {
+        val store = HealthStoreProvider.getStore(applicationContext)
+        val permissionRepo = HealthPermissionRepository(store)
+        val dataRepo = HealthDataRepository(store)
+
+        // Log 호출을 마지막 줄이 아닌 앞줄로 옮기기
+        Log.d("Health", "Observing steps data")
+
+        // 마지막 줄이 HealthViewModel 객체를 반환하도록 함
+        HealthViewModel(permissionRepo, dataRepo)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 1. LiveData 관찰자 설정: 데이터가 변경될 때 할 작업을 정의
+        healthViewModel.steps.observe(this) { stepList ->
+            Log.d("Health", "steps LiveData가 업데이트됨")
+
+            stepList.forEach { agg ->
+                Log.d("Health", "${agg.startTime} ~ ${agg.endTime}: ${agg.value} 걸음")
+            }
+        }
+
+        // 2. loadStepsData 함수 호출: 데이터를 가져오는 작업을 시작
+        // 이 함수를 호출해야 ViewModel 내부에서 steps.value가 업데이트되고,
+        // 위에서 설정한 observe 블록이 실행됩니다.
+        healthViewModel.loadStepsData(this)
 
         askNotificationPermission()
         logRegToken()
@@ -97,30 +128,11 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ){
-                    WebViewScreen(url = "https://www.naver.com") // 테스트용 URL
+//                    WebViewScreen(url = "https://www.naver.com") // 테스트용 URL
+                    MainScreen()
                 }
             }
         }
-    }
-
-    companion object {
-        private const val TAG = "MainActivity"
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DGGTheme {
-        Greeting("Android")
     }
 }
 

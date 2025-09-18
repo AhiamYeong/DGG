@@ -1,0 +1,76 @@
+pipeline {
+  agent any
+  tools { nodejs 'node20' }
+  options { timestamps(); disableConcurrentBuilds() }
+
+  environment {
+    FE_DIR      = 'frontend'          // ★ 루트 기준으로 frontend 디렉터리로 변경
+    DIST_DIR    = 'dist'
+    DEPLOY_DIR  = '/var/www/app'
+    RELEASE_DIR = '/var/www/app_releases'
+    DOMAIN      = 'https://j13a305.p.ssafy.io'
+    API_BASE    = '/api'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+
+    // ★ 싱글 잡이므로 when 제거: 항상 생성(공개값만)
+    stage('Write .env.production (public only)') {
+      steps {
+        dir("${FE_DIR}") {
+          sh '''
+            set -eu
+            echo "VITE_API_BASE=${API_BASE}" > .env.production
+            # (선택) 네이버 지도 clientId를 Jenkins 크리덴셜에서 주입하려면:
+            # echo "VITE_NAVER_MAP_CLIENT_ID=${VITE_NAVER_MAP_CLIENT_ID}" >> .env.production
+          '''
+        }
+      }
+    }
+
+    stage('Install & Build') {
+      steps {
+        dir("${FE_DIR}") {
+          sh '''
+            set -eux
+            if [ -f package-lock.json ]; then
+              npm ci
+            else
+              npm i
+            fi
+            npm run build
+          '''
+        }
+      }
+    }
+
+    stage('Backup & Deploy') {
+      steps {
+        sh '''
+          set -eux
+          ts=$(date +%Y%m%d%H%M%S)
+
+          if [ -d ${DEPLOY_DIR} ] && [ "$(ls -A ${DEPLOY_DIR})" ]; then
+            mkdir -p ${RELEASE_DIR}/release-${ts}
+            rsync -a ${DEPLOY_DIR}/ ${RELEASE_DIR}/release-${ts}/
+          fi
+
+          rsync -av --delete ${FE_DIR}/${DIST_DIR}/ ${DEPLOY_DIR}/
+        '''
+      }
+    }
+
+    stage('Health Check') {
+      steps {
+        sh 'set -eux; curl -I --fail ${DOMAIN}/'
+      }
+    }
+  }
+
+  post {
+    always { cleanWs() }
+  }
+}

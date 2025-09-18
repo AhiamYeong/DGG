@@ -6,6 +6,9 @@ plugins {
     id("com.google.gms.google-services")
     id("kotlin-parcelize")
     alias(libs.plugins.parcelize)
+    // kotlin serializable plugin
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22" // Adjust the version to match your Kotlin version
+
 }
 
 android {
@@ -103,4 +106,15 @@ dependencies {
     // samsung health SDK
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
     implementation(libs.gson)
+
+    // Retrofit - maven central repo에서 찾음
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+
+    // 아래 3개는 쨈민이 추천...
+    // Add Kotlinx Serialization library
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    // Add Retrofit converter for Kotlinx Serialization
+    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
+    // Recommended: Add OkHttp logging interceptor for debugging API calls
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 }

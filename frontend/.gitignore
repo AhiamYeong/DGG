@@ -51,6 +51,10 @@ coverage/
 # nyc test coverage
 .nyc_output
 
+# Jest
+.jest-cache/
+.jest/
+
 # Dependency directories
 node_modules/
 jspm_packages/
