@@ -26,10 +26,9 @@ public class CustomOAuth2User implements OAuth2User {
     public Collection<? extends GrantedAuthority> getAuthorities() {
 
 //        Collection<GrantedAuthority> collection = new ArrayList<>();
-//
 //        collection.add(() -> "ROLE_" + memberDTO.getRole());
-//
 //        return collection;
+
         // 토큰의 role이 "GUEST"/"MEMBER"라면 여기서 ROLE_ 접두사 붙여줌
         String rawRole = memberDTO.getRole();              // e.g. "GUEST"
         String roleWithPrefix = rawRole.startsWith("ROLE_")
@@ -45,6 +44,7 @@ public class CustomOAuth2User implements OAuth2User {
         return Long.valueOf(memberDTO.getMemberId());
     }
 
+    // nickname
     public String getName(){
         return String.valueOf(memberDTO.getName());
     }

@@ -50,6 +50,7 @@ public class SecurityConfig {
         http
                 .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
+        //에러 디버깅
         http.exceptionHandling(ex -> ex
                 .authenticationEntryPoint((req,res,e) -> {
                     System.out.println("[SEC] 401: " + e.getMessage());
@@ -82,7 +83,7 @@ public class SecurityConfig {
 
                         CorsConfiguration configuration = new CorsConfiguration();
 
-                        configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
+                        configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://j13a305.p.ssafy.io"));
                         configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
                         configuration.setAllowCredentials(true);
                         configuration.setAllowedHeaders(List.of("Authorization","Content-Type","X-Requested-With"));

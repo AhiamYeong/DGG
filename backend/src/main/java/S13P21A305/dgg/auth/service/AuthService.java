@@ -79,7 +79,7 @@ public class AuthService {
             Cookie cookie = new Cookie(name, value);
             cookie.setPath("/");
             cookie.setHttpOnly(true); // 앱 코드에서 읽을 필요가 있으면 false로, 보안은 낮아짐
-            // cookie.setSecure(true); // HTTPS 배포 시 활성화 권장
+            cookie.setSecure(true); // HTTPS 배포 시 활성화 권장
             cookie.setMaxAge(maxAgeSeconds); // 초 단위
             return cookie;
         }
