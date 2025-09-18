@@ -28,8 +28,8 @@ export interface SearchOptions {
   sort?: 'random' | 'comment'; // 정렬 방법 (기본값: random)
 }
 
-// API 설정 (프록시 사용)
-const API_BASE_URL = '/api/naver/v1/search';
+// API 설정 (백엔드 직접 호출)
+const API_BASE_URL = 'https://j13a305.p.ssafy.io/api/v1/search';
 
 // Axios 인스턴스 생성
 const naverSearchApi = axios.create({
@@ -40,29 +40,17 @@ const naverSearchApi = axios.create({
   },
 });
 
-// 요청 인터셉터 - 네이버 API 인증 헤더 추가
+// 요청 인터셉터
 naverSearchApi.interceptors.request.use(
   (config) => {
-    const clientId = import.meta.env.VITE_NAVER_CLIENT_ID;
-    const clientSecret = import.meta.env.VITE_NAVER_CLIENT_SECRET;
-    
-    if (!clientId || !clientSecret) {
-      console.error('❌ 네이버 검색 API 클라이언트 ID 또는 시크릿이 설정되지 않았습니다.');
-      console.error('❌ .env 파일에 VITE_NAVER_CLIENT_ID와 VITE_NAVER_CLIENT_SECRET을 설정해주세요.');
-    }
-    
-    // 네이버 API 인증 헤더 추가
-    config.headers['X-Naver-Client-Id'] = clientId;
-    config.headers['X-Naver-Client-Secret'] = clientSecret;
-    
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 네이버 지역 검색 API 요청:', config);
+      console.log('🔍 백엔드 검색 API 요청:', config);
     }
     
     return config;
   },
   (error) => {
-    console.error('❌ 네이버 API 요청 에러:', error);
+    console.error('❌ 백엔드 API 요청 에러:', error);
     return Promise.reject(error);
   }
 );
@@ -71,20 +59,20 @@ naverSearchApi.interceptors.request.use(
 naverSearchApi.interceptors.response.use(
   (response) => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('✅ 네이버 지역 검색 API 응답:', response.data);
+      console.log('✅ 백엔드 검색 API 응답:', response.data);
     }
     return response;
   },
   (error) => {
-    console.error('❌ 네이버 API 응답 에러:', error);
+    console.error('❌ 백엔드 API 응답 에러:', error);
     
     // 에러 메시지 개선
-    if (error.response?.status === 403) {
-      throw new Error('네이버 API 권한이 없습니다. 클라이언트 ID와 시크릿을 확인해주세요.');
-    } else if (error.response?.status === 400) {
+    if (error.response?.status === 400) {
       throw new Error('잘못된 요청입니다. 검색어를 확인해주세요.');
-    } else if (error.response?.status === 429) {
-      throw new Error('API 호출 한도를 초과했습니다. 잠시 후 다시 시도해주세요.');
+    } else if (error.response?.status === 404) {
+      throw new Error('검색 결과를 찾을 수 없습니다.');
+    } else if (error.response?.status === 500) {
+      throw new Error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } else {
       throw new Error('검색 중 오류가 발생했습니다.');
     }
@@ -113,13 +101,6 @@ export const searchLocalPlaces = async (
       };
     }
 
-    const clientId = import.meta.env.VITE_NAVER_CLIENT_ID;
-    const clientSecret = import.meta.env.VITE_NAVER_CLIENT_SECRET;
-
-    // API 키가 없으면 에러 반환
-    if (!clientId || !clientSecret) {
-      throw new Error('네이버 API 클라이언트 ID 또는 시크릿이 설정되지 않았습니다. .env 파일에 VITE_NAVER_CLIENT_ID와 VITE_NAVER_CLIENT_SECRET을 설정해주세요.');
-    }
 
     // API 파라미터 설정 (네이버 API 문서 기준)
     const params = {
@@ -129,17 +110,17 @@ export const searchLocalPlaces = async (
       sort: options.sort || 'random' // 'random' 또는 'comment'
     };
 
-    // 네이버 지역 검색 API 호출
-    const response = await naverSearchApi.get('/local.json', { params });
+    // 백엔드 검색 API 호출
+    const response = await naverSearchApi.get('/places', { params });
     
-    // 응답 데이터 변환 (네이버 API JSON 응답 형식)
+    // 응답 데이터 변환 (백엔드 API 응답 형식)
     const data = response.data;
     
     return {
-      lastBuildDate: data.lastBuildDate,
-      total: parseInt(data.total) || 0,
-      start: parseInt(data.start) || 1,
-      display: parseInt(data.display) || 0,
+      lastBuildDate: new Date().toISOString(),
+      total: data.items ? data.items.length : 0,
+      start: 1,
+      display: data.items ? data.items.length : 0,
       items: data.items || []
     };
     
@@ -156,21 +137,21 @@ export const searchLocalPlaces = async (
  */
 export const convertNaverSearchResults = (naverItems: NaverSearchItem[]) => {
   return naverItems.map((item, index) => ({
-    id: `naver_${index}_${Date.now()}`, // 고유 ID 생성
+    id: `search_${index}_${Date.now()}`, // 고유 ID 생성
     name: item.title.replace(/<[^>]*>/g, ''), // HTML 태그 제거
     title: item.title, // HTML 태그가 포함된 원본 제목
     address: item.address, // 지번 주소
     roadAddress: item.roadAddress, // 도로명 주소
-    category: item.category,
-    description: item.description.replace(/<[^>]*>/g, ''), // HTML 태그 제거
-    distance: undefined, // 네이버 API에서는 거리 정보 제공 안함
-    rating: undefined,   // 네이버 API에서는 평점 정보 제공 안함
+    category: item.category || 'place', // 기본 카테고리
+    description: item.description ? item.description.replace(/<[^>]*>/g, '') : item.address, // HTML 태그 제거
+    distance: undefined, // 거리 정보 없음
+    rating: undefined,   // 평점 정보 없음
     isFavorite: false,   // 기본값
     location: {
-      lat: item.mapy, // 네이버 좌표 그대로 사용 (네이버 Map API와 호환)
-      lng: item.mapx
+      lat: item.mapy || 37.5665, // 기본값: 서울 중심
+      lng: item.mapx || 126.9780
     },
-    // 네이버 API 원본 데이터 보존
+    // 백엔드 API 원본 데이터 보존
     telephone: item.telephone,
     link: item.link,
     mapx: item.mapx,
@@ -212,7 +193,7 @@ export const searchPlacesWithNaver = async (
 
 
 /**
- * 네이버 API 연결 테스트 함수
+ * 백엔드 API 연결 테스트 함수
  * @returns API 연결 상태
  */
 export const testNaverApiConnection = async (): Promise<{
@@ -220,32 +201,18 @@ export const testNaverApiConnection = async (): Promise<{
   message: string;
   hasCredentials: boolean;
 }> => {
-  const clientId = import.meta.env.VITE_NAVER_CLIENT_ID;
-  const clientSecret = import.meta.env.VITE_NAVER_CLIENT_SECRET;
-  
-  if (!clientId || !clientSecret) {
-    return {
-      success: false,
-      message: '네이버 API 클라이언트 ID 또는 시크릿이 설정되지 않았습니다. .env 파일에 VITE_NAVER_CLIENT_ID와 VITE_NAVER_CLIENT_SECRET을 설정해주세요.',
-      hasCredentials: false
-    };
-  }
-
   try {
     // 간단한 테스트 검색 (갈비집)
-    const response = await naverSearchApi.get('/local.json', {
+    const response = await naverSearchApi.get('/places', {
       params: {
-        query: '갈비집',
-        display: 1,
-        start: 1,
-        sort: 'random'
+        query: '갈비집'
       }
     });
 
     if (response.data && response.data.items) {
       return {
         success: true,
-        message: `API 연결 성공! 총 ${response.data.total}개의 결과를 찾았습니다.`,
+        message: `API 연결 성공! 총 ${response.data.items.length}개의 결과를 찾았습니다.`,
         hasCredentials: true
       };
     } else {
@@ -256,18 +223,18 @@ export const testNaverApiConnection = async (): Promise<{
       };
     }
   } catch (error: any) {
-    console.error('네이버 API 테스트 실패:', error);
+    console.error('백엔드 API 테스트 실패:', error);
     
-    if (error.response?.status === 403) {
-      return {
-        success: false,
-        message: 'API 권한이 없습니다. 클라이언트 ID와 시크릿을 확인해주세요.',
-        hasCredentials: true
-      };
-    } else if (error.response?.status === 400) {
+    if (error.response?.status === 400) {
       return {
         success: false,
         message: '잘못된 요청입니다. API 파라미터를 확인해주세요.',
+        hasCredentials: true
+      };
+    } else if (error.response?.status === 404) {
+      return {
+        success: false,
+        message: 'API 엔드포인트를 찾을 수 없습니다.',
         hasCredentials: true
       };
     } else {
