@@ -242,7 +242,7 @@ export default function SearchPage() {
                 onToggleFavorite={handleToggleFavorite}
                 isLoading={searchState.isLoading}
                 error={searchState.error}
-                total={searchState.total}
+                total={searchState.results.length}
               />
             )}
           </div>

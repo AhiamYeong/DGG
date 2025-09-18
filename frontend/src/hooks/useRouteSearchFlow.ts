@@ -91,12 +91,12 @@ export const useRouteSearchFlow = (): UseRouteSearchFlowReturn => {
   }, []);
 
   // 출발 시간 설정
-  const setDepartureTime = useCallback((time: Date) => {
+  const updateDepartureTime = useCallback((time: Date) => {
     setDepartureTime(time);
   }, []);
 
   // 출발 옵션 설정
-  const setSelectedDepartureOption = useCallback((option: 'now' | 'schedule') => {
+  const updateSelectedDepartureOption = useCallback((option: 'now' | 'schedule') => {
     setSelectedDepartureOption(option);
     if (option === 'now') {
       setDepartureTime(new Date());
@@ -122,8 +122,8 @@ export const useRouteSearchFlow = (): UseRouteSearchFlowReturn => {
     confirmTimeSelection,
     cancelTimeSelection,
     closeRouteResults,
-    setDepartureTime,
-    setSelectedDepartureOption,
+    setDepartureTime: updateDepartureTime,
+    setSelectedDepartureOption: updateSelectedDepartureOption,
     selectRoute,
   };
 };

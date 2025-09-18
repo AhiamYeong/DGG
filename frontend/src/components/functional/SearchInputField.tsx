@@ -15,7 +15,6 @@ export default function SearchInputField({
   onChange,
   placeholder,
   onClear,
-  icon = 'search',
   searchType = 'origin'
 }: SearchInputFieldProps) {
   const navigate = useNavigate();
@@ -35,7 +34,7 @@ export default function SearchInputField({
     <LocationInput
       type={searchType}
       value={value}
-      onChange={onChange}
+      onChange={(e) => onChange(e.target.value)}
       onSearch={handleSearch}
       onClear={onClear}
       showClear={!!value}

@@ -13,10 +13,6 @@ export default function FavoriteRoutesBottomSheet() {
     setActiveTab
   } = useRouteStore();
 
-  const addNewRoute = () => {
-    console.log('새 경로 추가');
-    // TODO: 새 경로 추가 모달 열기
-  };
 
   const {
     height,
@@ -69,18 +65,14 @@ export default function FavoriteRoutesBottomSheet() {
             routes={favoriteRoutes as any}
             onSelectRoute={selectRoute as any}
             onToggleBookmark={(id) => toggleBookmark(id, 'favorite')}
-            onAddNewRoute={addNewRoute}
             emptyMessage="즐겨찾기한 노선이 없습니다"
-            showAddButton={true}
           />
         ) : (
           <RouteList
             routes={reservedRoutes as any}
             onSelectRoute={selectRoute as any}
             onToggleBookmark={(id) => toggleBookmark(id, 'reserved')}
-            onAddNewRoute={addNewRoute}
             emptyMessage="예약된 노선이 없습니다"
-            showAddButton={true}
           />
         )}
       </div>
