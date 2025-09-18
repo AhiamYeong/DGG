@@ -48,17 +48,17 @@ export const usePlaceSearch = (options: UsePlaceSearchOptions = {}): UsePlaceSea
         
         if (response.success) {
           // API 응답을 SearchResult 형식으로 변환
-          const transformedResults = response.data.map(item => ({
-            ...item,
-            location: item.coordinates ? {
-              latitude: item.coordinates.lat,
-              longitude: item.coordinates.lng
-            } : { latitude: 0, longitude: 0 },
-            type: 'address' as const,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }));
-          setResults(transformedResults);
+        const transformedResults = response.data.map(item => ({
+          ...item,
+          location: item.coordinates ? {
+            latitude: item.coordinates.lat,
+            longitude: item.coordinates.lng
+          } : { latitude: 0, longitude: 0 },
+          type: 'address' as const,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }));
+        setResults(transformedResults);
         } else {
           setError(response.message);
           setResults([]);
