@@ -1,7 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { generateRouteRecommendations } from '../utils/routeDataGenerator';
-import { getActionLabel } from '../utils/timeUtils';
 import { useNavigationStore } from './useNavigationStore';
 import type { SimpleRoute } from '../types/route-types';
 
@@ -21,13 +19,14 @@ interface RouteSearchState {
     id: string;
     origin: string;
     destination: string;
+    waypoints?: string[];
     timestamp: number;
   }>;
 }
 
 interface RouteSearchActions {
   // 검색 플로우
-  startRouteSearch: (origin: string, destination: string) => void;
+  startRouteSearch: (origin: string, destination: string, waypoints?: string[]) => void;
   confirmTimeSelection: () => Promise<void>;
   cancelTimeSelection: () => void;
   closeRouteResults: () => void;
@@ -40,7 +39,7 @@ interface RouteSearchActions {
   selectRoute: (route: SimpleRoute) => void;
   
   // 검색 히스토리
-  addSearchHistory: (origin: string, destination: string) => void;
+  addSearchHistory: (origin: string, destination: string, waypoints?: string[]) => void;
   clearSearchHistory: () => void;
   
   // 상태 초기화
@@ -63,14 +62,15 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
       ...initialState,
 
       // 검색 시작
-      startRouteSearch: (origin: string, destination: string) => {
+      startRouteSearch: (origin: string, destination: string, waypoints?: string[]) => {
         console.log('=== 길찾기 요청 ===');
         console.log('출발지:', origin);
         console.log('도착지:', destination);
+        console.log('경유지:', waypoints);
         console.log('==================');
         
         // 검색 히스토리 추가
-        get().addSearchHistory(origin, destination);
+        get().addSearchHistory(origin, destination, waypoints);
         
         // 출발 옵션 탭 표시 (경로 결과 페이지)
         set({ 
@@ -91,28 +91,21 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
             return;
           }
           
-          // TimeSlot 형식으로 변환
-          const timeSlot = {
-            hour: departureTime.getHours(),
-            minute: departureTime.getMinutes()
-          };
-          
-          // 3개 경로 생성
-          const routes = generateRouteRecommendations(
+          // RouteService를 통한 실제 API 호출
+          const { RouteService } = await import('../services/routeService');
+          const result = await RouteService.executeRouteSearchFlow(
             lastSearch.origin,
             lastSearch.destination,
-            timeSlot
+            departureTime,
+            selectedDepartureOption,
+            lastSearch.waypoints
           );
           
-          console.log('생성된 경로 개수:', routes.length);
-          console.log('경로 목록:', routes.map(r => ({ id: r.id, name: r.name })));
-          
-          // 액션 라벨 결정
-          const actionLabel = getActionLabel(departureTime, selectedDepartureOption);
+          console.log('API 호출 결과:', result);
           
           set({ 
-            routeResults: routes,
-            actionLabel,
+            routeResults: result.routes,
+            actionLabel: result.actionLabel,
             showTimePicker: false,
             showDepartureOptions: true
           });
@@ -162,12 +155,13 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
       },
 
       // 검색 히스토리 추가
-      addSearchHistory: (origin: string, destination: string) => {
+      addSearchHistory: (origin: string, destination: string, waypoints?: string[]) => {
         const { searchHistory } = get();
         const newEntry = {
           id: `search-${Date.now()}`,
           origin,
           destination,
+          waypoints,
           timestamp: Date.now()
         };
         

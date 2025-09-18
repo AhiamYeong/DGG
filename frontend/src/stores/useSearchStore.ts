@@ -8,21 +8,25 @@ export interface Waypoint {
   id: string;
   value: string;
   location?: Location;
+  roadAddress?: string; // 도로명 주소 추가
 }
 
 interface SearchState {
   origin: string;
   destination: string;
   waypoints: Waypoint[];
+  // 도로명 주소 별도 저장
+  originRoadAddress?: string;
+  destinationRoadAddress?: string;
   // recentSearches는 API로 관리하므로 제거
 }
 
 interface SearchActions {
-  setOrigin: (origin: string) => void;
-  setDestination: (destination: string) => void;
+  setOrigin: (origin: string, roadAddress?: string) => void;
+  setDestination: (destination: string, roadAddress?: string) => void;
   addWaypoint: () => void;
   removeWaypoint: (id: string) => void;
-  updateWaypoint: (id: string, value: string) => void;
+  updateWaypoint: (id: string, value: string, roadAddress?: string) => void;
   clearOrigin: () => void;
   clearDestination: () => void;
   clearWaypoint: (id: string) => void;
@@ -37,10 +41,12 @@ export const useSearchStore = create<SearchState & SearchActions>()(
       origin: '',
       destination: '',
       waypoints: [],
+      originRoadAddress: undefined,
+      destinationRoadAddress: undefined,
 
   // Actions
-  setOrigin: (origin) => set({ origin }),
-  setDestination: (destination) => set({ destination }),
+  setOrigin: (origin, roadAddress) => set({ origin, originRoadAddress: roadAddress }),
+  setDestination: (destination, roadAddress) => set({ destination, destinationRoadAddress: roadAddress }),
   
   addWaypoint: () => {
     const { waypoints } = get();
@@ -58,23 +64,23 @@ export const useSearchStore = create<SearchState & SearchActions>()(
     set({ waypoints: waypoints.filter(wp => wp.id !== id) });
   },
 
-  updateWaypoint: (id, value) => {
+  updateWaypoint: (id, value, roadAddress) => {
     const { waypoints } = get();
     set({
       waypoints: waypoints.map(wp => 
-        wp.id === id ? { ...wp, value } : wp
+        wp.id === id ? { ...wp, value, roadAddress } : wp
       )
     });
   },
 
-  clearOrigin: () => set({ origin: '' }),
-  clearDestination: () => set({ destination: '' }),
+  clearOrigin: () => set({ origin: '', originRoadAddress: undefined }),
+  clearDestination: () => set({ destination: '', destinationRoadAddress: undefined }),
   
   clearWaypoint: (id) => {
     const { waypoints } = get();
     set({
       waypoints: waypoints.map(wp => 
-        wp.id === id ? { ...wp, value: '' } : wp
+        wp.id === id ? { ...wp, value: '', roadAddress: undefined } : wp
       )
     });
   },
@@ -82,7 +88,9 @@ export const useSearchStore = create<SearchState & SearchActions>()(
       clearAll: () => set({ 
         origin: '', 
         destination: '', 
-        waypoints: [] 
+        waypoints: [],
+        originRoadAddress: undefined,
+        destinationRoadAddress: undefined
       }),
     }),
     {
@@ -91,6 +99,8 @@ export const useSearchStore = create<SearchState & SearchActions>()(
         origin: state.origin,
         destination: state.destination,
         waypoints: state.waypoints,
+        originRoadAddress: state.originRoadAddress,
+        destinationRoadAddress: state.destinationRoadAddress,
       }),
     }
   )

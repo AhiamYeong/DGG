@@ -101,18 +101,18 @@ export default function SearchPage() {
     console.log('선택된 위치:', location, '타입:', searchType);
     
     // 1. 즉시 SearchStore에 반영 (동기적 처리)
-    // 도로명 주소가 있으면 도로명 주소를 우선 사용, 없으면 지번 주소 사용
-    const displayAddress = location.roadAddress || location.address;
-    const locationName = `${location.name} (${displayAddress})`;
+    // 장소명만 표시하고, 도로명 주소는 별도 저장
+    const locationName = location.name;
+    const roadAddress = location.roadAddress || location.address;
     
     if (searchType === 'origin') {
-      setOrigin(locationName);
+      setOrigin(locationName, roadAddress);
     } else if (searchType === 'destination') {
-      setDestination(locationName);
+      setDestination(locationName, roadAddress);
     } else if (searchType === 'waypoint' && waypointIndex !== undefined) {
       const waypoint = waypoints[waypointIndex];
       if (waypoint) {
-        updateWaypoint(waypoint.id, locationName);
+        updateWaypoint(waypoint.id, locationName, roadAddress);
       }
     }
     

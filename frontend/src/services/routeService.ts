@@ -1,5 +1,6 @@
 import { generateRouteRecommendations } from '../utils/routeDataGenerator';
-import { isCurrentTime, getActionLabel } from '../utils/timeUtils';
+import { isCurrentTime, getActionLabel, formatDateTimeForApi } from '../utils/timeUtils';
+import { searchRoutesWithTime } from './mapApi';
 import type { SimpleRoute } from '../types/route-types';
 
 /**
@@ -55,13 +56,15 @@ export class RouteService {
    * @param destination 도착지
    * @param departureTime 출발 시간
    * @param selectedOption 출발 옵션
+   * @param waypoints 경유지 (선택사항)
    * @returns 경로 검색 결과와 액션 라벨
    */
   static async executeRouteSearchFlow(
     origin: string,
     destination: string,
     departureTime: Date,
-    selectedOption: 'now' | 'schedule'
+    selectedOption: 'now' | 'schedule',
+    waypoints?: string[]
   ): Promise<{
     routes: SimpleRoute[];
     actionLabel: string;
@@ -71,18 +74,65 @@ export class RouteService {
     console.log('도착지:', destination);
     console.log('출발 시간:', departureTime);
     console.log('출발 옵션:', selectedOption);
+    console.log('경유지:', waypoints);
     console.log('============================');
 
-    // 경로 검색
-    const routes = await this.searchRoutes(origin, destination);
-    
-    // 액션 라벨 결정
-    const actionLabel = this.calculateActionLabel(departureTime, selectedOption);
+    try {
+      // 시간을 API 형식으로 변환
+      const startTime = formatDateTimeForApi(departureTime);
+      
+      // 백엔드 API 호출
+      const apiResponse = await searchRoutesWithTime(
+        origin,
+        destination,
+        startTime,
+        waypoints
+      );
 
-    return {
-      routes,
-      actionLabel
-    };
+      // API 응답을 SimpleRoute 형식으로 변환
+      const routes = this.convertApiResponseToRoutes(apiResponse);
+      
+      // 액션 라벨 결정
+      const actionLabel = this.calculateActionLabel(departureTime, selectedOption);
+
+      return {
+        routes,
+        actionLabel
+      };
+    } catch (error) {
+      console.error('백엔드 API 호출 실패, 더미 데이터 사용:', error);
+      
+      // 폴백: 더미 데이터 사용
+      const routes = await this.searchRoutes(origin, destination);
+      const actionLabel = this.calculateActionLabel(departureTime, selectedOption);
+
+      return {
+        routes,
+        actionLabel
+      };
+    }
+  }
+
+  /**
+   * 백엔드 API 응답을 SimpleRoute 형식으로 변환
+   */
+  private static convertApiResponseToRoutes(apiResponse: any): SimpleRoute[] {
+    if (!apiResponse || !apiResponse.recommendedRoutes) {
+      return [];
+    }
+
+    return apiResponse.recommendedRoutes.map((route: any, index: number) => ({
+      id: route.routeId?.toString() || `route-${index}`,
+      name: route.name || `경로 ${index + 1}`,
+      from: apiResponse.departureAddress || '',
+      to: apiResponse.destinationAddress || '',
+      time: route.timeTaken?.toString() || '0',
+      isBookmarked: false,
+      // 추가 필드들
+      arrivalTime: route.arrivalTime,
+      fatigue: route.fatigue,
+      totalTime: route.timeTaken
+    }));
   }
 
   /**

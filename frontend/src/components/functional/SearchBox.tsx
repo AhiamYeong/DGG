@@ -18,6 +18,8 @@ export default function SearchBox({ onSearch, onDepartureOptionChange, selectedD
     origin,
     destination,
     waypoints,
+    originRoadAddress,
+    destinationRoadAddress,
     setOrigin,
     setDestination,
     addWaypoint,
@@ -35,8 +37,14 @@ export default function SearchBox({ onSearch, onDepartureOptionChange, selectedD
 
   const handleSearch = () => {
     if (origin.trim() && destination.trim()) {
-      const waypointValues = waypoints.map(wp => wp.value.trim()).filter(value => value);
-      onSearch(origin.trim(), destination.trim(), waypointValues);
+      // 도로명 주소가 있으면 도로명 주소를 사용, 없으면 장소명 사용
+      const departureAddress = originRoadAddress || origin.trim();
+      const destinationAddress = destinationRoadAddress || destination.trim();
+      const waypointAddresses = waypoints
+        .map(wp => wp.roadAddress || wp.value.trim())
+        .filter(address => address);
+      
+      onSearch(departureAddress, destinationAddress, waypointAddresses);
     }
   };
 
