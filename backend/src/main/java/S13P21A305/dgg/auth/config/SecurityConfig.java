@@ -3,6 +3,7 @@ package S13P21A305.dgg.auth.config;
 import S13P21A305.dgg.auth.jwt.JWTFilter;
 import S13P21A305.dgg.auth.jwt.JWTUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,6 +16,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.Collections;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -32,6 +34,8 @@ public class SecurityConfig {
 
         //csrf disable
         http
+                .csrf(csrf -> csrf.disable());
+        http
                 .csrf((auth) -> auth.disable());
 
         //From 로그인 방식 disable
@@ -46,13 +50,23 @@ public class SecurityConfig {
         http
                 .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
+        http.exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req,res,e) -> {
+                    System.out.println("[SEC] 401: " + e.getMessage());
+                    res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                })
+                .accessDeniedHandler((req,res,e) -> {
+                    System.out.println("[SEC] 403: " + e.getMessage());
+                    res.sendError(HttpServletResponse.SC_FORBIDDEN);
+                })
+        );
+
 
         //경로별 인가 작업
         http
-
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/v1/auth/google").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/mypage/**").hasAnyRole("GUEST","MEMBER")
                         .anyRequest().authenticated());
 
         //세션 설정 : STATELESS
@@ -69,8 +83,9 @@ public class SecurityConfig {
                         CorsConfiguration configuration = new CorsConfiguration();
 
                         configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
-                        configuration.setAllowedMethods(Collections.singletonList("*"));
+                        configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
                         configuration.setAllowCredentials(true);
+                        configuration.setAllowedHeaders(List.of("Authorization","Content-Type","X-Requested-With"));
                         configuration.setAllowedHeaders(Collections.singletonList("*"));
                         configuration.setMaxAge(3600L);
 
