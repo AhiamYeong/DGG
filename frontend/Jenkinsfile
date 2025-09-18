@@ -4,7 +4,7 @@ pipeline {
   options { timestamps(); disableConcurrentBuilds() }
 
   environment {
-    FE_DIR      = 'frontend'          // ★ 루트 기준으로 frontend 디렉터리로 변경
+    FE_DIR      = 'frontend'
     DIST_DIR    = 'dist'
     DEPLOY_DIR  = '/var/www/app'
     RELEASE_DIR = '/var/www/app_releases'
@@ -17,16 +17,35 @@ pipeline {
       steps { checkout scm }
     }
 
-    // ★ 싱글 잡이므로 when 제거: 항상 생성(공개값만)
-    stage('Write .env.production (public only)') {
+    // 가짜 URL이 남아있으면 실패시켜서 바로 잡게 함
+    stage('Preflight: placeholder URL guard') {
       steps {
         dir("${FE_DIR}") {
           sh '''
             set -eu
-            echo "VITE_API_BASE=${API_BASE}" > .env.production
-            # (선택) 네이버 지도 clientId를 Jenkins 크리덴셜에서 주입하려면:
-            # echo "VITE_NAVER_MAP_CLIENT_ID=${VITE_NAVER_MAP_CLIENT_ID}" >> .env.production
+            if grep -RIn "your-backend-server.com" .; then
+              echo "[ERROR] Found placeholder domain 'your-backend-server.com'. Replace with import.meta.env.VITE_API_BASE";
+              exit 1
+            fi
           '''
+        }
+      }
+    }
+
+    // .env.production 생성: API_BASE + 네이버 지도 clientId 주입
+    stage('Write .env.production (public only)') {
+      steps {
+        dir("${FE_DIR}") {
+          withCredentials([string(credentialsId: 'naver_map_client_id', variable: 'NAVER_ID')]) {
+            sh '''
+              set -eu
+              cat > .env.production <<EOF
+VITE_API_BASE=${API_BASE}
+VITE_NAVER_MAP_CLIENT_ID=${NAVER_ID}
+EOF
+              echo "[info] Wrote .env.production"
+            '''
+          }
         }
       }
     }
@@ -36,11 +55,9 @@ pipeline {
         dir("${FE_DIR}") {
           sh '''
             set -eux
-            if [ -f package-lock.json ]; then
-              npm ci
-            else
-              npm i
-            fi
+            if [ -f package-lock.json ]; then npm ci; else npm i; fi
+            # 타입 에러가 지금 많으면 아래 한 줄로 바꿔 임시 통과 가능:
+            # npx vite build
             npm run build
           '''
         }
