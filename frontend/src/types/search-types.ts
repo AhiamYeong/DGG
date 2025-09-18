@@ -28,6 +28,7 @@ export interface SearchSuggestion {
 export interface SearchResult extends BaseEntity {
   name: string;
   address: string;
+  roadAddress?: string; // 도로명 주소 (네이버 API)
   location: Location;
   type: SearchType;
   distance?: number; // 미터 단위
@@ -45,6 +46,12 @@ export interface SearchResult extends BaseEntity {
     phone?: string;
     website?: string;
   };
+  // 네이버 API 관련 필드
+  title?: string; // HTML 태그가 포함된 제목
+  link?: string; // 상세 정보 URL
+  telephone?: string; // 전화번호
+  mapx?: number; // x 좌표
+  mapy?: number; // y 좌표
 }
 
 

@@ -158,18 +158,24 @@ export const convertNaverSearchResults = (naverItems: NaverSearchItem[]) => {
   return naverItems.map((item, index) => ({
     id: `naver_${index}_${Date.now()}`, // 고유 ID 생성
     name: item.title.replace(/<[^>]*>/g, ''), // HTML 태그 제거
-    address: item.roadAddress || item.address,
+    title: item.title, // HTML 태그가 포함된 원본 제목
+    address: item.address, // 지번 주소
+    roadAddress: item.roadAddress, // 도로명 주소
     category: item.category,
     description: item.description.replace(/<[^>]*>/g, ''), // HTML 태그 제거
     distance: undefined, // 네이버 API에서는 거리 정보 제공 안함
     rating: undefined,   // 네이버 API에서는 평점 정보 제공 안함
     isFavorite: false,   // 기본값
-    coordinates: {
+    location: {
       lat: item.mapy, // 네이버 좌표 그대로 사용 (네이버 Map API와 호환)
       lng: item.mapx
     },
-    phone: item.telephone,
-    link: item.link
+    // 네이버 API 원본 데이터 보존
+    telephone: item.telephone,
+    link: item.link,
+    mapx: item.mapx,
+    mapy: item.mapy,
+    type: 'landmark' as const
   }));
 };
 
