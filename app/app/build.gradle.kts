@@ -34,10 +34,10 @@ android {
             versionNameSuffix = "-DEBUG"
 
             // React 웹뷰용 URL
-            buildConfigField("String", "WEB_URL", "\"http://localhost:3000\"")
+            buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io\"")
 
             // native의 직접 API 호출용 URL
-            buildConfigField("String", "WEB_URL", "\"http://localhost:8080\"")
+            buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io\"")
 
             buildConfigField("boolean", "IS_DEBUG", "true")
             resValue("string", "dgg", "DGG 개발")
@@ -117,4 +117,13 @@ dependencies {
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
     // Recommended: Add OkHttp logging interceptor for debugging API calls
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+
+    // Unit Test용
+    testImplementation("junit:junit:4.13.2")
+    // 기본 UnitTest
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    // MockWebServer
+    testImplementation("org.mockito:mockito-core:5.6.0")
+    // 필요하면 Mockito
 }

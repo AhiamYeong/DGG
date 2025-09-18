@@ -26,14 +26,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
+import com.samsung.android.sdk.health.data.HealthDataStore
+import com.samsung.android.sdk.health.data.data.AggregatedData
+import com.samsung.android.sdk.health.data.request.DataType
+import com.samsung.android.sdk.health.data.request.DataTypes
+import com.samsung.android.sdk.health.data.request.LocalTimeFilter
+import com.samsung.android.sdk.health.data.response.DataResponse
 import com.ssafy.dgg.model.repository.api.HealthDataRepository
 import com.ssafy.dgg.model.repository.api.HealthPermissionRepository
 import com.ssafy.dgg.ui.screen.MainScreen
 import com.ssafy.dgg.ui.theme.DGGTheme
 import com.ssafy.dgg.util.HealthStoreProvider
+import com.ssafy.dgg.util.formatDuration
 import com.ssafy.dgg.viewModel.HealthViewModel
+import kotlinx.coroutines.launch
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalTime
 
 class MainActivity : ComponentActivity() {
 
@@ -95,15 +107,158 @@ class MainActivity : ComponentActivity() {
         val permissionRepo = HealthPermissionRepository(store)
         val dataRepo = HealthDataRepository(store)
 
-        // Log 호출을 마지막 줄이 아닌 앞줄로 옮기기
-        Log.d("Health", "Observing steps data")
-
         // 마지막 줄이 HealthViewModel 객체를 반환하도록 함
         HealthViewModel(permissionRepo, dataRepo)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        lifecycleScope.launch {
+            val store = HealthStoreProvider.getStore(applicationContext)
+/*
+            val start = LocalDateTime.of(2025, 9, 1, 0, 0) // 시작: 2025년 1월 1일 00:00
+            val end = LocalDateTime.of(2025, 9, 18, 23, 59) // 끝: 2025년 1월 1일 23:59
+            val localTimeFilter = LocalTimeFilter.of(start, end)*/
+
+            // 오늘 날짜 범위 설정
+            val today = LocalDate.now()
+            val startOfToday = today.atStartOfDay()            // 오늘 00:00
+            val endOfToday = today.plusDays(1).atStartOfDay()  // 내일 00:00
+
+            val localTimeFilter = LocalTimeFilter.of(startOfToday, endOfToday)
+
+
+            val TAG = "health data preview"
+
+            val readHeart = DataTypes.HEART_RATE.readDataRequestBuilder
+                .setLocalTimeFilter(localTimeFilter)
+                .build()
+
+            val readSleep = DataTypes.SLEEP.readDataRequestBuilder
+                .setLocalTimeFilter(localTimeFilter)
+                .build()
+
+            suspend fun getActivitySummary(store: HealthDataStore): List<AggregatedData<*>> {
+                // 2️⃣ AggregateRequest 생성
+                val aggregateReq1 = DataType.ActivitySummaryType.TOTAL_ACTIVE_TIME.requestBuilder
+                    .setLocalTimeFilter(localTimeFilter)
+                    .build()
+
+                val aggregateReq2 = DataType.ActivitySummaryType.TOTAL_CALORIES_BURNED.requestBuilder
+                    .setLocalTimeFilter(localTimeFilter)
+                    .build()
+
+                val aggregateReq3 = DataType.ActivitySummaryType.TOTAL_DISTANCE.requestBuilder
+                    .setLocalTimeFilter(localTimeFilter)
+                    .build()
+
+                val aggregateReq4 = DataType.ActivitySummaryType.TOTAL_ACTIVE_CALORIES_BURNED.requestBuilder
+                    .setLocalTimeFilter(localTimeFilter)
+                    .build()
+
+
+                // 3️⃣ HealthDataStore에 요청
+                val res1 : DataResponse<AggregatedData<Duration>> = store.aggregateData(aggregateReq1)
+                val res2 : DataResponse<AggregatedData<Float>> = store.aggregateData(aggregateReq2)
+                val res3 : DataResponse<AggregatedData<Float>> = store.aggregateData(aggregateReq3)
+                val res4 : DataResponse<AggregatedData<Float>> = store.aggregateData(aggregateReq4)
+
+
+                // 결과 합치기
+                val combinedList = mutableListOf<AggregatedData<*>>()
+                combinedList.addAll(res1.dataList) // TOTAL_ACTIVE_TIME
+                combinedList.addAll(res2.dataList) // TOTAL_CALORIES_BURNED
+                combinedList.addAll(res3.dataList) // TOTAL_DISTANCE
+                combinedList.addAll(res4.dataList) // TOTAL_ACTIVE_CALORIES_BURNED
+
+                return combinedList
+            }
+
+            suspend fun getSleepGoal(store: HealthDataStore): List<AggregatedData<LocalTime>> {
+                val lastBedTimeRequest = DataType.SleepGoalType.LAST_BED_TIME.requestBuilder.build()
+                val lastWakeUpTimeRequest = DataType.SleepGoalType.LAST_WAKE_UP_TIME.requestBuilder.build()
+
+                // 2️⃣ 각각 요청
+                val bedTimeResponse: DataResponse<AggregatedData<LocalTime>> = store.aggregateData(lastBedTimeRequest)
+                val wakeUpTimeResponse: DataResponse<AggregatedData<LocalTime>> = store.aggregateData(lastWakeUpTimeRequest)
+
+                // 3️⃣ HealthDataStore에 요청
+                val combinedList = mutableListOf<AggregatedData<LocalTime>>()
+                combinedList.addAll(bedTimeResponse.dataList)
+                combinedList.addAll(wakeUpTimeResponse.dataList)
+
+                // 4️⃣ 반환
+                return combinedList
+            }
+
+            suspend fun getSteps(store: HealthDataStore): List<AggregatedData<Long>> {
+                val stepRequest = DataType.StepsType.TOTAL.requestBuilder
+                    .setLocalTimeFilter(localTimeFilter)
+                    .build()
+
+                // 2️⃣ 각각 요청
+                val stepResponse: DataResponse<AggregatedData<Long>> = store.aggregateData(stepRequest)
+
+                // 4️⃣ 반환
+                return stepResponse.dataList
+            }
+
+            val act = getActivitySummary(store)
+            val sleepgoal = getSleepGoal(store)
+            val steps = getSteps(store)
+
+            // val readActivity = DataTypes.ACTIVITY_SUMMARY.allAggregateOperations.req
+            val resHeart = store.readData(readHeart).dataList
+            val resSleep = store.readData(readSleep).dataList
+
+            resHeart.forEach { item ->
+                val hr = item.getValue(DataType.HeartRateType.HEART_RATE)
+                Log.d(TAG, "Heart Rate: $hr")
+            }
+            resSleep.forEach { item ->
+                val s1 = item.getValue(DataType.SleepType.SLEEP_SCORE)
+                val s2 = item.getValue(DataType.SleepType.DURATION)
+                val sleepSession = item.getValue(DataType.SleepType.SESSIONS)
+
+                Log.d(TAG, "**sleep session**")
+                sleepSession?.forEach { item ->
+                    Log.d(TAG, formatDuration(item.duration))
+                    Log.d(TAG, item.startTime.toString())
+                    Log.d(TAG, item.endTime.toString())
+                    Log.d(TAG, item.stages.toString())
+                }
+
+
+                /*val s4 = item.getValue(DataType.SleepType.*/
+                Log.d(TAG, "score: $s1")
+                Log.d(TAG, "sleep duration: ${formatDuration(s2)}")
+                // sleep session -> ?
+            }
+
+            val dataRepo = HealthDataRepository(store)
+            // val steps = dataRepo.getSteps(LocalDate.now())
+
+            steps.forEach { data ->
+                Log.d(TAG, "걷기 ${data.value}: ${data.startTime} ~ ${data.endTime}")
+            }
+
+            act.forEach { data ->
+                Log.d(TAG, "activity 4개: ${data.value}")
+            }
+
+            sleepgoal.forEach { data ->
+                Log.d(TAG, "수면 목표: ${data.value}")
+            }
+
+
+        }
+
+
+
+
         super.onCreate(savedInstanceState)
+
+        // 데이터 상태 확인
 
         // 1. LiveData 관찰자 설정: 데이터가 변경될 때 할 작업을 정의
         healthViewModel.steps.observe(this) { stepList ->
@@ -117,7 +272,7 @@ class MainActivity : ComponentActivity() {
         // 2. loadStepsData 함수 호출: 데이터를 가져오는 작업을 시작
         // 이 함수를 호출해야 ViewModel 내부에서 steps.value가 업데이트되고,
         // 위에서 설정한 observe 블록이 실행됩니다.
-        healthViewModel.loadStepsData(this)
+        healthViewModel.loadHealthDatas(this)
 
         askNotificationPermission()
         logRegToken()

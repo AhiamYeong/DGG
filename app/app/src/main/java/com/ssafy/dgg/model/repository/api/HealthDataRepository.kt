@@ -12,7 +12,8 @@ import java.time.LocalDate
 
 class HealthDataRepository(private val store: HealthDataStore) {
 
-    private suspend fun getAggregateResult(
+    // 걸음수 집계
+    private suspend fun getAggregateSteps(
         store: HealthDataStore,
         date: LocalDate
     ): DataResponse<AggregatedData<Long>> {
@@ -21,14 +22,17 @@ class HealthDataRepository(private val store: HealthDataStore) {
                 LocalTimeFilter.of(date.atStartOfDay(), date.plusDays(1).atStartOfDay()),
                 LocalTimeGroup.of(LocalTimeGroupUnit.MINUTELY, 30)
             ).build()
-
         // An API call for an aggregate request.
         return store.aggregateData(stepsRequest)
     }
 
+
+
     suspend fun getSteps(date: LocalDate): List<AggregatedData<Long>> {
         val response: DataResponse<AggregatedData<Long>> =
-            getAggregateResult(store, date)
+            getAggregateSteps(store, date)
         return response.dataList
     }
+
+    // suspend fun getActivitySummary(): List<>
 }

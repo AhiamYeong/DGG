@@ -16,14 +16,14 @@ class HealthViewModel(
     private val dataRepo: HealthDataRepository
 ) : ViewModel() {
 
-    // private set을 통해 외부에서는 값을 변경하지 못하도록 보호
     private val _steps = MutableLiveData<List<AggregatedData<Long>>>()
 
     // public get을 통해 외부에서 값에 접근
     val steps: LiveData<List<AggregatedData<Long>>>
         get() = _steps
 
-    fun loadStepsData(activity: Activity) {
+
+    fun loadHealthDatas(activity: Activity) {
         viewModelScope.launch {
             // 1. 현재 권한 상태 확인
             var hasPermission = permissionRepo.hasPermissions()
