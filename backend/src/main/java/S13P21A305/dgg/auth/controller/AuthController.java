@@ -1,13 +1,8 @@
 package S13P21A305.dgg.auth.controller;
 
-import S13P21A305.dgg.auth.jwt.JWTUtil;
 import S13P21A305.dgg.auth.service.AuthService;
-import S13P21A305.dgg.auth.service.GoogleTokenVerifierService;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

@@ -47,6 +47,8 @@ public class AuthService {
                     .email(email)
                     .role(MemberRole.GUEST)       // 가입=로그인 허용이면 MEMBER로 통일
                     .build();
+
+            memberRepository.save(member);
         } else {
             member.setEmail(email);
             member.setNickname(name);
@@ -55,8 +57,6 @@ public class AuthService {
 
         Long memberId = member.getId();
         String role = member.getRole().toString();
-
-        memberRepository.save(member);
 
         // 3) 서버 자체 JWT 발급 (만료시간은 ms 단위)
         long expiresMs = 60L * 60L * 24 * 1000L; // 24시간
