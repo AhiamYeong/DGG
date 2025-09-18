@@ -1,13 +1,5 @@
 import { memo } from 'react';
-
-interface SearchResult {
-  id: string;
-  name: string;
-  address: string;
-  category?: string;
-  distance?: number; // 미터 단위
-  rating?: number;
-}
+import { SearchResult } from '../../../types/search-types';
 
 interface SearchResultsListProps {
   results: SearchResult[];
@@ -38,6 +30,41 @@ const SearchResultsList = memo<SearchResultsListProps>(({
   const handleToggleFavorite = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     onToggleFavorite(id);
+  };
+
+  // 카테고리별 아이콘 반환 함수
+  const getCategoryIcon = (category?: string) => {
+    if (!category) return null;
+    
+    const categoryLower = category.toLowerCase();
+    
+    if (categoryLower.includes('지하철') || categoryLower.includes('역')) {
+      return (
+        <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 2L3 7v11h4v-6h6v6h4V7l-7-5z"/>
+        </svg>
+      );
+    } else if (categoryLower.includes('음식') || categoryLower.includes('식당') || categoryLower.includes('카페')) {
+      return (
+        <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+        </svg>
+      );
+    } else if (categoryLower.includes('쇼핑') || categoryLower.includes('마트') || categoryLower.includes('편의점')) {
+      return (
+        <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+        </svg>
+      );
+    } else if (categoryLower.includes('병원') || categoryLower.includes('약국')) {
+      return (
+        <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 2L3 7v11h4v-6h6v6h4V7l-7-5z"/>
+        </svg>
+      );
+    }
+    
+    return null;
   };
 
   if (isLoading) {
@@ -99,21 +126,32 @@ const SearchResultsList = memo<SearchResultsListProps>(({
         <div
           key={result.id}
           onClick={() => handleSelect(result)}
-          className="flex items-center justify-between py-3 bg-background border-b border-gray-100 hover:bg-primary hover:bg-opacity-5 transition-colors cursor-pointer"
+          className="flex items-center justify-between py-4 px-2 bg-background border-b border-gray-100 hover:bg-primary hover:bg-opacity-10 hover:shadow-sm transition-all duration-200 cursor-pointer group"
         >
           <div className="flex items-center gap-3 flex-1">
             {/* 장소 아이콘 */}
-            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+            <div className="w-10 h-10 bg-gray-100 group-hover:bg-primary group-hover:bg-opacity-20 rounded-full flex items-center justify-center flex-shrink-0 transition-colors duration-200">
+              {getCategoryIcon(result.category) || (
+                <svg className="w-5 h-5 text-gray-400 group-hover:text-primary transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              )}
             </div>
 
             {/* 장소 정보 */}
             <div className="flex-1 min-w-0">
               <h4 className="font-medium text-font text-sm truncate">{result.name}</h4>
-              <p className="text-xs text-gray-500 truncate">{result.address}</p>
+              {/* 도로명 주소가 있으면 도로명 주소를 우선 표시, 없으면 지번 주소 표시 */}
+              <p className="text-xs text-gray-500 truncate">
+                {result.roadAddress || result.address}
+              </p>
+              {/* 지번 주소가 있고 도로명 주소와 다르면 지번 주소도 표시 */}
+              {result.roadAddress && result.address && result.roadAddress !== result.address && (
+                <p className="text-xs text-gray-400 truncate mt-0.5">
+                  {result.address}
+                </p>
+              )}
               <div className="flex items-center gap-2 mt-1">
                 {result.category && (
                   <span className="text-xs text-primary bg-primary bg-opacity-10 px-2 py-0.5 rounded">
@@ -143,10 +181,10 @@ const SearchResultsList = memo<SearchResultsListProps>(({
           {/* 즐겨찾기 토글 버튼 */}
           <button
             onClick={(e) => handleToggleFavorite(e, result.id)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors opacity-0 group-hover:opacity-100"
             aria-label="즐겨찾기 추가"
           >
-            <svg className="w-4 h-4 text-gray-400 hover:text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-gray-400 hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </button>
