@@ -6,9 +6,9 @@ import SearchResultsList from '../components/functional/Search/SearchResultsList
 import ErrorState from '../components/functional/Search/ErrorState';
 import LoadingState from '../components/functional/Search/LoadingState';
 import EmptyState from '../components/functional/Search/EmptyState';
-import { useNaverSearch } from '../hooks/useNaverSearch';
+import { usePlaceSearch } from '../hooks/usePlaceSearch';
 import { useSearchHistory } from '../hooks/useSearchHistory';
-import { testNaverApiConnection } from '../services/naverSearchApi';
+import { testPlaceSearchApiConnection } from '../services/placeSearchApi';
 import { testSearchHistoryApiConnection } from '../services/searchHistoryApi';
 import { useSearchStore } from '../stores/useSearchStore';
 import { transformRecentSearches, transformFavoritePlaces } from '../utils/dataTransformers';
@@ -41,13 +41,13 @@ export default function SearchPage() {
     refreshAll
   } = useSearchHistory();
   
-  // 네이버 지역 검색 API 훅 사용
+  // 장소 검색 API 훅 사용
   const {
     searchQuery,
     searchState,
     handleSearchChange,
     clearSearch
-  } = useNaverSearch({
+  } = usePlaceSearch({
     display: 10, // 최대 10개 결과
     sort: 'random' // 정확도순 정렬
   });

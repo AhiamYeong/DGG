@@ -113,3 +113,21 @@ export interface RouteHistory extends BaseEntity {
   rating?: number;
   feedback?: string;
 }
+
+// 간단한 경로 타입 (바텀시트에서 사용)
+export interface SimpleRoute extends BaseEntity {
+  name: string;
+  totalDuration: number; // 분 단위
+  totalDistance: number; // 미터 단위
+  departureTime: TimeSlot;
+  arrivalTime: TimeSlot;
+  price?: number;
+  from: Location;
+  to: Location;
+  steps: RouteStep[];
+  // 추천 기준
+  recommendationType: 'minFatigue' | 'minTime' | 'minTransfer';
+  description: string;
+  isBookmarked?: boolean;
+  fatigueLevel?: number; // 피로도 수치 (0-100)
+}

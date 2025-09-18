@@ -36,6 +36,23 @@ export interface NaverSearchItem {
   mapy: string;
 }
 
+// 장소 검색 API 응답 타입
+export interface PlaceSearchApiResponse {
+  query: string;
+  size: number;
+  data: Array<{
+    name: string;
+    isBookmark: boolean;
+    displayAddress: string;
+    mapx: number;
+    mapy: number;
+    address: {
+      road: string;
+      jibun: string;
+    };
+  }>;
+}
+
 // 검색 내역 API 타입
 export interface RecentSearchApiResponse {
   id: string;
