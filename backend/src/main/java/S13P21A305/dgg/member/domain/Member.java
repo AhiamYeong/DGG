@@ -3,11 +3,8 @@ package S13P21A305.dgg.member.domain;
 import S13P21A305.dgg.member.domain.enums.MemberRole;
 import jakarta.persistence.*;
 import lombok.*;
-import org.apache.kafka.common.protocol.types.Field;
-import org.checkerframework.checker.units.qual.C;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.cglib.core.Local;
 
 import java.time.LocalDateTime;
 
