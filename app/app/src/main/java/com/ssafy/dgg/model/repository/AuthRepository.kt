@@ -8,5 +8,5 @@ import retrofit2.http.Body
 interface AuthRepository {
     suspend fun loginWithGoogle(request: GoogleLoginRequest): TokenResponse
     // TODO: refreshtoken 알아보기..ㅎ
-    suspend fun refreshToken(refreshToken: String): TokenResponse
+    // suspend fun refreshToken(refreshToken: String): TokenResponse
 }

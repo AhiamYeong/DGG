@@ -12,7 +12,7 @@ import retrofit2.http.POST
 
 interface AuthApi {
     // 로그인 검증
-    @POST("/auth/google")
+    @POST("auth/google")
     suspend fun loginWithGoogle(
         @Body request: GoogleLoginRequest
     ): Response<TokenResponse>

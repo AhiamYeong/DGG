@@ -51,7 +51,7 @@ android {
             buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io\"")
 
             // native의 직접 API 호출용 URL
-            buildConfigField("String", "API_BASE_URL", "\"http://localhost:8080\"")
+            buildConfigField("String", "API_BASE_URL", "\"http://localhost:8080/api/v1/\"")
 
             buildConfigField("boolean", "IS_DEBUG", "true")
             resValue("string", "dgg", "DGG 개발")
@@ -137,5 +137,4 @@ dependencies {
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
     // gemini 추천...
     implementation("com.google.android.gms:play-services-auth:21.2.0")
-
 }

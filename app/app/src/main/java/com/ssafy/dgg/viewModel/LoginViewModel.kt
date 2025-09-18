@@ -34,7 +34,7 @@ class LoginViewModel(
                 val request = GoogleLoginRequest(idToken = idToken)
 
                 // 로그 찍기
-                // Log.d("LoginFlow", "viewModel Repository 호출 전 idToken=$idToken")
+                Log.d("LoginFlow", "viewModel Repository 호출 전 idToken=$idToken")
 
                 // 서버에 ID Token 전달 → Access/Refresh Token 발급
                 val tokens = authRepository.loginWithGoogle(request)
