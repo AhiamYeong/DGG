@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 data class SleepDataResponse (
     val sleepDate: String,
     val sleepScore: Int,
-    val sleepDuration: Float,
-    val sleepGoal: Float,
+    val sleepDuration: Long,
+    val sleepGoalStart: Long,
+    val sleepGoalEnd: Long,
 )

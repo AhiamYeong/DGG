@@ -8,7 +8,7 @@ data class HealthDataResponse(
     val windowEnd: String, // 마지막 전송 시간
     val totalStep: Long,
     val totalActiveTimeSec: Long,
-    val totalActiveCaloriesBurned: Double,
-    val totalCaloriesBurned: Double,
-    val totalDistanceM: Double
+    val totalActiveCaloriesBurned: Float,
+    val totalCaloriesBurned: Float,
+    val totalDistanceM: Float,
 )
