@@ -31,6 +31,7 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
 import com.samsung.android.sdk.health.data.HealthDataStore
 import com.samsung.android.sdk.health.data.data.AggregatedData
+import com.samsung.android.sdk.health.data.device.DeviceGroup
 import com.samsung.android.sdk.health.data.request.DataType
 import com.samsung.android.sdk.health.data.request.DataTypes
 import com.samsung.android.sdk.health.data.request.LocalTimeFilter
@@ -127,6 +128,8 @@ class MainActivity : ComponentActivity() {
 
             val localTimeFilter = LocalTimeFilter.of(startOfToday, endOfToday)
 
+            val deviceManager = store.getDeviceManager()
+            deviceManager.getDevices(DeviceGroup.MOBILE)
 
             val TAG = "health data preview"
 
@@ -228,7 +231,6 @@ class MainActivity : ComponentActivity() {
                     Log.d(TAG, item.stages.toString())
                 }
 
-
                 /*val s4 = item.getValue(DataType.SleepType.*/
                 Log.d(TAG, "score: $s1")
                 Log.d(TAG, "sleep duration: ${formatDuration(s2)}")
@@ -239,21 +241,18 @@ class MainActivity : ComponentActivity() {
             // val steps = dataRepo.getSteps(LocalDate.now())
 
             steps.forEach { data ->
-                Log.d(TAG, "걷기 ${data.value}: ${data.startTime} ~ ${data.endTime}")
+                Log.d(TAG, "걷기 ${data.startTime} ~ ${data.endTime}: ${data.value} 걸음")
             }
 
             act.forEach { data ->
-                Log.d(TAG, "activity 4개: ${data.value}")
+                Log.d(TAG, "activities: ${data.value}")
             }
 
             sleepgoal.forEach { data ->
                 Log.d(TAG, "수면 목표: ${data.value}")
             }
 
-
         }
-
-
 
 
         super.onCreate(savedInstanceState)

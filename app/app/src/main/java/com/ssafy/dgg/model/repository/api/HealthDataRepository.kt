@@ -26,8 +26,6 @@ class HealthDataRepository(private val store: HealthDataStore) {
         return store.aggregateData(stepsRequest)
     }
 
-
-
     suspend fun getSteps(date: LocalDate): List<AggregatedData<Long>> {
         val response: DataResponse<AggregatedData<Long>> =
             getAggregateSteps(store, date)
