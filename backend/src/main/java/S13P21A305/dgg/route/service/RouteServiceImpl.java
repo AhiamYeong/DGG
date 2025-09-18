@@ -49,7 +49,18 @@ public class RouteServiceImpl implements RouteService {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 		LocalDateTime departureDateTime = LocalDateTime.parse(routeRequestDTO.getStartTime(), formatter);
 
-		// 최소 환승 경로 계산
+		// 최단 경로 계산 - 각 구간별 최단 경로 선택, 선택된 경로들의 총 소요시간 합산
+		int shortestDistanceTime = calculateTotalMetric(waypoints, this::findShortestDistancePathSegment, path -> path.getInfo().getTotalTime());
+		String shortestDistanceArrival = departureDateTime.plusMinutes(shortestDistanceTime).format(formatter);
+		recommendedRoutes.add(RecommendedRouteDTO.builder()
+			.routeId(2L) // 경로 ID
+			.name("최단 경로") // 경로 이름
+			.timeTaken(shortestDistanceTime)
+			.arrivalTime(shortestDistanceArrival)
+			.fatigue(75) // 피로도는 임의 값으로 설정
+			.build());
+
+		// 최소 환승 경로 계산 - 각 구간별 최소 환승 경로 선택, 선택된 경로들의 총 소요시간 합산
 		int minTransferTime = calculateTotalMetric(waypoints, this::findMinTransferPathSegment, path -> path.getInfo().getTotalTime()); // 구간별 최소환승 경로 찾고, 그 경로들의 소요시간을 합산
 		String minTransferArrival = departureDateTime.plusMinutes(minTransferTime).format(formatter); // 출발 시간 + 총 소요시간 = 최종 도착 시간
 		recommendedRoutes.add(RecommendedRouteDTO.builder()
@@ -66,7 +77,7 @@ public class RouteServiceImpl implements RouteService {
 			.destinationAddress(routeRequestDTO.getDestinationAddress())
 			.stopoverAddresses(routeRequestDTO.getStopoverAddresses())
 			.departureTime(routeRequestDTO.getStartTime())
-			.destinationTime(minTransferArrival) // 최소 환승의 경우에 소요되는 시간을 대표 도착 시간으로 설정 -> 임의로 설정
+			.destinationTime(shortestDistanceArrival) // 가장 빠른 도착 시간을 대표로 설정
 			.recommendedRoutes(recommendedRoutes)
 			.build();
 	}
@@ -115,7 +126,16 @@ public class RouteServiceImpl implements RouteService {
 	}
 
 	/**
-	 * 경로 리스트에서 최소 환승 경로 선택
+	 * 경로 리스트에서 최단 경로 선택하는 로직
+	 */
+	private OdSayResponseDTO.Path findShortestDistancePathSegment(List<OdSayResponseDTO.Path> paths) {
+		return paths.stream()
+			.min(Comparator.comparingInt(p -> p.getInfo().getTotalDistance())) // totalDistance를 기준으로 비교
+			.orElseThrow(() -> new IllegalStateException("최단 경로를 찾을 수 없습니다."));
+	}
+
+	/**
+	 * 경로 리스트에서 최소 환승 경로 선택하는 로직
 	 */
 	private OdSayResponseDTO.Path findMinTransferPathSegment(List<OdSayResponseDTO.Path> paths) {
 		return paths.stream()
