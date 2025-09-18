@@ -24,6 +24,6 @@ ENV JAVA_OPTS=""
 
 # Actuator 건강 체크 사용 시
 HEALTHCHECK --interval=10s --timeout=3s --retries=10 \
-  CMD wget -qO- http://127.0.0.1:8080/actuator/health || exit 1
+  CMD curl -fsS http://127.0.0.1:8080/actuator/health || curl -fI http://127.0.0.1:8080/ || exit 1
 
 CMD ["sh","-c","java $JAVA_OPTS -jar app.jar"]
