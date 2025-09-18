@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { NaverMapLocation, NaverMapProps } from '../../types/naver-map';
+import type { NaverMapLocation, NaverMapProps } from '../../types/map';
 
 interface NaverMapComponentProps extends NaverMapProps {
   mapRef: React.RefObject<HTMLDivElement>;

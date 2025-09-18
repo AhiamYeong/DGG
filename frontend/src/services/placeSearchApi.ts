@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { PlaceSearchApiResponse } from '../types/api';
+import type { PlaceSearchApiResponse } from '../types/api-types';
 
 // API 설정
 const API_BASE_URL = '/api/v1/search';

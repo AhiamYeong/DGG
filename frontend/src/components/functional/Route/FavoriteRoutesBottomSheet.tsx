@@ -65,14 +65,14 @@ export default function FavoriteRoutesBottomSheet() {
             routes={favoriteRoutes as any}
             onSelectRoute={selectRoute as any}
             onToggleBookmark={(id) => toggleBookmark(id, 'favorite')}
-            emptyMessage="즐겨찾기한 노선이 없습니다"
+            actionLabel="선택"
           />
         ) : (
           <RouteList
             routes={reservedRoutes as any}
             onSelectRoute={selectRoute as any}
             onToggleBookmark={(id) => toggleBookmark(id, 'reserved')}
-            emptyMessage="예약된 노선이 없습니다"
+            actionLabel="선택"
           />
         )}
       </div>

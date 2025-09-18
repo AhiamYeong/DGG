@@ -1,10 +1,10 @@
+import { useCallback } from 'react';
 import { useMapViewModel } from '../hooks/useMapViewModel';
 import { useRouteSearchStore } from '../stores/useRouteSearchStore';
-import SearchBox from '../components/functional/SearchBox';
+import { useNavigationStore } from '../stores/useNavigationStore';
+import { MapContainer } from '../components/map';
+import { NavigationMode, SearchMode } from '../components/navigation';
 import TimePicker from '../components/functional/TimePicker';
-import RouteResults from '../components/functional/RouteResults';
-import FavoriteRoutesBottomSheet from '../components/functional/Route/FavoriteRoutesBottomSheet';
-import NaverMap from '../components/functional/NaverMap';
 
 export default function MainMapPage() {
   // 지도 관련 로직
@@ -14,7 +14,9 @@ export default function MainMapPage() {
     isLoaded,
     getCurrentLocation,
     initializeMap,
-    cleanupMap
+    cleanupMap,
+    drawGangnamToSeongsuRoute,
+    clearPolylinesAndMarkers
   } = useMapViewModel();
 
   // 경로 검색 관련 상태 및 액션 (스토어에서 직접 사용)
@@ -34,19 +36,28 @@ export default function MainMapPage() {
     selectRoute
   } = useRouteSearchStore();
 
-  // 출발 옵션 탭 닫기 핸들러
-  const handleCloseDepartureOptions = () => {
+  // 네비게이션 관련 상태 및 액션
+  const {
+    isNavigating,
+    currentRoute,
+    sideSheetPosition,
+    currentStepIndex,
+    closeSideSheet,
+    setSideSheetPosition,
+    stopNavigation
+  } = useNavigationStore();
+
+  // 출발 옵션 탭 닫기 핸들러 (메모이제이션)
+  const handleCloseDepartureOptions = useCallback(() => {
     closeRouteResults();
-  };
+  }, [closeRouteResults]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* 레이어 1: 네이버 지도 (전체 화면) */}
+      {/* 레이어 0: 지도 컨테이너 */}
       <div className="absolute inset-0 z-0">
-        <NaverMap 
-          center={currentLocation}
-          height="100vh"
-          width="100%"
+        <MapContainer
+          currentLocation={currentLocation}
           mapRef={mapRef}
           isLoaded={isLoaded}
           onInitialize={initializeMap}
@@ -54,48 +65,40 @@ export default function MainMapPage() {
         />
       </div>
 
-      {/* 레이어 2: UI 컴포넌트들 */}
+      {/* 레이어 1: 네비게이션 모드 또는 검색 모드 */}
       <div className="absolute inset-0 z-10 pointer-events-none">
-        {/* 상단 검색 박스 */}
-        <div className="absolute top-0 left-0 right-0 pointer-events-auto">
-          <SearchBox 
+        {isNavigating && currentRoute ? (
+          <NavigationMode
+            currentRoute={currentRoute}
+            currentStepIndex={currentStepIndex}
+            sideSheetPosition={sideSheetPosition}
+            onPositionChange={setSideSheetPosition}
+            onClose={closeSideSheet}
+            onStopNavigation={stopNavigation}
+            headerHeight={140}
+          />
+        ) : (
+          <SearchMode
             onSearch={startRouteSearch}
             onDepartureOptionChange={setSelectedDepartureOption}
             selectedDepartureOption={selectedDepartureOption}
-            showDepartureOptions={false}
+            showDepartureOptions={showDepartureOptions}
             onCloseDepartureOptions={handleCloseDepartureOptions}
+            routeResults={routeResults}
+            actionLabel={actionLabel}
+            onSelectRoute={selectRoute}
+            onToggleBookmark={() => {}}
+            onShowOptions={() => {}}
+            onCloseRouteResults={closeRouteResults}
+            showTimePicker={showTimePicker}
+            onLocationClick={getCurrentLocation}
+            onPolylineClick={drawGangnamToSeongsuRoute}
+            onRemoveClick={clearPolylinesAndMarkers}
           />
-        </div>
-
-        {/* 경로 결과 컴포넌트 */}
-        <RouteResults
-          isOpen={showDepartureOptions}
-          routes={routeResults}
-          actionLabel={actionLabel}
-          selectedDepartureOption={selectedDepartureOption}
-          onSelectRoute={selectRoute}
-          onToggleBookmark={() => {}}
-          onShowOptions={() => {}}
-          onDepartureOptionChange={setSelectedDepartureOption}
-          onClose={closeRouteResults}
-        />
-
-        {/* 현재 위치 버튼 (우측 하단) */}
-        <div className="absolute bottom-32 right-4 pointer-events-auto">
-          <button
-            onClick={getCurrentLocation}
-            className="bg-white hover:bg-secondary hover:bg-opacity-20 text-font p-3 rounded-full shadow-lg transition-colors"
-            title="현재 위치로 이동"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </button>
-        </div>
+        )}
       </div>
 
-      {/* 타임픽커 모달 - pointer-events-none 컨테이너 밖으로 이동 */}
+      {/* 타임픽커 모달 - pointer-events-none 영향 받지 않도록 별도 레이어 */}
       <TimePicker
         isOpen={showTimePicker}
         departureTime={departureTime}
@@ -103,13 +106,6 @@ export default function MainMapPage() {
         onConfirm={confirmTimeSelection}
         onCancel={cancelTimeSelection}
       />
-
-      {/* 하단 즐겨찾기 예약노선 바텀시트 - 처음 지도 화면에서만 표시 */}
-      {routeResults.length === 0 && !showTimePicker && !showDepartureOptions && (
-        <div className="absolute bottom-0 left-0 right-0 z-20">
-          <FavoriteRoutesBottomSheet />
-        </div>
-      )}
     </div>
   );
 }

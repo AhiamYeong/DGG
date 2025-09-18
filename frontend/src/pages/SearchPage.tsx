@@ -8,7 +8,6 @@ import LoadingState from '../components/functional/Search/LoadingState';
 import EmptyState from '../components/functional/Search/EmptyState';
 import { usePlaceSearch } from '../hooks/usePlaceSearch';
 import { useSearchHistory } from '../hooks/useSearchHistory';
-import { testPlaceSearchApiConnection } from '../services/placeSearchApi';
 import { testSearchHistoryApiConnection } from '../services/searchHistoryApi';
 import { useSearchStore } from '../stores/useSearchStore';
 import { transformRecentSearches, transformFavoritePlaces } from '../utils/dataTransformers';
@@ -64,14 +63,6 @@ export default function SearchPage() {
     // API 연결 확인을 백그라운드에서 처리 (사용자 경험에 영향 없음)
     const checkApiConnections = async () => {
       try {
-        // 장소 검색 API 연결 확인
-        const placeResult = await testPlaceSearchApiConnection();
-        if (placeResult.success) {
-          console.log('🔍 장소 검색 API 연결 상태:', placeResult.message);
-        } else {
-          console.warn('⚠️ 장소 검색 API 연결 실패:', placeResult.message);
-        }
-        
         // 검색 내역 API 연결 확인
         const historyResult = await testSearchHistoryApiConnection();
         if (historyResult.success) {

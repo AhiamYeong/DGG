@@ -1,2 +1,2 @@
-export { RouteResults } from './RouteResults';
-export { default } from './RouteResults';
+export { RouteResultsContainer } from './RouteResultsContainer';
+export { default } from './RouteResultsContainer';
