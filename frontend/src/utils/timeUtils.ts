@@ -1,0 +1,58 @@
+/**
+ * 시간 관련 유틸리티 함수들
+ */
+
+/**
+ * 현재 시간을 기준으로 최소 선택 가능한 시간을 반환
+ * 15분 단위로 반올림
+ */
+export const getMinTime = (): Date => {
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  
+  // 현재 시간의 15분 단위로 반올림
+  const roundedMinute = Math.ceil(currentMinute / 15) * 15;
+  const minTime = new Date();
+  minTime.setHours(currentHour, roundedMinute, 0, 0);
+  
+  return minTime;
+};
+
+/**
+ * 주어진 시간이 현재 시간인지 확인 (5분 이내 차이)
+ */
+export const isCurrentTime = (time: Date): boolean => {
+  const now = new Date();
+  const timeDiff = Math.abs(time.getTime() - now.getTime());
+  return timeDiff <= 5 * 60 * 1000; // 5분 = 5 * 60 * 1000ms
+};
+
+/**
+ * 출발 옵션과 시간에 따른 액션 라벨 결정
+ */
+export const getActionLabel = (
+  departureTime: Date, 
+  option: 'now' | 'schedule'
+): string => {
+  if (option === 'now') return '안내 시작';
+  
+  // 현재 시간과의 차이 계산
+  const now = new Date();
+  const timeDiff = departureTime.getTime() - now.getTime();
+  const minutesDiff = Math.floor(timeDiff / (1000 * 60));
+  
+  // 5분 이상 차이나면 "경로 예약", 그렇지 않으면 "안내 시작"
+  return minutesDiff >= 5 ? '경로 예약' : '안내 시작';
+};
+
+/**
+ * 시간을 한국어 형식으로 포맷팅
+ */
+export const formatTime = (date: Date): string => {
+  return date.toLocaleTimeString('ko-KR', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: true 
+  });
+};

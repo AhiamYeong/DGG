@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useBottomSheetSwipe } from '../../../hooks/useBottomSheetSwipe';
+// import { useBottomSheetSwipe } from '../../../hooks/useBottomSheetSwipe';
 import RouteList from './RouteList';
 import type { SimpleRoute } from '../../../types/routes';
 
@@ -25,18 +25,18 @@ export default function RouteResultsBottomSheet({
   const modalRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   
-  // 바텀시트 스와이프 훅 사용
-  const { 
-    isDragging, 
-    dragY, 
-    handleTouchStart, 
-    handleTouchMove, 
-    handleTouchEnd,
-    resetPosition 
-  } = useBottomSheetSwipe({
-    onClose,
-    threshold: 100
-  });
+  // 바텀시트 스와이프 훅 사용 (임시로 비활성화)
+  // const { 
+  //   isDragging, 
+  //   dragY, 
+  //   handleTouchStart, 
+  //   handleTouchMove, 
+  //   handleTouchEnd,
+  //   resetPosition 
+  // } = useBottomSheetSwipe({
+  //   onClose,
+  //   threshold: 100
+  // });
 
   // ESC 키로 닫기
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -109,7 +109,7 @@ export default function RouteResultsBottomSheet({
       }
       
       // 드래그 위치 리셋
-      resetPosition();
+      // resetPosition();
     }
     
     return () => {
@@ -117,7 +117,7 @@ export default function RouteResultsBottomSheet({
       document.removeEventListener('keydown', handleFocusTrap);
       document.body.style.overflow = '';
     };
-  }, [open, handleKeyDown, handleFocusTrap, resetPosition]);
+  }, [open, handleKeyDown, handleFocusTrap]);
 
   // 백드롭 클릭으로 닫기
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
@@ -130,11 +130,12 @@ export default function RouteResultsBottomSheet({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
+      className="fixed inset-0 z-[9999] flex justify-center"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="route-results-title"
+      style={{ paddingTop: '96px' }} // 검색창 높이만큼 여백 (top-24 = 96px)
     >
       {/* 백드롭 */}
       <div className="absolute inset-0 bg-black bg-opacity-50 transition-opacity" />
@@ -142,14 +143,14 @@ export default function RouteResultsBottomSheet({
       {/* 바텀시트 */}
       <div
         ref={modalRef}
-        className="relative w-full max-w-md bg-white rounded-t-2xl shadow-2xl transform transition-transform duration-300 ease-out"
+        className="relative w-full max-w-md bg-white rounded-t-2xl shadow-2xl transform transition-all duration-300 ease-out animate-slide-up"
         style={{
-          transform: `translateY(${Math.max(0, dragY)}px)`,
-          maxHeight: '80vh'
+          // transform: `translateY(${Math.max(0, dragY)}px)`,
+          maxHeight: 'calc(100vh - 140px)' // 검색창 높이를 고려한 최대 높이
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        // onTouchStart={handleTouchStart}
+        // onTouchMove={handleTouchMove}
+        // onTouchEnd={handleTouchEnd}
       >
         {/* 드래그 핸들 */}
         <div className="flex justify-center pt-3 pb-2">
@@ -180,7 +181,7 @@ export default function RouteResultsBottomSheet({
         </div>
         
         {/* 내용 영역 */}
-        <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 120px)' }}>
+        <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
           <div className="bg-white">
             {routes.length === 0 ? (
               <div className="text-center py-8">

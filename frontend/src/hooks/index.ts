@@ -13,3 +13,6 @@ export { useSearchHistory } from './useSearchHistory';
 // 공통 유틸리티 훅들
 export { useApiState } from './useApiState';
 export { useAsyncOperation } from './useAsyncOperation';
+
+// 경로 검색 플로우 훅
+export { useRouteSearchFlow } from './useRouteSearchFlow';

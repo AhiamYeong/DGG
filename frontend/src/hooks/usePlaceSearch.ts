@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { searchPlacesWithApi } from '../services/placeSearchApi';
 import type { SearchResult } from '../types/search';
 
@@ -23,7 +23,7 @@ interface UsePlaceSearchReturn {
  * 장소 검색 훅
  */
 export const usePlaceSearch = (options: UsePlaceSearchOptions = {}): UsePlaceSearchReturn => {
-  const { display = 10, sort = 'random', debounceMs = 300 } = options;
+  const { debounceMs = 300 } = options;
   
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -47,7 +47,18 @@ export const usePlaceSearch = (options: UsePlaceSearchOptions = {}): UsePlaceSea
         const response = await searchPlacesWithApi(query);
         
         if (response.success) {
-          setResults(response.data);
+          // API 응답을 SearchResult 형식으로 변환
+        const transformedResults = response.data.map(item => ({
+          ...item,
+          location: item.coordinates ? {
+            latitude: item.coordinates.lat,
+            longitude: item.coordinates.lng
+          } : { latitude: 0, longitude: 0 },
+          type: 'address' as const,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }));
+        setResults(transformedResults);
         } else {
           setError(response.message);
           setResults([]);

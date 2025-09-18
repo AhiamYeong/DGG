@@ -1,4 +1,44 @@
-// 서버 API 호출 전용 (네이버 지도 SDK는 NaverMap.tsx에서 직접 처리)
+// 네이버 지도 API 및 서버 API 호출
+
+// 네이버 지도 API 키
+export const getNaverMapClientId = (): string => {
+  const clientId = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
+  if (!clientId) {
+    throw new Error('VITE_NAVER_MAP_CLIENT_ID가 설정되지 않았습니다.');
+  }
+  return clientId;
+};
+
+// 네이버 지도 API 스크립트 로드
+export const loadNaverMapScript = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    // 이미 로드된 경우
+    if (window.naver && window.naver.maps) {
+      resolve();
+      return;
+    }
+
+    // 스크립트 태그 생성
+    const script = document.createElement('script');
+    const clientId = getNaverMapClientId();
+    console.log('API Key:', clientId); // 디버깅용
+    
+    script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${clientId}`;
+    script.async = true;
+    
+    script.onload = () => {
+      console.log('네이버 Map API 로드 완료');
+      resolve();
+    };
+    
+    script.onerror = () => {
+      console.error('네이버 Map API 로드 실패');
+      reject(new Error('네이버 Map API 로드에 실패했습니다.'));
+    };
+    
+    document.head.appendChild(script);
+  });
+};
 
 interface SearchPlaceResponse {
   id: string;

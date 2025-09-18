@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { loadNaverMapScript } from '../services/mapApi';
 import type { NaverMapLocation, NaverMapInstance } from '../types/naver-map';
 
 export function useMapViewModel() {
@@ -49,34 +50,9 @@ export function useMapViewModel() {
     };
 
     // 네이버 Map API 동적 로딩
-    const loadNaverMapAPI = () => {
-      return new Promise((resolve, reject) => {
-        // 이미 로드되어 있는지 확인
-        if (window.naver && window.naver.maps) {
-          resolve(window.naver);
-          return;
-        }
-
-        // 스크립트 태그 생성
-        const script = document.createElement('script');
-        const clientId = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
-        console.log('API Key:', clientId); // 디버깅용
-        
-        script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${clientId}`;
-        script.async = true;
-        
-        script.onload = () => {
-          console.log('네이버 Map API 로드 완료');
-          resolve(window.naver);
-        };
-        
-        script.onerror = () => {
-          console.error('네이버 Map API 로드 실패');
-          reject(new Error('네이버 Map API 로드 실패'));
-        };
-
-        document.head.appendChild(script);
-      });
+    const loadNaverMapAPI = async () => {
+      await loadNaverMapScript();
+      return window.naver;
     };
 
     // API 로드 및 지도 초기화

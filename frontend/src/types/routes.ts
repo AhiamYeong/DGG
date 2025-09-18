@@ -128,4 +128,6 @@ export interface SimpleRoute extends BaseEntity {
   // 추천 기준
   recommendationType: 'minFatigue' | 'minTime' | 'minTransfer';
   description: string;
+  isBookmarked?: boolean;
+  fatigueLevel?: number; // 피로도 수치 (0-100)
 }

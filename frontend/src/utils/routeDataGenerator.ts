@@ -1,4 +1,5 @@
-import type { SimpleRoute, RouteStep, Location, TimeSlot } from '../types/routes';
+import type { SimpleRoute, RouteStep } from '../types/routes';
+import type { Location, TimeSlot } from '../types/common';
 
 /**
  * 경로 추천 결과를 위한 더미 데이터 생성기
@@ -11,8 +12,7 @@ const createTimeSlot = (minutesFromNow: number): TimeSlot => {
   
   return {
     hour: time.getHours(),
-    minute: time.getMinutes(),
-    date: time.toISOString().split('T')[0]
+    minute: time.getMinutes()
   };
 };
 
@@ -20,10 +20,8 @@ const createTimeSlot = (minutesFromNow: number): TimeSlot => {
 const createLocation = (name: string, address: string): Location => ({
   name,
   address,
-  coordinates: {
-    lat: 37.5665 + (Math.random() - 0.5) * 0.1,
-    lng: 126.9780 + (Math.random() - 0.5) * 0.1
-  }
+  latitude: 37.5665 + (Math.random() - 0.5) * 0.1,
+  longitude: 126.9780 + (Math.random() - 0.5) * 0.1
 });
 
 // 경로 단계 생성
@@ -52,10 +50,10 @@ export const generateRouteRecommendations = (
   to: string,
   departureTime?: TimeSlot
 ): SimpleRoute[] => {
-  const now = new Date();
-  const isCurrentTime = !departureTime || 
-    (departureTime.hour === now.getHours() && 
-     Math.abs(departureTime.minute - now.getMinutes()) <= 30);
+  // const now = new Date();
+  // const isCurrentTime = !departureTime || 
+  //   (departureTime.hour === now.getHours() && 
+  //    Math.abs(departureTime.minute - now.getMinutes()) <= 30);
 
   const baseDepartureTime = departureTime || createTimeSlot(0);
   const fromLocation = createLocation(from, `${from}역`);
@@ -91,6 +89,8 @@ export const generateRouteRecommendations = (
       }),
       createRouteStep('walk', '도착지까지', 5, 300)
     ],
+    isBookmarked: false,
+    fatigueLevel: 40, // 최소 피로도
     createdAt: new Date(),
     updatedAt: new Date()
   };
@@ -117,6 +117,8 @@ export const generateRouteRecommendations = (
       }),
       createRouteStep('walk', '도착지까지', 10, 800)
     ],
+    isBookmarked: true,
+    fatigueLevel: 90, // 최소 시간 (높은 피로도)
     createdAt: new Date(),
     updatedAt: new Date()
   };
@@ -144,6 +146,8 @@ export const generateRouteRecommendations = (
       }),
       createRouteStep('walk', '도착지까지', 4, 200)
     ],
+    isBookmarked: false,
+    fatigueLevel: 60, // 최소 환승 (중간 피로도)
     createdAt: new Date(),
     updatedAt: new Date()
   };
