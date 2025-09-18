@@ -1,17 +1,10 @@
 // API 관련 타입 정의
 
-/**
- * 공통 API 응답 타입
- * @template T 응답 데이터의 타입
- */
-export interface ApiResponse<T> {
-  /** API 호출 성공 여부 */
+// 공통 API 응답 타입
+export interface ApiResponse<T = any> {
   success: boolean;
-  /** 응답 데이터 */
   data: T;
-  /** 응답 메시지 */
-  message: string;
-  /** 에러 메시지 (실패 시) */
+  message?: string;
   error?: string;
 }
 

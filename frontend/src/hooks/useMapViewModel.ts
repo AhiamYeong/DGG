@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useMapInitialization, useMapLocation, usePolyline, useMarker, useMapSearch } from './map';
+import { useEffect, useCallback } from 'react';
+import { useMapInitialization, useMapLocation, usePolyline, useMarker } from './map';
 import type { NaverMapLocation } from '../types/map';
 
 /**
@@ -19,14 +19,13 @@ export function useMapViewModel() {
   // 마커 관리
   const { clearMarkers, createRouteMarkers } = useMarker(map);
   
-  // 검색 기능
-  const { handleSearch } = useMapSearch();
+  // 검색 기능은 useRouteSearchStore에서 처리
 
   // 폴리라인과 마커를 함께 제거하는 함수
-  const clearPolylinesAndMarkers = () => {
+  const clearPolylinesAndMarkers = useCallback(() => {
     clearPolylines();
     clearMarkers();
-  };
+  }, [clearPolylines, clearMarkers]);
 
   // currentLocation이 변경될 때 지도 위치 업데이트
   useEffect(() => {
@@ -44,7 +43,6 @@ export function useMapViewModel() {
     
     // Actions
     getCurrentLocation,
-    handleSearch,
     initializeMap,
     cleanupMap,
     setCurrentLocation,

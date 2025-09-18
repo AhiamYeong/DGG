@@ -1,6 +1,9 @@
-import { memo } from 'react';
-import { RouteInfo, SideSheet } from '../functional/Navigation';
+import { memo, lazy, Suspense } from 'react';
+import { RouteInfo } from '../route';
 import type { SimpleRoute } from '../../types/route-types';
+
+// Lazy load heavy SideSheet component
+const SideSheet = lazy(() => import('../route/SideSheet'));
 
 interface NavigationModeProps {
   currentRoute: SimpleRoute;
@@ -36,13 +39,15 @@ export const NavigationMode = memo<NavigationModeProps>(({
 
       {/* 사이드 시트 */}
       <div className="pointer-events-auto">
-        <SideSheet
-          position={sideSheetPosition}
-          route={currentRoute}
-          onPositionChange={onPositionChange}
-          onClose={onClose}
-          headerHeight={headerHeight}
-        />
+        <Suspense fallback={<div className="w-full h-20 bg-gray-100 animate-pulse rounded-lg" />}>
+          <SideSheet
+            position={sideSheetPosition}
+            route={currentRoute}
+            onPositionChange={onPositionChange}
+            onClose={onClose}
+            headerHeight={headerHeight}
+          />
+        </Suspense>
       </div>
 
       {/* 네비게이션 종료 버튼 */}

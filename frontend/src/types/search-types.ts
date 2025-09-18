@@ -55,14 +55,7 @@ export interface SearchResult extends BaseEntity {
 }
 
 
-export interface SearchParams {
-  query: string;
-  location?: Location;
-  radius?: number; // 미터 단위
-  limit?: number;
-  type?: SearchType[];
-  category?: string[];
-}
+// 사용하지 않는 SearchParams 타입 제거됨
 
 export interface SearchFilters {
   type?: SearchType[];

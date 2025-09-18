@@ -1,8 +1,8 @@
 import { memo } from 'react';
-import SearchBox from '../functional/SearchBox';
-import RouteResultsContainer from '../functional/RouteResults';
-import FavoriteRoutesBottomSheet from '../functional/Route/FavoriteRoutesBottomSheet';
-import { MapControls } from '../ui';
+import { SearchBox } from '../search';
+import { RouteResultsContainer } from '../route';
+import { FavoriteRoutesBottomSheet } from '../route';
+import { MapControls } from '../map';
 import type { SimpleRoute } from '../../types/route-types';
 
 interface SearchModeProps {
@@ -17,8 +17,6 @@ interface SearchModeProps {
   routeResults: SimpleRoute[];
   actionLabel: string;
   onSelectRoute: (route: SimpleRoute) => void;
-  onToggleBookmark: (routeId: string) => void;
-  onShowOptions: (routeId: string) => void;
   onCloseRouteResults: () => void;
   
   // 시간 선택 관련 props
@@ -44,8 +42,6 @@ export const SearchMode = memo<SearchModeProps>(({
   routeResults,
   actionLabel,
   onSelectRoute,
-  onToggleBookmark,
-  onShowOptions,
   onCloseRouteResults,
   showTimePicker,
   onLocationClick,
@@ -74,8 +70,6 @@ export const SearchMode = memo<SearchModeProps>(({
         actionLabel={actionLabel}
         selectedDepartureOption={selectedDepartureOption}
         onSelectRoute={onSelectRoute}
-        onToggleBookmark={onToggleBookmark}
-        onShowOptions={onShowOptions}
         onDepartureOptionChange={onDepartureOptionChange}
         onClose={onCloseRouteResults}
       />

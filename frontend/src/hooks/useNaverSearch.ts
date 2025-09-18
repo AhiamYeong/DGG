@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { searchPlacesWithNaver, type SearchOptions } from '../services/naverSearchApi';
 import { useSearchDebounce } from './useDebounce';
+import { UI_CONSTANTS } from '../constants';
+
+// Dynamic import for large API module
+const loadNaverSearchApi = () => import('../api/naverSearchApi');
+
+// Import types separately (they're small)
+import type { SearchOptions } from '../api/naverSearchApi';
 
 // 검색 결과 타입 (앱에서 사용하는 형식)
 export interface SearchResult {
@@ -58,7 +64,7 @@ export function useNaverSearch(options: SearchOptions = {}) {
   ]);
 
   // 디바운스된 검색어 (500ms 지연)
-  const debouncedQuery = useSearchDebounce(searchQuery, 500);
+  const debouncedQuery = useSearchDebounce(searchQuery, UI_CONSTANTS.DEBOUNCE_DELAY);
 
   // 검색 실행 함수 (외부에서 호출용)
   const executeSearch = useCallback(async (query: string) => {
@@ -80,6 +86,7 @@ export function useNaverSearch(options: SearchOptions = {}) {
     }));
 
     try {
+      const { searchPlacesWithNaver } = await loadNaverSearchApi();
       const response = await searchPlacesWithNaver(query, memoizedOptions);
       
       if (response.success) {
@@ -154,6 +161,7 @@ export function useNaverSearch(options: SearchOptions = {}) {
       }));
 
       try {
+        const { searchPlacesWithNaver } = await loadNaverSearchApi();
         const response = await searchPlacesWithNaver(query, memoizedOptions);
         
         if (response.success) {

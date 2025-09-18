@@ -25,15 +25,4 @@ export interface BaseEntity {
   updatedAt: Date;
 }
 
-export interface PaginationParams {
-  page: number;
-  limit: number;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+// 사용하지 않는 타입들 제거됨

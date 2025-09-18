@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import NaverMap from '../functional/NaverMap';
+import NaverMap from './NaverMap';
 import type { NaverMapLocation } from '../../types/map';
 
 interface MapContainerProps {
