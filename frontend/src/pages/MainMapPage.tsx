@@ -4,7 +4,7 @@ import { useRouteSearchStore } from '../stores/useRouteSearchStore';
 import { useNavigationStore } from '../stores/useNavigationStore';
 import { MapContainer } from '../components/map';
 import { NavigationMode, SearchMode } from '../components/navigation';
-import { MapLayout, LayerContainer } from '../components/layout';
+import TimePicker from '../components/functional/TimePicker';
 
 export default function MainMapPage() {
   // 지도 관련 로직
@@ -53,9 +53,9 @@ export default function MainMapPage() {
   }, [closeRouteResults]);
 
   return (
-    <MapLayout>
+    <div className="relative w-full h-screen overflow-hidden">
       {/* 레이어 0: 지도 컨테이너 */}
-      <LayerContainer zIndex={0}>
+      <div className="absolute inset-0 z-0">
         <MapContainer
           currentLocation={currentLocation}
           mapRef={mapRef}
@@ -63,10 +63,10 @@ export default function MainMapPage() {
           onInitialize={initializeMap}
           onCleanup={cleanupMap}
         />
-      </LayerContainer>
+      </div>
 
       {/* 레이어 1: 네비게이션 모드 또는 검색 모드 */}
-      <LayerContainer zIndex={10} pointerEvents="auto">
+      <div className="absolute inset-0 z-10 pointer-events-none">
         {isNavigating && currentRoute ? (
           <NavigationMode
             currentRoute={currentRoute}
@@ -91,16 +91,21 @@ export default function MainMapPage() {
             onShowOptions={() => {}}
             onCloseRouteResults={closeRouteResults}
             showTimePicker={showTimePicker}
-            departureTime={departureTime}
-            onTimeChange={setDepartureTime}
-            onConfirmTime={confirmTimeSelection}
-            onCancelTime={cancelTimeSelection}
             onLocationClick={getCurrentLocation}
             onPolylineClick={drawGangnamToSeongsuRoute}
             onRemoveClick={clearPolylinesAndMarkers}
           />
         )}
-      </LayerContainer>
-    </MapLayout>
+      </div>
+
+      {/* 타임픽커 모달 - pointer-events-none 영향 받지 않도록 별도 레이어 */}
+      <TimePicker
+        isOpen={showTimePicker}
+        departureTime={departureTime}
+        onTimeChange={setDepartureTime}
+        onConfirm={confirmTimeSelection}
+        onCancel={cancelTimeSelection}
+      />
+    </div>
   );
 }
