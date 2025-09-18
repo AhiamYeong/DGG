@@ -1,4 +1,45 @@
 // 네이버 지도 API 및 서버 API 호출
+import axios from 'axios';
+
+// API 설정
+const API_BASE_URL = '/api';
+
+// Axios 인스턴스 생성
+const mapApi = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000, // 10초 타임아웃
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// 요청 인터셉터
+mapApi.interceptors.request.use(
+  (config) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🗺️ 지도 API 요청:', config);
+    }
+    return config;
+  },
+  (error) => {
+    console.error('❌ 지도 API 요청 에러:', error);
+    return Promise.reject(error);
+  }
+);
+
+// 응답 인터셉터
+mapApi.interceptors.response.use(
+  (response) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ 지도 API 응답:', response);
+    }
+    return response;
+  },
+  (error) => {
+    console.error('❌ 지도 API 응답 에러:', error);
+    return Promise.reject(error);
+  }
+);
 
 // 네이버 지도 API 키
 export const getNaverMapClientId = (): string => {
@@ -60,18 +101,15 @@ interface RouteResponse {
 // 장소 검색 API
 export const searchPlaces = async (query: string): Promise<SearchPlaceResponse[]> => {
   try {
-    const response = await fetch(`/api/search/places?query=${encodeURIComponent(query)}`);
-    if (!response.ok) {
-      throw new Error('장소 검색에 실패했습니다.');
-    }
-    return await response.json();
+    const response = await mapApi.get(`/search/places?query=${encodeURIComponent(query)}`);
+    return response.data;
   } catch (error) {
     console.error('장소 검색 오류:', error);
     throw error;
   }
 };
 
-// 경로 검색 API
+// 경로 검색 API (기존 - 더 이상 사용하지 않음)
 export const searchRoutes = async (
   origin: string,
   destination: string,
@@ -84,11 +122,35 @@ export const searchRoutes = async (
       ...(waypoints && waypoints.length > 0 && { waypoints: waypoints.join(',') })
     });
     
-    const response = await fetch(`/api/routes/search?${params}`);
-    if (!response.ok) {
-      throw new Error('경로 검색에 실패했습니다.');
-    }
-    return await response.json();
+    const response = await mapApi.get(`/routes/search?${params}`);
+    return response.data;
+  } catch (error) {
+    console.error('경로 검색 오류:', error);
+    throw error;
+  }
+};
+
+// 새로운 경로 검색 API (시간 정보 포함)
+export const searchRoutesWithTime = async (
+  departureAddress: string,
+  destinationAddress: string,
+  startTime: string,
+  stopoverAddresses?: string[]
+): Promise<any> => {
+  try {
+    const requestBody = {
+      departureAddress,
+      destinationAddress,
+      startTime,
+      ...(stopoverAddresses && stopoverAddresses.length > 0 && { stopoverAddresses })
+    };
+
+    console.log('경로 검색 API 요청:', requestBody);
+
+    const response = await mapApi.post('/v1/maps/routes', requestBody);
+    
+    console.log('경로 검색 API 응답:', response.data);
+    return response.data;
   } catch (error) {
     console.error('경로 검색 오류:', error);
     throw error;
@@ -98,11 +160,8 @@ export const searchRoutes = async (
 // 즐겨찾기 경로 목록 API
 export const getFavoriteRoutes = async (): Promise<RouteResponse[]> => {
   try {
-    const response = await fetch('/api/routes/favorites');
-    if (!response.ok) {
-      throw new Error('즐겨찾기 경로 조회에 실패했습니다.');
-    }
-    return await response.json();
+    const response = await mapApi.get('/routes/favorites');
+    return response.data;
   } catch (error) {
     console.error('즐겨찾기 경로 조회 오류:', error);
     throw error;
@@ -112,18 +171,8 @@ export const getFavoriteRoutes = async (): Promise<RouteResponse[]> => {
 // 즐겨찾기 경로 추가 API
 export const addFavoriteRoute = async (route: Omit<RouteResponse, 'id'>): Promise<RouteResponse> => {
   try {
-    const response = await fetch('/api/routes/favorites', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(route),
-    });
-    
-    if (!response.ok) {
-      throw new Error('즐겨찾기 경로 추가에 실패했습니다.');
-    }
-    return await response.json();
+    const response = await mapApi.post('/routes/favorites', route);
+    return response.data;
   } catch (error) {
     console.error('즐겨찾기 경로 추가 오류:', error);
     throw error;
@@ -133,13 +182,7 @@ export const addFavoriteRoute = async (route: Omit<RouteResponse, 'id'>): Promis
 // 즐겨찾기 경로 삭제 API
 export const removeFavoriteRoute = async (id: string): Promise<void> => {
   try {
-    const response = await fetch(`/api/routes/favorites/${id}`, {
-      method: 'DELETE',
-    });
-    
-    if (!response.ok) {
-      throw new Error('즐겨찾기 경로 삭제에 실패했습니다.');
-    }
+    await mapApi.delete(`/routes/favorites/${id}`);
   } catch (error) {
     console.error('즐겨찾기 경로 삭제 오류:', error);
     throw error;
