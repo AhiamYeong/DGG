@@ -1,128 +1,37 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { loadNaverMapScript } from '../services/mapApi';
-import type { NaverMapLocation, NaverMapInstance } from '../types/naver-map';
+import { useEffect } from 'react';
+import { useMapInitialization, useMapLocation, usePolyline, useMarker, useMapSearch } from './map';
+import type { NaverMapLocation } from '../types/map';
 
+/**
+ * 새로운 useMapViewModel - 기능별 훅들을 조합한 메인 훅
+ * 기존 330+ 라인을 여러 개의 작은 훅으로 분리
+ */
 export function useMapViewModel() {
-  const [currentLocation, setCurrentLocation] = useState<NaverMapLocation>({
-    lat: 37.5665,
-    lng: 126.9780
-  });
+  // 지도 초기화
+  const { map, isLoaded, mapRef, initializeMap, cleanupMap } = useMapInitialization();
+  
+  // 위치 관리
+  const { currentLocation, setCurrentLocation, getCurrentLocation, updateMapLocation } = useMapLocation();
+  
+  // 폴리라인 관리
+  const { drawPolylines, drawGangnamToSeongsuRoute, clearPolylines } = usePolyline(map);
+  
+  // 마커 관리
+  const { clearMarkers, createRouteMarkers } = useMarker(map);
+  
+  // 검색 기능
+  const { handleSearch } = useMapSearch();
 
-  const [map, setMap] = useState<NaverMapInstance | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const mapRef = useRef<HTMLDivElement>(null);
-
-  // 현재 위치 가져오기
-  const getCurrentLocation = useCallback(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCurrentLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.error('위치 정보를 가져올 수 없습니다:', error);
-          alert('위치 정보를 가져올 수 없습니다.');
-        }
-      );
-    } else {
-      alert('이 브라우저는 위치 정보를 지원하지 않습니다.');
-    }
-  }, []);
-
-  // 길찾기 검색 처리
-  const handleSearch = useCallback((origin: string, destination: string, waypoints?: string[]) => {
-    console.log('길찾기 검색:', { origin, destination, waypoints });
-    // TODO: 실제 길찾기 API 호출 및 경로 표시
-    if (waypoints && waypoints.length > 0) {
-      console.log('경유지 포함:', waypoints);
-    }
-  }, []);
-
-  // 네이버 지도 초기화
-  const initializeMap = useCallback((center: NaverMapLocation, zoom: number = 15) => {
-    // 인증 실패 감지 함수 설정
-    (window as Window & { navermap_authFailure?: () => void }).navermap_authFailure = () => {
-      console.error('네이버 Map API 인증 실패');
-      alert('네이버 Map API 인증에 실패했습니다. API 키와 도메인 설정을 확인해주세요.');
-    };
-
-    // 네이버 Map API 동적 로딩
-    const loadNaverMapAPI = async () => {
-      await loadNaverMapScript();
-      return window.naver;
-    };
-
-    // API 로드 및 지도 초기화
-    loadNaverMapAPI()
-      .then((naver: any) => {
-        if (mapRef.current && naver.maps) {
-          const mapInstance = new naver.maps.Map(mapRef.current, {
-            center: new naver.maps.LatLng(center.lat, center.lng),
-            zoom: zoom,
-            mapTypeControl: true,
-            mapTypeControlOptions: {
-              style: naver.maps.MapTypeControlStyle.BUTTON as any,
-              position: naver.maps.Position.TOP_RIGHT as any
-            },
-            zoomControl: true,
-            zoomControlOptions: {
-              style: naver.maps.ZoomControlStyle.SMALL as any,
-              position: naver.maps.Position.RIGHT_CENTER as any
-            }
-          });
-
-          // 마커 추가 (네이버 좌표계 사용)
-          const marker = new naver.maps.Marker({
-            position: new naver.maps.LatLng(center.lat, center.lng),
-            map: mapInstance,
-            title: '현재 위치'
-          });
-
-          // 정보창 추가
-          const infoWindow = new naver.maps.InfoWindow({
-            content: '<div style="padding:10px; font-size:14px;"><strong>현재 위치</strong><br/>네이버 지도 API</div>'
-          });
-
-          // 마커 클릭 시 정보창 표시
-          naver.maps.Event.addListener(marker, 'click', () => {
-            if (infoWindow.getMap()) {
-              infoWindow.close();
-            } else {
-              infoWindow.open(mapInstance, marker);
-            }
-          });
-
-          setMap(mapInstance);
-          setIsLoaded(true);
-        }
-      })
-      .catch((error) => {
-        console.error('지도 초기화 실패:', error);
-      });
-  }, [mapRef]);
-
-  // 지도 정리
-  const cleanupMap = useCallback(() => {
-    if (map) {
-      map.destroy();
-    }
-  }, [map]);
-
-  // 지도 위치 업데이트
-  const updateMapLocation = useCallback((newLocation: NaverMapLocation) => {
-    if (map && window.naver && window.naver.maps) {
-      const newCenter = new window.naver.maps.LatLng(newLocation.lat, newLocation.lng);
-      map.setCenter(newCenter as any);
-    }
-  }, [map]);
+  // 폴리라인과 마커를 함께 제거하는 함수
+  const clearPolylinesAndMarkers = () => {
+    clearPolylines();
+    clearMarkers();
+  };
 
   // currentLocation이 변경될 때 지도 위치 업데이트
-  React.useEffect(() => {
+  useEffect(() => {
     if (map && isLoaded) {
-      updateMapLocation(currentLocation);
+      updateMapLocation(currentLocation, map);
     }
   }, [currentLocation, map, isLoaded, updateMapLocation]);
 
@@ -139,6 +48,14 @@ export function useMapViewModel() {
     initializeMap,
     cleanupMap,
     setCurrentLocation,
-    updateMapLocation
+    updateMapLocation: (newLocation: NaverMapLocation) => updateMapLocation(newLocation, map),
+    
+    // Polyline Actions
+    drawPolylines,
+    drawGangnamToSeongsuRoute,
+    clearPolylinesAndMarkers,
+    
+    // Marker Actions
+    createRouteMarkers
   };
 }

@@ -1,5 +1,5 @@
-import type { SimpleRoute, RouteStep } from '../types/routes';
-import type { Location, TimeSlot } from '../types/common';
+import type { SimpleRoute, RouteStep } from '../types/route-types';
+import type { Location, TimeSlot } from '../types/common-types';
 
 /**
  * 경로 추천 결과를 위한 더미 데이터 생성기

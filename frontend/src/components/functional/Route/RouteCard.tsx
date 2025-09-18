@@ -1,5 +1,5 @@
 import { memo, useCallback } from 'react';
-import type { SimpleRoute } from '../../../types/routes';
+import type { SimpleRoute } from '../../../types/route-types';
 import { Button, IconButton } from '../../ui';
 
 interface RouteCardProps {

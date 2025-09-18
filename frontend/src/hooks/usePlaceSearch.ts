@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { searchPlacesWithApi } from '../services/placeSearchApi';
-import type { SearchResult } from '../types/search';
+import type { SearchResult } from '../types/search-types';
 
 interface UsePlaceSearchOptions {
   display?: number;

@@ -1,4 +1,4 @@
-import { Location, TimeSlot, BaseEntity } from './common';
+import { Location, TimeSlot, BaseEntity } from './common-types';
 
 // 경로 관련 타입 정의
 
