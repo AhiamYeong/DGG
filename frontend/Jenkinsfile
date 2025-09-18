@@ -1,0 +1,92 @@
+pipeline {
+  agent any
+  tools { nodejs 'node20' }
+  options { timestamps(); disableConcurrentBuilds() }
+
+  environment {
+    // frontend 폴더 안에서 실행하므로 FE_DIR='.'
+    FE_DIR      = '.'
+    DIST_DIR    = 'dist'
+    DEPLOY_DIR  = '/var/www/app'
+    RELEASE_DIR = '/var/www/app_releases'
+    DOMAIN      = 'https://j13a305.p.ssafy.io'
+    API_BASE    = '/api'   // 공개값만
+  }
+
+  stages {
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+
+    // Jenkins가 .env.production을 생성합니다 (깃에 올리지 않음)
+    stage('Write .env.production (public only)') {
+      when { branch 'dev' }
+      steps {
+        dir("${FE_DIR}") {
+          sh '''
+            set -eu
+            echo "VITE_API_BASE=${API_BASE}" > .env.production
+            # 네이버 지도 clientId를 Jenkins 크리덴셜에서 주입하려면 아래 주석 블록을 사용하세요.
+          '''
+        }
+      }
+    }
+
+    // (선택) 네이버 지도 clientId를 크리덴셜로 넣고 싶을 때 이 블록으로 교체
+    // stage('Write .env.production (public only)') {
+    //   when { branch 'dev' }
+    //   steps {
+    //     withCredentials([string(credentialsId: 'naver_map_client_id', variable: 'VITE_NAVER_MAP_CLIENT_ID')]) {
+    //       dir("${FE_DIR}") {
+    //         sh '''
+    //           set -eu
+    //           echo "VITE_API_BASE=${API_BASE}" > .env.production
+    //           echo "VITE_NAVER_MAP_CLIENT_ID=${VITE_NAVER_MAP_CLIENT_ID}" >> .env.production
+    //         '''
+    //       }
+    //     }
+    //   }
+    // }
+
+    stage('Install & Build') {
+      steps {
+        dir("${FE_DIR}") {
+          sh '''
+            set -eux
+            npm ci || npm i
+            npm run build
+          '''
+        }
+      }
+    }
+
+    stage('Backup & Deploy') {
+      when { branch 'dev' }
+      steps {
+        sh '''
+          set -eux
+          ts=$(date +%Y%m%d%H%M%S)
+
+          # 이전 배포물 백업
+          if [ -d ${DEPLOY_DIR} ] && [ "$(ls -A ${DEPLOY_DIR})" ]; then
+            mkdir -p ${RELEASE_DIR}/release-${ts}
+            rsync -a ${DEPLOY_DIR}/ ${RELEASE_DIR}/release-${ts}/
+          fi
+
+          # 신규 배포(dist "내용물"을 웹루트로 동기화)
+          rsync -av --delete ${DIST_DIR}/ ${DEPLOY_DIR}/
+        '''
+      }
+    }
+
+    stage('Health Check') {
+      steps {
+        sh 'set -eux; curl -I --fail ${DOMAIN}/'
+      }
+    }
+  }
+
+  post {
+    always { cleanWs() }
+  }
+}
