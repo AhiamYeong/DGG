@@ -28,18 +28,10 @@ export default function SearchBox({ onSearch, onDepartureOptionChange, selectedD
     clearWaypoint
   } = useSearchStore();
 
-  // 컴포넌트 마운트 시 기본값 설정
+  // 컴포넌트 마운트 시 상태 로깅
   useEffect(() => {
     console.log('SearchBox 마운트 - 현재 상태:', { origin, destination });
-    if (!origin.trim()) {
-      console.log('출발지가 비어있어서 강남역으로 설정');
-      setOrigin('강남역');
-    }
-    if (!destination.trim()) {
-      console.log('도착지가 비어있어서 성수역으로 설정');
-      setDestination('성수역');
-    }
-  }, [origin, destination, setOrigin, setDestination]);
+  }, [origin, destination]);
 
   const handleSearch = () => {
     if (origin.trim() && destination.trim()) {
