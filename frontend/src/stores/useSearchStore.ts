@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Location } from '../types/common';
+import type { Location } from '../types/common-types';
 import { ROUTE_CONSTANTS } from '../constants';
 
 // 경유지 타입 정의

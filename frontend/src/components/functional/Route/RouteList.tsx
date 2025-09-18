@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo } from 'react';
 import RouteCard from './RouteCard';
-import type { SimpleRoute } from '../../../types/routes';
+import type { SimpleRoute } from '../../../types/route-types';
 
 interface RouteListProps {
   routes: SimpleRoute[];

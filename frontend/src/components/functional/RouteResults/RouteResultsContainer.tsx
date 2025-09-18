@@ -2,9 +2,9 @@ import React from 'react';
 import RouteList from '../Route/RouteList';
 import { IconButton, TabButton } from '../../ui';
 import { formatTime } from '../../../utils/timeUtils';
-import type { SimpleRoute } from '../../../types/routes';
+import type { SimpleRoute } from '../../../types/route-types';
 
-interface RouteResultsProps {
+interface RouteResultsContainerProps {
   isOpen: boolean;
   routes: SimpleRoute[];
   actionLabel: string;
@@ -17,11 +17,11 @@ interface RouteResultsProps {
 }
 
 /**
- * 경로 검색 결과 표시 컴포넌트
+ * 경로 검색 결과 컨테이너 컴포넌트
  * - 출발 옵션 탭 (지금 출발하기 / 출발예약)
  * - 경로 목록 (RouteList 컴포넌트 사용)
  */
-export const RouteResults: React.FC<RouteResultsProps> = ({
+export const RouteResultsContainer: React.FC<RouteResultsContainerProps> = ({
   isOpen,
   routes,
   actionLabel,
@@ -104,4 +104,4 @@ export const RouteResults: React.FC<RouteResultsProps> = ({
   );
 };
 
-export default RouteResults;
+export default RouteResultsContainer;

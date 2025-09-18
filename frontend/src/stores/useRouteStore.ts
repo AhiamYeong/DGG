@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { RouteTabType } from '../types/routes';
+import type { RouteTabType } from '../types/route-types';
 
 interface FavoriteRoute {
   id: string;

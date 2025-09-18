@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { RouteService } from '../services/routeService';
-import type { SimpleRoute } from '../types/routes';
+import type { SimpleRoute } from '../types/route-types';
 
 interface RouteSearchFlowState {
   // 검색 결과 관련
