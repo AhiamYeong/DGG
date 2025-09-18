@@ -32,6 +32,11 @@ public class MemberService {
     }
 
 //    @Transactional
-//    public ProfileResponseDto
+//    public ProfileResponseDto updateProfile(Long memberId) {
+//        Member member = memberRepository.findById(memberId)
+//                .orElseThrow(() -> new EntityNotFoundException(memberId + "에 해당하는 사용자가 없습니다."));
+//
+//
+//    }
 
 }
