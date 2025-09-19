@@ -3,7 +3,7 @@ import type { NaverMapInstance, NaverPolylineInstance } from '@/types/map';
 import type { SimpleRoute } from '@/types/route-types';
 import type { SubPath } from '@/types/route-api-types';
 import { log } from '../utils/logger';
-import { POLYLINE_STYLES, TRAFFIC_TYPES } from '../constants';
+import { POLYLINE_STYLES, TRAFFIC_TYPES, SUBWAY_LINE_COLORS } from '../constants';
 
 // ODsay API 응답을 흉내 내는 더미 데이터 타입
 interface DummySubPath {
@@ -183,7 +183,19 @@ export function usePolyline(map: NaverMapInstance | null) {
       return;
     }
 
-    const subPaths = route.rawData.subPath.map((subPath: SubPath) => {
+    if (!map || !window.naver || !window.naver.maps) {
+      log.error('지도가 초기화되지 않았습니다.');
+      return;
+    }
+
+    // 기존 폴리라인 제거
+    clearPolylines();
+
+    const naver = window.naver;
+    const newPolylines: NaverPolylineInstance[] = [];
+
+    // 각 subPath에 대해 폴리라인 생성
+    route.rawData.subPath.forEach((subPath: SubPath) => {
       // passShape이 있으면 사용, 없으면 passStopList.stations로 좌표 생성
       let coordinates: number[][] = [];
       
@@ -191,11 +203,14 @@ export function usePolyline(map: NaverMapInstance | null) {
         // passShape이 있는 경우
         coordinates = subPath.passShape.geojson.coordinates;
       } else if (subPath.passStopList?.stations) {
-        // passStopList.stations를 사용해서 좌표 생성
-        coordinates = subPath.passStopList.stations.map((station) => [
-          parseFloat(station.x), // 경도
-          parseFloat(station.y)  // 위도
-        ]);
+        // 환승역만 표시 (첫 번째와 마지막 역만)
+        const stations = subPath.passStopList.stations;
+        if (stations.length > 0) {
+          coordinates = [
+            [parseFloat(stations[0].x), parseFloat(stations[0].y)], // 첫 번째 역
+            [parseFloat(stations[stations.length - 1].x), parseFloat(stations[stations.length - 1].y)] // 마지막 역
+          ];
+        }
       } else if (subPath.startX && subPath.startY && subPath.endX && subPath.endY) {
         // 시작점과 끝점만 있는 경우 (도보 구간)
         coordinates = [
@@ -204,22 +219,45 @@ export function usePolyline(map: NaverMapInstance | null) {
         ];
       }
 
-      return {
-        trafficType: subPath.trafficType,
-        passShape: {
-          geojson: {
-            coordinates
-          }
-        }
-      };
+      if (coordinates.length === 0) return;
+
+      // [lng, lat] → new naver.maps.LatLng(lat, lng) 변환
+      const path = coordinates.map(coord => 
+        new naver.maps.LatLng(coord[1], coord[0]) // [lng, lat] → [lat, lng]
+      );
+
+      // 호선별 색상 결정
+      let strokeColor = '#FF0000'; // 기본값
+      if (subPath.trafficType === TRAFFIC_TYPES.SUBWAY && subPath.lane?.[0]?.name) {
+        const lineName = subPath.lane[0].name;
+        strokeColor = SUBWAY_LINE_COLORS[lineName as keyof typeof SUBWAY_LINE_COLORS] || SUBWAY_LINE_COLORS['기타'];
+      } else if (subPath.trafficType === TRAFFIC_TYPES.BUS) {
+        strokeColor = POLYLINE_STYLES.BUS.strokeColor;
+      } else if (subPath.trafficType === TRAFFIC_TYPES.WALK) {
+        strokeColor = POLYLINE_STYLES.WALK.strokeColor;
+      }
+
+      // 폴리라인 생성
+      const polyline = new naver.maps.Polyline({
+        map: map,
+        path: path,
+        strokeColor: strokeColor,
+        strokeWeight: subPath.trafficType === TRAFFIC_TYPES.SUBWAY ? 6 : 
+                     subPath.trafficType === TRAFFIC_TYPES.BUS ? 5 : 3,
+        strokeStyle: subPath.trafficType === TRAFFIC_TYPES.WALK ? 'shortdash' : 'solid'
+      });
+
+      newPolylines.push(polyline);
     });
 
-    drawPolylines(subPaths);
+    // 참조 저장
+    polylinesRef.current = newPolylines;
+
     log.map('선택된 경로 폴리라인 그리기 완료', {
       routeName: route.name,
-      subPathCount: subPaths.length
+      subPathCount: newPolylines.length
     });
-  }, [drawPolylines]);
+  }, [map, clearPolylines]);
 
   return {
     drawPolylines,

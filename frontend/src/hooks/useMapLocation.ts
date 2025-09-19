@@ -71,10 +71,10 @@ export function useMapLocation() {
       const newCenter = new window.naver.maps.LatLng(startLocation.lat, startLocation.lng);
       map.setCenter(newCenter as any);
       
-      // 적절한 줌 레벨로 설정 (경로 전체를 볼 수 있도록)
-      map.setZoom(12);
+      // 안내시작 시 클로즈업 (줌 레벨 16으로 설정)
+      map.setZoom(16);
       
-      console.log('지도를 경로 시작점으로 이동:', startLocation);
+      console.log('지도를 경로 시작점으로 클로즈업:', startLocation);
     }
   }, []);
 
