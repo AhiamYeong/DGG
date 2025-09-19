@@ -1,50 +1,66 @@
-package com.ssafy.dgg.ui.screen
+package com.ssafy.dgg.ui.screen // 패키지명은 실제 프로젝트에 맞게 조정하세요.
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.view.ViewGroup
-import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 
-// 웹에서 안드로이드 함수 호출하기 위한 브릿지 클래스
-class WebAppInterface(private val context: Context) {
-    @JavascriptInterface
-    fun showToast(toast: String) {
-        // 웹에서 "Android.showToast('메시지')"를 호출하면 이 함수가 실행됨
-        // Toast.makeText(context, toast, Toast.LENGTH_SHORT).show()
-        // 실제로는 여기에서 네이티브 기능을 실행합니다. (예: 삼성 헬스 SDK 호출 등)
-    }
-}
-
-@SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun WebViewScreen(url: String, context: Context) {
+fun WebViewScreen(
+    url: String,
+    context: Context, // Context는 AndroidView 팩토리에서 필요할 수 있습니다.
+    modifier: Modifier = Modifier // Add modifier parameter
+) {
+    // AndroidView를 사용하여 WebView를 Compose에 통합
     AndroidView(
-        factory = {
-            WebView(it).apply {
+        factory = { ctx ->
+            WebView(ctx).apply {
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
-                webViewClient = WebViewClient()
-                settings.javaScriptEnabled = true
-                settings.domStorageEnabled = true
-
-                // 웹 -> 네이티브 통신 브릿지 설정
-                addJavascriptInterface(WebAppInterface(context), "Android")
-
-                // 초기 URL 로드
+                webViewClient = WebViewClient() // 기본적인 WebViewClient 설정
+                settings.javaScriptEnabled = true // JavaScript 활성화 (필요에 따라)
                 loadUrl(url)
             }
         },
         update = { webView ->
-            // 현재 url, 새 url이 다를 때만 로드
-            if (webView.url != url) {
-                webView.loadUrl(url)
-            }
-        }
+            webView.loadUrl(url) // URL이 변경되면 웹뷰를 업데이트
+        },
+        modifier = modifier // 전달받은 modifier를 여기에 적용 (fillMaxSize 포함 가능)
+        // .fillMaxSize() // 필요에 따라 여기에 fillMaxSize를 유지하거나 외부에서 관리
     )
 }
+
+// 만약 WebViewScreen이 BoxWithConstraints 등으로 감싸져 있다면,
+// 그 Box에 modifier를 적용할 수도 있습니다.
+// 예시:
+// @Composable
+// fun WebViewScreen(
+//    url: String,
+//    context: Context,
+//    modifier: Modifier = Modifier
+// ) {
+//    BoxWithConstraints(modifier = modifier) { // Apply padding to the Box
+//        AndroidView(
+//            factory = { ctx ->
+//                WebView(ctx).apply {
+//                    layoutParams = ViewGroup.LayoutParams(
+//                        ViewGroup.LayoutParams.MATCH_PARENT,
+//                        ViewGroup.LayoutParams.MATCH_PARENT
+//                    )
+//                    webViewClient = WebViewClient()
+//                    settings.javaScriptEnabled = true
+//                    loadUrl(url)
+//                }
+//            },
+//            update = { webView ->
+//                webView.loadUrl(url)
+//            },
+//            modifier = Modifier.fillMaxSize() // AndroidView는 Box를 채우도록
+//        )
+//    }
+// }
