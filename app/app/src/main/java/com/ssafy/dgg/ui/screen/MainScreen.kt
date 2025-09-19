@@ -24,10 +24,12 @@ val items = listOf(
 
 val BASE_URL = BuildConfig.WEB_URL
 
+// TODO: 웹뷰 사이즈 조절 & 키보드 입력 시 네비게이션 바 내리기
+// TODO: 네비게이션 바 컬러 및 폰트 조정
 @Composable
 fun MainScreen() {
     val context = LocalContext.current
-    var selectedItem by remember { mutableStateOf(items[0]) }
+    var selectedItem by remember { mutableStateOf(items[2]) }
 
     Scaffold (
         bottomBar = {
@@ -44,11 +46,12 @@ fun MainScreen() {
         }
     ) { innerPadding ->
 //        네비게이션 바 클릭에 따라 웹뷰 URL 변경
+        // TODO: 네비게이션 바 웹뷰로 이동
         val currentUrl = when (selectedItem.route) {
             // base URL
             "fatigue" -> BASE_URL
             "plan" -> "$BASE_URL/plan"
-            "route" -> "$BASE_URL/map-test"
+            "route" -> "$BASE_URL/map"
             "alarm" -> "$BASE_URL/alarm"
             "mypage" -> "$BASE_URL/mypage"
             else -> BASE_URL
