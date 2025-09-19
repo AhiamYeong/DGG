@@ -165,21 +165,24 @@ export class RouteService {
         totalDistance: info.totalDistance,
         departureTime,
         arrivalTime,
+        price: info.payment,
         from: { 
           latitude: 0, 
           longitude: 0, 
-          name: origin || info.firstStartStation 
+          name: origin || info.firstStartStation,
+          address: origin || info.firstStartStation
         },
         to: { 
           latitude: 0, 
           longitude: 0, 
-          name: destination || info.lastEndStation 
+          name: destination || info.lastEndStation,
+          address: destination || info.lastEndStation
         },
         steps: this.convertSubPathsToSteps(path.subPath),
         recommendationType: 'minTime' as const,
-        description: `${info.subwayTransitCount}번 환승, ${info.totalTime}분`,
+        description: `지하철 ${info.subwayTransitCount}번 환승, 버스 ${info.busTransitCount}번 환승, 총 ${info.totalTime}분`,
         isBookmarked: false,
-        fatigueLevel: Math.min(100, Math.max(0, 50 + (info.subwayTransitCount * 10))),
+        fatigueLevel: Math.min(100, Math.max(0, 50 + ((info.subwayTransitCount + info.busTransitCount) * 10))),
         createdAt: new Date(),
         updatedAt: new Date(),
         // test.json 원본 데이터 저장
@@ -192,17 +195,51 @@ export class RouteService {
    * SubPath 배열을 Step 배열로 변환
    */
   private static convertSubPathsToSteps(subPaths: SubPath[]): any[] {
-    return subPaths.map((subPath, index) => ({
-      id: `step-${index}`,
-      type: subPath.trafficType === 1 ? 'subway' : 'walk',
-      description: subPath.trafficType === 1 
-        ? `${subPath.startName} → ${subPath.endName} (${subPath.lane?.[0]?.name || '지하철'})`
-        : `${subPath.startName} → ${subPath.endName} (도보)`,
-      duration: subPath.sectionTime,
-      distance: subPath.distance,
-      stations: subPath.passStopList?.stations || [],
-      coordinates: subPath.passShape?.geojson?.coordinates || []
-    }));
+    return subPaths.map((subPath, index) => {
+      // trafficType에 따른 타입 결정
+      let type: string;
+      let description: string;
+      
+      if (subPath.trafficType === 1) {
+        // 지하철
+        type = 'subway';
+        const lineName = subPath.lane?.[0]?.name || '지하철';
+        const stationCount = subPath.stationCount || 0;
+        description = `${lineName} 이용 (${stationCount}개역)`;
+      } else if (subPath.trafficType === 2) {
+        // 버스
+        type = 'bus';
+        const busNo = subPath.lane?.[0]?.busNo || '버스';
+        const stationCount = subPath.stationCount || 0;
+        description = `${busNo}번 버스 이용 (${stationCount}개정류장)`;
+      } else {
+        // 도보 (trafficType === 3)
+        type = 'walk';
+        description = '도보';
+      }
+
+      return {
+        id: `step-${index}`,
+        type,
+        description,
+        duration: subPath.sectionTime,
+        distance: subPath.distance,
+        lineInfo: subPath.trafficType === 1 ? {
+          name: subPath.lane?.[0]?.name || '지하철',
+          direction: subPath.way || '',
+          stationCount: subPath.stationCount || 0
+        } : subPath.trafficType === 2 ? {
+          name: subPath.lane?.[0]?.busNo || '버스',
+          direction: subPath.way || '',
+          stationCount: subPath.stationCount || 0
+        } : undefined,
+        stations: subPath.passStopList?.stations || [],
+        startName: subPath.startName,
+        endName: subPath.endName,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    });
   }
 
   /**

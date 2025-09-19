@@ -18,7 +18,8 @@ export default function MainMapPage() {
     cleanupMap,
     createCurrentLocationMarker,
     drawSelectedRoute,
-    createSelectedRouteMarkers
+    createSelectedRouteMarkers,
+    centerMapToRouteStart
   } = useMapViewModel();
 
   // 경로 검색 관련 상태 및 액션 (스토어에서 직접 사용)
@@ -71,8 +72,10 @@ export default function MainMapPage() {
     if (isNavigating && currentRoute && currentRoute.rawData) {
       drawSelectedRoute(currentRoute);
       createSelectedRouteMarkers(currentRoute);
+      // 지도를 경로 시작점으로 이동
+      centerMapToRouteStart(currentRoute);
     }
-  }, [isNavigating, currentRoute, drawSelectedRoute, createSelectedRouteMarkers]);
+  }, [isNavigating, currentRoute, drawSelectedRoute, createSelectedRouteMarkers, centerMapToRouteStart]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
