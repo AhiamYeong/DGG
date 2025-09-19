@@ -7,8 +7,11 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
+    // 회원가입 로직에서 필요. dgg 기존 고객인지
     Member findByGoogleKey(String googleKey);
 
-    @Query("SELECT m.email FROM Member m WHERE m.id= :memverId")
-    String findEmailById(Long memberId);
+    boolean existsByNickname(String nickname);
+
+//    @Query("SELECT m.email FROM Member m WHERE m.id= :memverId")
+//    String findEmailById(Long memberId);
 }
