@@ -126,7 +126,12 @@ const SearchResultsList = memo<SearchResultsListProps>(({
         <div
           key={result.id}
           onClick={() => handleSelect(result)}
-          className="flex items-center justify-between py-4 px-2 bg-background border-b border-gray-100 hover:bg-primary hover:bg-opacity-10 hover:shadow-sm transition-all duration-200 cursor-pointer group"
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleSelect(result);
+          }}
+          className="flex items-center justify-between py-4 px-2 bg-background border-b border-gray-100 hover:bg-primary hover:bg-opacity-10 hover:shadow-sm transition-all duration-200 cursor-pointer group touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
         >
           <div className="flex items-center gap-3 flex-1">
             {/* 장소 아이콘 */}
