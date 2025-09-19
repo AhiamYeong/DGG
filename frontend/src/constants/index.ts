@@ -100,6 +100,30 @@ export const TRAFFIC_TYPES = {
   WALK: 3     // 도보
 } as const;
 
+// 피로도 레벨 매핑 (백분율을 1-5단계로 변환)
+export const FATIGUE_LEVELS = {
+  LEVEL_1: { min: 0, max: 20, label: '매우 낮음', color: '#4CAF50' },
+  LEVEL_2: { min: 21, max: 40, label: '낮음', color: '#8BC34A' },
+  LEVEL_3: { min: 41, max: 60, label: '보통', color: '#FFC107' },
+  LEVEL_4: { min: 61, max: 80, label: '높음', color: '#FF9800' },
+  LEVEL_5: { min: 81, max: 100, label: '매우 높음', color: '#F44336' }
+} as const;
+
+// 피로도 백분율을 레벨로 변환하는 함수
+export const getFatigueLevel = (fatiguePercentage: number): { level: number; label: string; color: string } => {
+  if (fatiguePercentage <= 20) {
+    return { level: 1, ...FATIGUE_LEVELS.LEVEL_1 };
+  } else if (fatiguePercentage <= 40) {
+    return { level: 2, ...FATIGUE_LEVELS.LEVEL_2 };
+  } else if (fatiguePercentage <= 60) {
+    return { level: 3, ...FATIGUE_LEVELS.LEVEL_3 };
+  } else if (fatiguePercentage <= 80) {
+    return { level: 4, ...FATIGUE_LEVELS.LEVEL_4 };
+  } else {
+    return { level: 5, ...FATIGUE_LEVELS.LEVEL_5 };
+  }
+};
+
 export const MARKER_ICONS = {
   START: {
     content: '<div style="background: #00AA00; color: white; padding: 5px; border-radius: 50%; font-size: 12px; font-weight: bold;">출발</div>',

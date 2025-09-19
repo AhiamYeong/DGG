@@ -105,14 +105,20 @@ export const searchRoutesWithTime = async (
   stopoverAddresses?: string[]
 ): Promise<any> => {
   try {
+    // stopoverAddresses는 최소 빈배열, 최대 2개
+    const validStopoverAddresses = stopoverAddresses && stopoverAddresses.length > 0 
+      ? stopoverAddresses.slice(0, 2) // 최대 2개로 제한
+      : []; // 빈배열로 설정
+
     const requestBody = {
       departureAddress,
       destinationAddress,
-      startTime,
-      ...(stopoverAddresses && stopoverAddresses.length > 0 && { stopoverAddresses })
+      stopoverAddresses: validStopoverAddresses,
+      startTime
     };
 
     log.route('경로 검색 API 요청', requestBody);
+    console.log('API 요청 형식:', JSON.stringify(requestBody, null, 2));
 
     const response = await mapApi.post('/v1/maps/routes', requestBody);
     
