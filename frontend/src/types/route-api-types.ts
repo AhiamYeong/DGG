@@ -1,5 +1,23 @@
 // test.json 기반 API 응답 타입 정의
 
+// 새로운 백엔드 API 응답 타입 정의
+export interface NewBackendRouteApiResponse {
+  departureAdress: string;
+  destinationAdress: string;
+  stopoverAdress: string;
+  departureTime: string;
+  destinationTime: string;
+  recommendedRoutes: RecommendedRoute[];
+}
+
+export interface RecommendedRoute {
+  routeId: number;
+  name: string;
+  timeTaken: number; // min 단위
+  arrivalTime: string;
+  fatigue: number; // % 단위
+}
+
 export interface RouteApiResponse {
   result: {
     searchType: number;

@@ -1,6 +1,7 @@
 import { memo, useCallback } from 'react';
 import type { SimpleRoute } from '@/types/route-types';
 import { Button } from '@/components/ui';
+import { getFatigueLevel } from '@/constants';
 
 interface RouteCardProps {
   route: SimpleRoute;
@@ -84,12 +85,13 @@ const RouteCard = memo<RouteCardProps>(({
           </svg>
           <span className="font-medium">{route.to.name}</span>
         </div>
+        
 
         {/* 경로 정보 */}
         <div className="flex items-center gap-4 text-xs text-secondary mt-1">
-          <span>⏱️ {route.totalDuration}분</span>
-          <span>📏 {Math.round(route.totalDistance / 1000)}km</span>
-          <span>💰 {route.price ? `${route.price.toLocaleString()}원` : '무료'}</span>
+          <span>{route.totalDuration}분</span>
+          <span>{Math.round(route.totalDistance / 1000)}km</span>
+          <span>{route.price ? `${route.price.toLocaleString()}원` : '무료'}</span>
         </div>
 
         {/* 출발/도착 시간 */}
@@ -99,21 +101,26 @@ const RouteCard = memo<RouteCardProps>(({
 
         {/* 피로도 표시 */}
         <div className="mt-2">
-          <div className="flex items-center justify-between text-xs text-secondary mb-1">
-            <span>예상 증가 피로도</span>
-            <span>{route.fatigueLevel || 50}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className={`h-2 rounded-full transition-all duration-300 ${
-                (route.fatigueLevel || 50) <= 30 ? 'bg-level-1' :
-                (route.fatigueLevel || 50) <= 50 ? 'bg-level-2' :
-                (route.fatigueLevel || 50) <= 70 ? 'bg-level-3' :
-                (route.fatigueLevel || 50) <= 90 ? 'bg-level-4' : 'bg-level-5'
-              }`}
-              style={{ width: `${route.fatigueLevel || 50}%` }}
-            />
-          </div>
+          {(() => {
+            const fatigueInfo = getFatigueLevel(route.fatigueLevel || 50);
+            return (
+              <>
+                <div className="flex items-center justify-between text-xs text-secondary mb-1">
+                  <span>예상 증가 피로도</span>
+                  <span>레벨{fatigueInfo.level} ({fatigueInfo.label})</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${route.fatigueLevel || 50}%`,
+                      backgroundColor: fatigueInfo.color
+                    }}
+                  />
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
       

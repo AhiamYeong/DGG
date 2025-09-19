@@ -2,6 +2,12 @@ import { Location, TimeSlot, BaseEntity } from './common-types';
 
 // 경로 관련 타입 정의
 
+// 통합된 주소 정보 (지명 + 도로명 주소)
+export interface PlaceInfo {
+  name: string;        // 지명 (표시용)
+  address: string;     // 도로명 주소 (API용)
+}
+
 export type TransportType = 'walk' | 'bus' | 'subway' | 'transfer' | 'taxi' | 'bike';
 
 export interface RouteStep extends BaseEntity {
