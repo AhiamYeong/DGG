@@ -20,14 +20,14 @@ public class JWTUtil {
         );
     }
 
-    public Long getMemberId(String token) {
+    public Integer getMemberId(String token) {
 
         return Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
-                .get("memberId", Long.class);
+                .get("memberId", Integer.class);
     }
 
     //role을 string 타입으로 꺼냄
@@ -54,7 +54,7 @@ public class JWTUtil {
     }
 
     // 새 jwt 발급
-    public String createJwt(Long memberId, String role, Long expiredMs) {
+    public String createJwt(Integer memberId, String role, Long expiredMs) {
 
         return Jwts.builder()
                 .claim("memberId", memberId)
