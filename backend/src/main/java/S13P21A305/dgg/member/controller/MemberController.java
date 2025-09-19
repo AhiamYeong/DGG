@@ -2,7 +2,9 @@ package S13P21A305.dgg.member.controller;
 
 import S13P21A305.dgg.auth.dto.CustomOAuth2User;
 import S13P21A305.dgg.auth.service.AuthService;
+import S13P21A305.dgg.member.dto.request.ProfileUpdateRequestDto;
 import S13P21A305.dgg.member.dto.response.ProfileResponseDto;
+import S13P21A305.dgg.member.dto.response.ProfileUpdateResponseDto;
 import S13P21A305.dgg.member.service.MemberService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,17 @@ public class MemberController {
         return ResponseEntity.ok(memberService.getProfile(memberId));
     }
 
+    /**
+     * 닉네임 정보 변경
+     */
+    @PatchMapping("/profile")
+    public ResponseEntity<ProfileUpdateResponseDto> updateProfile(
+            @AuthenticationPrincipal CustomOAuth2User oAuth2User,
+            @RequestBody ProfileUpdateRequestDto request){
+        Long memberId = oAuth2User.getMemberId();
+
+        return ResponseEntity.ok(memberService.updateProfile(memberId, request));
+    }
 
 
 

@@ -60,4 +60,11 @@ public class Member {
     @Column(name = "is_withdraw", insertable=false)
     private Boolean isWithdraw;
 
+    /**
+    닉네임 수정
+     */
+    public void updateNickname(String nickname){
+        this.nickname = nickname;
+    }
+
 }
