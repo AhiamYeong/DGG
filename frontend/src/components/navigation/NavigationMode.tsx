@@ -32,10 +32,12 @@ export const NavigationMode = memo<NavigationModeProps>(({
   return (
     <>
       {/* 경로 정보 컴포넌트 */}
-      <RouteInfo
-        route={currentRoute}
-        currentStepIndex={currentStepIndex}
-      />
+      <div className="pointer-events-auto">
+        <RouteInfo
+          route={currentRoute}
+          currentStepIndex={currentStepIndex}
+        />
+      </div>
 
       {/* 사이드 시트 */}
       <div className="pointer-events-auto">
