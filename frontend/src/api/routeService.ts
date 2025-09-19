@@ -2,10 +2,11 @@ import { generateRouteRecommendations } from '../utils/routeDataGenerator';
 import { isCurrentTime, getActionLabel, formatDateTimeForApi } from '../utils/timeUtils';
 import { searchRoutesWithTime } from './mapApi';
 import type { SimpleRoute } from '../types/route-types';
+import type { RouteApiResponse, RoutePath, SubPath } from '../types/route-api-types';
 import { log } from '../utils/logger';
 
-// API 응답 타입 정의
-interface RouteApiResponse {
+// 기존 API 응답 타입 (백엔드용)
+interface BackendRouteApiResponse {
   departureAddress: string;
   destinationAddress: string;
   recommendedRoutes: RecommendedRoute[];
@@ -24,6 +25,21 @@ interface RecommendedRoute {
  */
 export class RouteService {
   /**
+   * test.json 데이터 로드
+   * @returns test.json의 경로 데이터
+   */
+  static async loadTestRouteData(): Promise<RouteApiResponse> {
+    try {
+      const response = await fetch('/src/api/test.json');
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      log.error('test.json 로드 실패:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 경로 검색 실행
    * @param origin 출발지
    * @param destination 도착지
@@ -31,12 +47,9 @@ export class RouteService {
    */
   static async searchRoutes(origin: string, destination: string): Promise<SimpleRoute[]> {
     try {
-      // TODO: 실제 API 호출로 대체
-      // const response = await routeSearchApi.searchRoute({ origin, destination });
-      // return response.routes;
-      
-      // 현재는 더미 데이터 사용
-      return generateRouteRecommendations(origin, destination);
+      // test.json 데이터 사용
+      const testData = await this.loadTestRouteData();
+      return this.convertTestDataToRoutes(testData, origin, destination);
     } catch (error) {
       log.error('경로 검색 실패:', error);
       // 폴백: 더미 데이터 반환
@@ -130,9 +143,73 @@ export class RouteService {
   }
 
   /**
+   * test.json 데이터를 SimpleRoute 형식으로 변환
+   */
+  private static convertTestDataToRoutes(testData: RouteApiResponse, origin: string, destination: string): SimpleRoute[] {
+    if (!testData || !testData.result || !testData.result.path) {
+      return [];
+    }
+
+    return testData.result.path.map((path: RoutePath, index: number) => {
+      const info = path.info;
+      const now = new Date();
+      const departureTime = { hour: now.getHours(), minute: now.getMinutes() };
+      const arrivalTime = { 
+        hour: (now.getHours() + Math.floor(info.totalTime / 60)) % 24, 
+        minute: (now.getMinutes() + info.totalTime % 60) % 60 
+      };
+
+      return {
+        id: `test-route-${index}`,
+        name: `${info.firstStartStation} → ${info.lastEndStation}`,
+        totalDuration: info.totalTime,
+        totalDistance: info.totalDistance,
+        departureTime,
+        arrivalTime,
+        from: { 
+          latitude: 0, 
+          longitude: 0, 
+          name: origin || info.firstStartStation 
+        },
+        to: { 
+          latitude: 0, 
+          longitude: 0, 
+          name: destination || info.lastEndStation 
+        },
+        steps: this.convertSubPathsToSteps(path.subPath),
+        recommendationType: 'minTime' as const,
+        description: `${info.subwayTransitCount}번 환승, ${info.totalTime}분`,
+        isBookmarked: false,
+        fatigueLevel: Math.min(100, Math.max(0, 50 + (info.subwayTransitCount * 10))),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        // test.json 원본 데이터 저장
+        rawData: path
+      };
+    });
+  }
+
+  /**
+   * SubPath 배열을 Step 배열로 변환
+   */
+  private static convertSubPathsToSteps(subPaths: SubPath[]): any[] {
+    return subPaths.map((subPath, index) => ({
+      id: `step-${index}`,
+      type: subPath.trafficType === 1 ? 'subway' : 'walk',
+      description: subPath.trafficType === 1 
+        ? `${subPath.startName} → ${subPath.endName} (${subPath.lane?.[0]?.name || '지하철'})`
+        : `${subPath.startName} → ${subPath.endName} (도보)`,
+      duration: subPath.sectionTime,
+      distance: subPath.distance,
+      stations: subPath.passStopList?.stations || [],
+      coordinates: subPath.passShape?.geojson?.coordinates || []
+    }));
+  }
+
+  /**
    * 백엔드 API 응답을 SimpleRoute 형식으로 변환
    */
-  private static convertApiResponseToRoutes(apiResponse: RouteApiResponse): SimpleRoute[] {
+  private static convertApiResponseToRoutes(apiResponse: BackendRouteApiResponse): SimpleRoute[] {
     if (!apiResponse || !apiResponse.recommendedRoutes) {
       return [];
     }

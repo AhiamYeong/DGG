@@ -24,8 +24,6 @@ interface SearchModeProps {
   
   // 지도 컨트롤 관련 props
   onLocationClick: () => void;
-  onPolylineClick: () => void;
-  onRemoveClick: () => void;
 }
 
 /**
@@ -44,9 +42,7 @@ export const SearchMode = memo<SearchModeProps>(({
   onSelectRoute,
   onCloseRouteResults,
   showTimePicker,
-  onLocationClick,
-  onPolylineClick,
-  onRemoveClick
+  onLocationClick
 }) => {
   return (
     <>
@@ -79,8 +75,6 @@ export const SearchMode = memo<SearchModeProps>(({
         <div className="pointer-events-auto">
           <MapControls
             onLocationClick={onLocationClick}
-            onPolylineClick={onPolylineClick}
-            onRemoveClick={onRemoveClick}
             position="bottom-right"
           />
         </div>

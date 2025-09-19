@@ -58,6 +58,12 @@ export const useNavigationStore = create<NavigationState & NavigationActions>()(
         sideSheetPosition: 20, // 20% 상태로 시작
         sideSheetMode: 'normal',
       });
+      
+      // 선택된 경로의 폴리라인과 마커 그리기
+      if (route.rawData) {
+        // useMapViewModel에서 drawSelectedRoute와 createSelectedRouteMarkers 호출
+        // 이는 MainMapPage에서 처리됨
+      }
     },
 
     // 네비게이션 종료

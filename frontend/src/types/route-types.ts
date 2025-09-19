@@ -130,4 +130,6 @@ export interface SimpleRoute extends BaseEntity {
   description: string;
   isBookmarked?: boolean;
   fatigueLevel?: number; // 피로도 수치 (0-100)
+  // test.json 원본 데이터 (선택사항)
+  rawData?: any;
 }
