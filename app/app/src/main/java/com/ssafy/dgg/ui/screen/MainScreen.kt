@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue // Added this import
 import androidx.compose.ui.platform.LocalContext
+import com.ssafy.dgg.BuildConfig
 
 data class Screen(val route: String, val title: String)
 
@@ -21,7 +22,7 @@ val items = listOf(
     Screen("mypage", "마이페이지"),
 )
 
-val BASE_URL = "http://70.12.247.55:3000" // 추후 util 분리
+val BASE_URL = BuildConfig.WEB_URL
 
 @Composable
 fun MainScreen() {
