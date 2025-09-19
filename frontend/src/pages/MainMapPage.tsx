@@ -88,7 +88,7 @@ export default function MainMapPage() {
       </div>
 
       {/* 레이어 1: 네비게이션 모드 또는 검색 모드 */}
-      <div className={`absolute inset-0 z-10 ${isNavigating ? '' : 'pointer-events-none'}`}>
+      <div className="absolute inset-0 z-10 pointer-events-none">
         {isNavigating && currentRoute ? (
           <NavigationMode
             currentRoute={currentRoute}
