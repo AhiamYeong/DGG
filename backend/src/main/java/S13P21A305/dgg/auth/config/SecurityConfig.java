@@ -67,7 +67,9 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
-//                        .requestMatchers("/api/v1/mypage/**").hasAnyRole("GUEST","MEMBER")
+                        .requestMatchers("/api/v1/alarms/**").permitAll()
+                        .requestMatchers("/internal/push/**").permitAll()
+                        .requestMatchers("/api/v1/mypage/**").hasAnyRole("GUEST","MEMBER")
                         .anyRequest().permitAll());
 //                        .anyRequest().authenticated());
 

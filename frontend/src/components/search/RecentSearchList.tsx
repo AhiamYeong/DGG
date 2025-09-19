@@ -59,7 +59,12 @@ const RecentSearchList = memo<RecentSearchListProps>(({
         <div
           key={item.id}
           onClick={() => handleSelect(item)}
-          className="flex items-center justify-between py-3 bg-background border-b border-gray-100 hover:bg-primary hover:bg-opacity-5 transition-colors cursor-pointer"
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleSelect(item);
+          }}
+          className="flex items-center justify-between py-3 bg-background border-b border-gray-100 hover:bg-primary hover:bg-opacity-5 transition-colors cursor-pointer touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
         >
           <div className="flex items-center gap-3 flex-1">
             {/* 장소 아이콘 */}
@@ -85,7 +90,13 @@ const RecentSearchList = memo<RecentSearchListProps>(({
             {/* 즐겨찾기 토글 */}
             <button
               onClick={(e) => handleToggleFavorite(e, item.id)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleToggleFavorite(e, item.id);
+              }}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation"
+              style={{ touchAction: 'manipulation' }}
               aria-label="즐겨찾기 추가"
             >
               <svg className="w-4 h-4 text-gray-400 hover:text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,7 +107,13 @@ const RecentSearchList = memo<RecentSearchListProps>(({
             {/* 삭제 버튼 */}
             <button
               onClick={(e) => handleDelete(e, item.id)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDelete(e, item.id);
+              }}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation"
+              style={{ touchAction: 'manipulation' }}
               aria-label="삭제"
             >
               <svg className="w-4 h-4 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

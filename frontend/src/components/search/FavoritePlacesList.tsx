@@ -53,7 +53,12 @@ const FavoritePlacesList = memo<FavoritePlacesListProps>(({
         <div
           key={item.id}
           onClick={() => handleSelect(item)}
-          className="flex items-center justify-between py-3 bg-background border-b border-gray-100 hover:bg-primary hover:bg-opacity-5 transition-colors cursor-pointer"
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleSelect(item);
+          }}
+          className="flex items-center justify-between py-3 bg-background border-b border-gray-100 hover:bg-primary hover:bg-opacity-5 transition-colors cursor-pointer touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
         >
           <div className="flex items-center gap-3 flex-1">
             {/* 장소 아이콘 */}
@@ -77,7 +82,13 @@ const FavoritePlacesList = memo<FavoritePlacesListProps>(({
           {/* 즐겨찾기 토글 버튼 */}
           <button
             onClick={(e) => handleToggleFavorite(e, item.id)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleToggleFavorite(e, item.id);
+            }}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation"
+            style={{ touchAction: 'manipulation' }}
             aria-label={item.isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
           >
             <svg 

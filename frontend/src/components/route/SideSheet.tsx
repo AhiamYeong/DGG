@@ -5,7 +5,7 @@ interface SideSheetProps {
   position: number; // 0, 20, 70 (0: 닫힘, 20: 보통상태, 70: 확장상태)
   route: SimpleRoute;
   onPositionChange: (position: number) => void;
-  onClose: () => void;
+  onClose?: () => void; // 선택적 prop으로 변경
   headerHeight?: number; // 헤더 높이 (기본값: 0)
 }
 
@@ -19,7 +19,6 @@ export const SideSheet: React.FC<SideSheetProps> = ({
   position,
   route,
   onPositionChange,
-  onClose,
   headerHeight = 0,
 }) => {
   const [startX, setStartX] = useState(0);
@@ -152,7 +151,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
                 }}
               >
                 {showDetails && (
-                  <p className="text-sm font-medium text-gray-900">{route.from.name}</p>
+                  <p className="text-sm font-medium text-gray-900">{route.from.name || route.from.address || '출발지'}</p>
                 )}
               </div>
             </div>
@@ -305,7 +304,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
                 }}
               >
                 {showDetails && (
-                  <p className="text-sm font-medium text-gray-900">{route.to.name}</p>
+                  <p className="text-sm font-medium text-gray-900">{route.to.name || route.to.address || '도착지'}</p>
                 )}
               </div>
             </div>
@@ -324,11 +323,11 @@ export const SideSheet: React.FC<SideSheetProps> = ({
               <div className="p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-600">총 소요시간</span>
-                  <span className="text-lg font-bold text-gray-900">{route.totalDuration}분</span>
+                  <span className="text-lg font-bold text-gray-900">{route.totalDuration || 0}분</span>
                 </div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-600">총 거리</span>
-                  <span className="text-lg font-bold text-gray-900">{(route.totalDistance / 1000).toFixed(1)}km</span>
+                  <span className="text-lg font-bold text-gray-900">{((route.totalDistance || 0) / 1000).toFixed(1)}km</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-600">예상 요금</span>
@@ -348,7 +347,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
       {/* 백드롭 */}
       {position > 0 && (
         <div
-          className="fixed bg-black bg-opacity-20 transition-opacity"
+          className="fixed bg-black bg-opacity-20 transition-opacity pointer-events-none"
           style={{ 
             zIndex: 12, // 안내종료 버튼(z-15)보다 아래
             top: `${headerHeight}px`,
@@ -357,7 +356,6 @@ export const SideSheet: React.FC<SideSheetProps> = ({
             bottom: 0,
             opacity: (position / 70) * 0.3 
           }}
-          onClick={onClose}
         />
       )}
       

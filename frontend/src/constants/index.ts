@@ -71,10 +71,33 @@ export const POLYLINE_STYLES = {
   }
 } as const;
 
+// 호선별 색상 매핑
+export const SUBWAY_LINE_COLORS = {
+  '1호선': '#0052A4',
+  '2호선': '#00A84D', 
+  '3호선': '#EF7C1C',
+  '4호선': '#00A5DE',
+  '5호선': '#996CAC',
+  '6호선': '#CD7C2F',
+  '7호선': '#747F00',
+  '8호선': '#E6186C',
+  '9호선': '#BDB092',
+  '경의중앙선': '#77C4A3',
+  '분당선': '#F5A200',
+  '신분당선': '#D4003B',
+  '공항철도': '#0090D2',
+  '수인분당선': '#F5A200',
+  '경춘선': '#0C8E72',
+  '우이신설선': '#B7C452',
+  '서해선': '#81A914',
+  '신림선': '#6789CA',
+  '기타': '#FF0000' // 기본값
+} as const;
+
 export const TRAFFIC_TYPES = {
-  BUS: 1,
-  SUBWAY: 2,
-  WALK: 3
+  SUBWAY: 1,  // 지하철
+  BUS: 2,     // 버스
+  WALK: 3     // 도보
 } as const;
 
 export const MARKER_ICONS = {

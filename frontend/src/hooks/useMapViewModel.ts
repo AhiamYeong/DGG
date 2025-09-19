@@ -11,13 +11,13 @@ export function useMapViewModel() {
   const { map, isLoaded, mapRef, initializeMap, cleanupMap } = useMapInitialization();
   
   // 위치 관리
-  const { currentLocation, setCurrentLocation, getCurrentLocation, updateMapLocation } = useMapLocation();
+  const { currentLocation, setCurrentLocation, getCurrentLocation, updateMapLocation, centerMapToRouteStart } = useMapLocation();
   
   // 폴리라인 관리
-  const { drawPolylines, drawGangnamToSeongsuRoute, clearPolylines } = usePolyline(map);
+  const { drawPolylines, drawGangnamToGongdeokRoute, drawSelectedRoute, clearPolylines } = usePolyline(map);
   
   // 마커 관리
-  const { clearMarkers, createRouteMarkers } = useMarker(map);
+  const { clearMarkers, createRouteMarkers, createCurrentLocationMarker, createGangnamToGongdeokStationMarkers, createSelectedRouteMarkers } = useMarker(map);
   
   // 검색 기능은 useRouteSearchStore에서 처리
 
@@ -47,13 +47,18 @@ export function useMapViewModel() {
     cleanupMap,
     setCurrentLocation,
     updateMapLocation: (newLocation: NaverMapLocation) => updateMapLocation(newLocation, map),
+    centerMapToRouteStart: (route: any) => centerMapToRouteStart(route, map),
     
     // Polyline Actions
     drawPolylines,
-    drawGangnamToSeongsuRoute,
+    drawGangnamToGongdeokRoute,
+    drawSelectedRoute,
     clearPolylinesAndMarkers,
     
     // Marker Actions
-    createRouteMarkers
+    createRouteMarkers,
+    createCurrentLocationMarker,
+    createGangnamToGongdeokStationMarkers,
+    createSelectedRouteMarkers
   };
 }

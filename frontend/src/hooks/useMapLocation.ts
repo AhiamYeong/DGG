@@ -37,10 +37,52 @@ export function useMapLocation() {
     }
   }, []);
 
+  // 경로 시작점으로 지도 이동
+  const centerMapToRouteStart = useCallback((route: any, map: NaverMapInstance | null) => {
+    if (!map || !window.naver || !window.naver.maps || !route) {
+      return;
+    }
+
+    // 경로의 첫 번째 구간에서 시작 좌표 찾기
+    let startLocation: NaverMapLocation | null = null;
+
+    if (route.rawData && route.rawData.subPath && route.rawData.subPath.length > 0) {
+      const firstSubPath = route.rawData.subPath[0];
+      
+      // passStopList.stations에서 첫 번째 역/정류장 좌표 사용
+      if (firstSubPath.passStopList?.stations && firstSubPath.passStopList.stations.length > 0) {
+        const firstStation = firstSubPath.passStopList.stations[0];
+        startLocation = {
+          lat: parseFloat(firstStation.y),
+          lng: parseFloat(firstStation.x)
+        };
+      }
+      // startX, startY가 있는 경우 사용
+      else if (firstSubPath.startX && firstSubPath.startY) {
+        startLocation = {
+          lat: firstSubPath.startY,
+          lng: firstSubPath.startX
+        };
+      }
+    }
+
+    // 시작 좌표가 있으면 지도 중심 이동
+    if (startLocation) {
+      const newCenter = new window.naver.maps.LatLng(startLocation.lat, startLocation.lng);
+      map.setCenter(newCenter as any);
+      
+      // 안내시작 시 클로즈업 (줌 레벨 16으로 설정)
+      map.setZoom(16);
+      
+      console.log('지도를 경로 시작점으로 클로즈업:', startLocation);
+    }
+  }, []);
+
   return {
     currentLocation,
     setCurrentLocation,
     getCurrentLocation,
-    updateMapLocation
+    updateMapLocation,
+    centerMapToRouteStart
   };
 }

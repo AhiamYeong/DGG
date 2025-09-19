@@ -3,8 +3,6 @@ import { MapIconButton } from '../ui/Button';
 
 interface MapControlsProps {
   onLocationClick: () => void;
-  onPolylineClick: () => void;
-  onRemoveClick: () => void;
   position?: 'top-right' | 'bottom-right';
   className?: string;
 }
@@ -16,8 +14,6 @@ interface MapControlsProps {
  */
 export const MapControls = memo<MapControlsProps>(({
   onLocationClick,
-  onPolylineClick,
-  onRemoveClick,
   position = 'bottom-right',
   className = ''
 }) => {
@@ -35,24 +31,6 @@ export const MapControls = memo<MapControlsProps>(({
         iconName="location"
         variant="location"
         aria-label="현재 위치로 이동"
-        className="rounded-full shadow-lg"
-      />
-      
-      {/* 폴리라인 테스트 버튼 */}
-      <MapIconButton
-        onClick={onPolylineClick}
-        iconName="route"
-        variant="polyline"
-        aria-label="강남역 -> 성수역 경로 표시"
-        className="rounded-full shadow-lg"
-      />
-      
-      {/* 폴리라인 제거 버튼 */}
-      <MapIconButton
-        onClick={onRemoveClick}
-        iconName="close"
-        variant="remove"
-        aria-label="경로 제거"
         className="rounded-full shadow-lg"
       />
     </div>

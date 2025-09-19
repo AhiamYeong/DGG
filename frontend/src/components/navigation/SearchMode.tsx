@@ -24,8 +24,6 @@ interface SearchModeProps {
   
   // 지도 컨트롤 관련 props
   onLocationClick: () => void;
-  onPolylineClick: () => void;
-  onRemoveClick: () => void;
 }
 
 /**
@@ -44,23 +42,19 @@ export const SearchMode = memo<SearchModeProps>(({
   onSelectRoute,
   onCloseRouteResults,
   showTimePicker,
-  onLocationClick,
-  onPolylineClick,
-  onRemoveClick
+  onLocationClick
 }) => {
   return (
     <>
       {/* 상단 검색 박스 */}
-      <div className="absolute top-0 left-0 w-full">
-        <div className="pointer-events-auto">
-          <SearchBox 
-            onSearch={onSearch}
-            onDepartureOptionChange={onDepartureOptionChange}
-            selectedDepartureOption={selectedDepartureOption}
-            showDepartureOptions={false}
-            onCloseDepartureOptions={onCloseDepartureOptions}
-          />
-        </div>
+      <div className="absolute top-0 left-0 w-full pointer-events-auto">
+        <SearchBox 
+          onSearch={onSearch}
+          onDepartureOptionChange={onDepartureOptionChange}
+          selectedDepartureOption={selectedDepartureOption}
+          showDepartureOptions={false}
+          onCloseDepartureOptions={onCloseDepartureOptions}
+        />
       </div>
 
       {/* 경로 결과 컴포넌트 */}
@@ -75,15 +69,11 @@ export const SearchMode = memo<SearchModeProps>(({
       />
 
       {/* 지도 컨트롤 버튼들 */}
-      <div className="absolute bottom-0 right-0 ml-4 mt-32">
-        <div className="pointer-events-auto">
-          <MapControls
-            onLocationClick={onLocationClick}
-            onPolylineClick={onPolylineClick}
-            onRemoveClick={onRemoveClick}
-            position="bottom-right"
-          />
-        </div>
+      <div className="absolute bottom-0 right-0 ml-4 mt-32 pointer-events-auto">
+        <MapControls
+          onLocationClick={onLocationClick}
+          position="bottom-right"
+        />
       </div>
 
 
