@@ -66,6 +66,18 @@ export function useMapInitialization() {
             }
           });
 
+          // 맵 클릭 이벤트 추가 - 좌표를 콘솔에 출력
+          naver.maps.Event.addListener(mapInstance, 'click', (e: any) => {
+            const lat = e.coord.lat();
+            const lng = e.coord.lng();
+            console.log('🗺️ 맵 클릭 좌표:', {
+              lat: lat,
+              lng: lng,
+              latLng: `${lat}, ${lng}`,
+              timestamp: new Date().toLocaleString()
+            });
+          });
+
           setMap(mapInstance);
           setIsLoaded(true);
         }

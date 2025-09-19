@@ -3,10 +3,10 @@ import { useSearchDebounce } from './useDebounce';
 import { UI_CONSTANTS } from '../constants';
 
 // Dynamic import for large API module
-const loadNaverSearchApi = () => import('../api/naverSearchApi');
+const loadSearchApi = () => import('../api/placeSearchApi');
 
 // Import types separately (they're small)
-import type { SearchOptions } from '../api/naverSearchApi';
+import type { SearchOptions } from '../api/placeSearchApi';
 
 // 검색 결과 타입 (앱에서 사용하는 형식)
 export interface SearchResult {
@@ -86,8 +86,34 @@ export function useNaverSearch(options: SearchOptions = {}) {
     }));
 
     try {
-      const { searchPlacesWithNaver } = await loadNaverSearchApi();
-      const response = await searchPlacesWithNaver(query, memoizedOptions);
+      const { searchPlaces, removeBTags } = await loadSearchApi();
+      const apiResponse = await searchPlaces(query, memoizedOptions);
+      
+      // API 응답을 앱 형식으로 변환
+      const convertedResults = apiResponse.items.map((item, index) => ({
+        id: `search_${index}_${Date.now()}`,
+        name: removeBTags(item.title),
+        title: item.title,
+        address: item.address,
+        roadAddress: item.roadAddress,
+        category: 'place',
+        description: item.address,
+        distance: undefined,
+        rating: undefined,
+        isFavorite: false,
+        location: {
+          lat: 37.5665,
+          lng: 126.9780
+        },
+        type: 'landmark' as const
+      }));
+      
+      const response = {
+        success: true,
+        data: convertedResults,
+        total: apiResponse.items.length,
+        message: `${apiResponse.items.length}개의 검색 결과를 찾았습니다.`
+      };
       
       if (response.success) {
         setSearchState({
@@ -161,8 +187,34 @@ export function useNaverSearch(options: SearchOptions = {}) {
       }));
 
       try {
-        const { searchPlacesWithNaver } = await loadNaverSearchApi();
-        const response = await searchPlacesWithNaver(query, memoizedOptions);
+        const { searchPlaces, removeBTags } = await loadSearchApi();
+        const apiResponse = await searchPlaces(query, memoizedOptions);
+        
+        // API 응답을 앱 형식으로 변환
+        const convertedResults = apiResponse.items.map((item, index) => ({
+          id: `search_${index}_${Date.now()}`,
+          name: removeBTags(item.title),
+          title: item.title,
+          address: item.address,
+          roadAddress: item.roadAddress,
+          category: 'place',
+          description: item.address,
+          distance: undefined,
+          rating: undefined,
+          isFavorite: false,
+          location: {
+            lat: 37.5665,
+            lng: 126.9780
+          },
+          type: 'landmark' as const
+        }));
+        
+        const response = {
+          success: true,
+          data: convertedResults,
+          total: apiResponse.items.length,
+          message: `${apiResponse.items.length}개의 검색 결과를 찾았습니다.`
+        };
         
         if (response.success) {
           setSearchState({

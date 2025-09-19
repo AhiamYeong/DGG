@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'icon';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'icon' | 'location' | 'polyline' | 'remove' | 'custom';
   size?: 'sm' | 'md' | 'lg' | 'icon';
   children: React.ReactNode;
   className?: string;
@@ -27,7 +27,12 @@ export const Button: React.FC<ButtonProps> = ({
     secondary: 'bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400',
     outline: 'border border-primary text-primary hover:bg-primary hover:text-white disabled:border-gray-300 disabled:text-gray-400',
     ghost: 'text-gray-600 hover:bg-gray-100 disabled:text-gray-400',
-    icon: 'p-2 hover:bg-gray-100 rounded-full transition-colors'
+    icon: 'p-2 hover:bg-gray-100 rounded-full transition-colors',
+    // 지도 전용 variant들
+    location: 'bg-white hover:bg-secondary hover:bg-opacity-20 text-font',
+    polyline: 'bg-blue-500 hover:bg-blue-600 text-white',
+    remove: 'bg-red-500 hover:bg-red-600 text-white',
+    custom: ''
   };
 
   // Size 스타일
@@ -39,12 +44,29 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   // 기본 스타일
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed';
+  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed';
+  
+  // 포커스 링 색상 (지도 variant용)
+  const focusRingStyles = {
+    location: 'focus:ring-gray-400',
+    polyline: 'focus:ring-blue-400',
+    remove: 'focus:ring-red-400',
+    custom: 'focus:ring-gray-400'
+  };
+  
+  // 지도 variant용 포커스 링 스타일
+  const getFocusRingStyle = () => {
+    if (['location', 'polyline', 'remove', 'custom'].includes(variant)) {
+      return focusRingStyles[variant as keyof typeof focusRingStyles];
+    }
+    return 'focus:ring-primary';
+  };
 
   const buttonClasses = `
     ${baseStyles}
     ${variantStyles[variant]}
     ${sizeStyles[size]}
+    ${getFocusRingStyle()}
     ${className}
   `.trim();
 
@@ -117,6 +139,32 @@ export const TabButton: React.FC<TabButtonProps> = ({
     >
       {children}
     </Button>
+  );
+};
+
+/**
+ * 아이콘 이름으로 Button을 생성하는 헬퍼 컴포넌트
+ */
+interface MapIconButtonProps extends Omit<ButtonProps, 'children'> {
+  iconName: 'location' | 'search' | 'close' | 'favorite' | 'route' | 'options' | 'arrow-right' | 'clock' | 'trash' | 'plus' | 'info' | 'warning' | 'error' | 'success' | 'arrow-left' | 'arrow-up' | 'arrow-down' | 'menu' | 'bookmark' | 'star' | 'heart' | 'calendar' | 'time' | 'distance' | 'price' | 'bus' | 'subway' | 'walk' | 'transfer';
+  iconSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+}
+
+export const MapIconButton: React.FC<MapIconButtonProps> = ({
+  iconName,
+  iconSize = 'lg',
+  ...props
+}) => {
+  // Icon 컴포넌트를 동적으로 import
+  const Icon = React.lazy(() => import('./Icon').then(module => ({ default: module.Icon })));
+  
+  return (
+    <React.Suspense fallback={<div className="w-6 h-6" />}>
+      <Button
+        {...props}
+        children={<Icon name={iconName} size={iconSize} />}
+      />
+    </React.Suspense>
   );
 };
 

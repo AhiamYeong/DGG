@@ -4,7 +4,7 @@
 export * from './logger';
 
 // API 관련 유틸리티
-export * from './apiUtils';
+export * from './apiClient';
 
 // 데이터 변환 유틸리티
 export * from './dataTransformers';

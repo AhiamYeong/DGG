@@ -1,43 +1,12 @@
 // 네이버 지도 API 및 서버 API 호출
-import axios from 'axios';
-import { API_CONSTANTS } from '../constants';
+import { createApiClient } from '../utils/apiClient';
 import { log } from '../utils/logger';
 
 // API 설정
 const API_BASE_URL = '/api';
 
-// Axios 인스턴스 생성
-const mapApi = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: API_CONSTANTS.TIMEOUT, // 상수 사용
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// 요청 인터셉터
-mapApi.interceptors.request.use(
-  (config) => {
-    log.api.request(config.url || '', config.method?.toUpperCase() || 'GET', config.data);
-    return config;
-  },
-  (error) => {
-    log.api.error('요청 에러', error);
-    return Promise.reject(error);
-  }
-);
-
-// 응답 인터셉터
-mapApi.interceptors.response.use(
-  (response) => {
-    log.api.response(response.config.url || '', response.status, response.data);
-    return response;
-  },
-  (error) => {
-    log.api.error(error.config?.url || '알 수 없는 URL', error);
-    return Promise.reject(error);
-  }
-);
+// 공통 API 클라이언트 생성
+const mapApi = createApiClient(API_BASE_URL);
 
 // 네이버 지도 API 키
 export const getNaverMapClientId = (): string => {
