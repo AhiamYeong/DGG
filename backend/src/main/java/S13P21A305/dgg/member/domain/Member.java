@@ -20,7 +20,7 @@ public class Member {
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(name="google_key")
     private String googleKey; //구글 고유 id
