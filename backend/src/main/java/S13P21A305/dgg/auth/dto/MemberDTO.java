@@ -8,5 +8,5 @@ import lombok.Setter;
 public class MemberDTO {
     private String role;
     private String name;
-    private Long memberId;
+    private Integer memberId;
 }

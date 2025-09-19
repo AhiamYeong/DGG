@@ -55,7 +55,7 @@ public class AuthService {
             memberRepository.save(member);
         }
 
-        Long memberId = member.getId();
+        Integer memberId = member.getId();
         String role = member.getRole().toString();
 
         // 3) 서버 자체 JWT 발급 (만료시간은 ms 단위)
