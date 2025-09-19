@@ -59,7 +59,7 @@ public class AuthService {
         String role = member.getRole().toString();
 
         // 3) 서버 자체 JWT 발급 (만료시간은 ms 단위)
-        long expiresMs = 60L * 60L * 24 * 1000L; // 24시간
+        long expiresMs = 60L * 60L * 24 * 14 * 1000L; // 24시간
         String jwt = jwtUtil.createJwt(memberId, role, expiresMs);
 
         // 4) 쿠키 발급 (JWTFilter가 Authorization 쿠키만 읽으므로 이름을 그대로 맞춘다)
