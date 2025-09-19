@@ -18,45 +18,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.ktx.messaging
 import com.ssafy.dgg.auth.GoogleSignInManager
 import com.ssafy.dgg.auth.TokenStorage
 import com.ssafy.dgg.model.repository.AuthRepositoryImpl
+import com.ssafy.dgg.model.repository.api.HealthDataRepository
+import com.ssafy.dgg.model.repository.api.HealthPermissionRepository
 import com.ssafy.dgg.model.repository.api.RetrofitClient
 import com.ssafy.dgg.ui.screen.LoginScreen
 import com.ssafy.dgg.ui.screen.MainScreen
 import com.ssafy.dgg.ui.theme.DGGTheme
-import com.ssafy.dgg.viewModel.LoginState
-import com.ssafy.dgg.viewModel.TestViewModel
-import androidx.lifecycle.lifecycleScope
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.messaging.ktx.messaging
-import com.samsung.android.sdk.health.data.HealthDataStore
-import com.samsung.android.sdk.health.data.data.AggregatedData
-import com.samsung.android.sdk.health.data.device.DeviceGroup
-import com.samsung.android.sdk.health.data.request.DataType
-import com.samsung.android.sdk.health.data.request.DataTypes
-import com.samsung.android.sdk.health.data.request.LocalTimeFilter
-import com.samsung.android.sdk.health.data.response.DataResponse
-import com.ssafy.dgg.model.repository.api.HealthDataRepository
-import com.ssafy.dgg.model.repository.api.HealthPermissionRepository
-import com.ssafy.dgg.ui.screen.MainScreen
-import com.ssafy.dgg.ui.theme.DGGTheme
 import com.ssafy.dgg.util.HealthStoreProvider
-import com.ssafy.dgg.util.formatDuration
 import com.ssafy.dgg.viewModel.HealthViewModel
-import kotlinx.coroutines.launch
-import java.time.Duration
-import java.time.LocalDate
-import java.time.LocalTime
+import com.ssafy.dgg.viewModel.LoginState
+
 
 class MainActivity : ComponentActivity() {
 
@@ -92,12 +77,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-<<<<<<< app/app/src/main/java/com/ssafy/dgg/MainActivity.kt
-    /*    private fun logRegToken() {
-=======
     val TAG = "FCM"
     private fun logRegToken() {
->>>>>>> app/app/src/main/java/com/ssafy/dgg/MainActivity.kt
         // [START log_reg_token]
         Firebase.messaging.getToken().addOnCompleteListener { task ->
             if (!task.isSuccessful) {
@@ -114,7 +95,7 @@ class MainActivity : ComponentActivity() {
             Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
         }
         // [END log_reg_token]
-    }*/
+    }
 
     // 삼성헬스 ViewModel 호출
     private val healthViewModel: HealthViewModel by lazy {
@@ -132,7 +113,6 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-<<<<<<< app/app/src/main/java/com/ssafy/dgg/MainActivity.kt
         // 로그인 토큰 저장용 앱 내 스토리지
         val tokenStorage = TokenStorage(this)
         val authRepository = AuthRepositoryImpl(
@@ -140,32 +120,64 @@ class MainActivity : ComponentActivity() {
         )
         // UI ~ 비즈니스 로직 연결 -> compose UI가 viewmodel의 loginState를 관찰
         val loginViewModel = LoginViewModel(tokenStorage, authRepository)
-=======
         healthViewModel.loadHealthDatas(this)
->>>>>>> app/app/src/main/java/com/ssafy/dgg/MainActivity.kt
 
         askNotificationPermission()
         // logRegToken()
 
-<<<<<<< app/app/src/main/java/com/ssafy/dgg/MainActivity.kt
         // googlesigninmanager 초기화
         googleSignInManager = GoogleSignInManager(
             this,
             onSignInSuccess = { idToken ->
-                // 로그인 성공! 이제 로그인 상태를 변경합니다.
                 Log.d("LoginFlow", "ID token 획득: $idToken")
                 loginViewModel.loginWithGoogle(idToken)
-                // screenState = ScreenState.LoggedIn
-                // 또는 ViewModel에 토큰을 전달하여 로그인 처리
-                Log.d("GoogleSignIn", "idToken: $idToken")
-=======
-        setContent {
+            },
+            onSignInFailure = { exception ->
+                Log.e("LoginFlow", "로그인 실패", exception)
+            }
+        )
+
+/*        setContent {
             DGGTheme {
                 Surface (
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ){
                     MainScreen()
+                }
+            } // DGGTheme
+        } // setContent*/
+
+        setContent {
+            // 로그인 상태 관리 변수
+            var loginState by remember { mutableStateOf<LoginState>(LoginState.LoggedOut) }
+
+            DGGTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    when (loginState) {
+                        is LoginState.LoggedOut -> {
+                            LoginScreen(
+                                onLoginSuccess = { loginState = LoginState.LoggedIn },
+                                // onSignUpClicked = { loginState = LoginState.LoggedIn },
+                                onGoogleSignInClicked = { googleSignInManager.startSignInIntent() }
+                            )
+                        }
+                        is LoginState.LoggedIn -> {
+                            MainScreen()
+                        }
+
+                        is LoginState.Loading -> {
+                            CircularProgressIndicator()
+                        }
+
+                        is LoginState.Error -> {
+                            Text("에러 발생")
+                        }
+
+                    }
                 }
             }
         }
@@ -200,55 +212,18 @@ fun WebViewScreen(
                         }
                     }
                 }
->>>>>>> app/app/src/main/java/com/ssafy/dgg/MainActivity.kt
             },
-            onSignInFailure = { exception ->
-                Log.e("LoginFlow", "구글 로그인 실패", exception)
-                // 로그인 실패! 사용자에게 메시지 표시 등
-                Log.e("GoogleSignIn", "Failed", exception)
-            }
         )
-
-        setContent {
-            // 로그인 상태 관리 변수
-            var loginState by remember { mutableStateOf<LoginState>(LoginState.LoggedOut) }
-
-            DGGTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    when (loginState) {
-                        is LoginState.LoggedOut -> {
-                            LoginScreen(
-                                onLoginSuccess = { loginState = LoginState.LoggedIn },
-                                onSignUpClicked = { /* ... */ },
-                                onGoogleSignInClicked = { googleSignInManager.startSignInIntent() }
-                            )
-                        }
-
-                        is LoginState.LoggedIn -> {
-                            MainScreen()
-                        }
-
-                        is LoginState.Loading -> {
-                            CircularProgressIndicator()
-                        }
-
-                        is LoginState.Error -> {
-                            Text("에러 발생")
-                        }
-                    }
-                }
-            }
-        }
     }
+}
+
+
     /* companion object {
         private const val TAG = "MainActivity"
     }*/
 
 
-    @Composable
+    /*@Composable
     fun WebViewScreen(
         url: String,
         modifier: Modifier = Modifier
@@ -293,5 +268,4 @@ fun WebViewScreen(
                 )
             }
         }
-    }
-}
+    }*/

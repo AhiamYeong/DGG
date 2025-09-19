@@ -29,7 +29,7 @@ val BASE_URL = BuildConfig.WEB_URL
 @Composable
 fun MainScreen() {
     val context = LocalContext.current
-    var selectedItem by remember { mutableStateOf(items[0]) }
+    var selectedItem by remember { mutableStateOf(items[2]) }
 
     Scaffold (
         bottomBar = {

@@ -24,7 +24,6 @@ class LoginViewModel(
 
     // 구글 로그인 ID token 처리 함수
     // - googlesigninManager에서 추출한 id token 전달
-    // - 서버 없으므로, 임시로 delay + dummy 토큰 사용
     fun loginWithGoogle(idToken: String) {
         // 로그인 시도중임을 UI에 알리기
         _loginState.value = LoginState.Loading

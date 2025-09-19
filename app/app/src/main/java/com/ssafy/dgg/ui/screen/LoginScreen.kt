@@ -12,19 +12,18 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 
 /* 상태 직접 관리X, 요청을 외부에 전달 -> State Hoisting
-* 버튼  -> googlesigninmanager.signinIntent 실행
+* 버튼 -> googlesigninmanager.signinIntent 실행
 * 결과(Activity result)에서 account.idToken추출 -> viewmodel에 전달
 * isLoggedIn에 따라 로그인 <> 메인화면 전달
 *
@@ -35,7 +34,7 @@ import androidx.compose.runtime.setValue
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    onSignUpClicked: () -> Unit,
+    // onSignUpClicked: () -> Unit,
     onGoogleSignInClicked: () -> Unit,
 ){
     // 사용자가 입력한 아이디와 비밀번호를 상태로 관리
@@ -78,30 +77,21 @@ fun LoginScreen(
         // 로그인 버튼
         Button(
             onClick = {
-                Log.d("LoginFlow", "구글 로그인 버튼 클릭")
-                onGoogleSignInClicked()
                 // TODO: 여기에 실제 로그인 로직(예: API 호출)을 구현합니다.
-                // 현재는 단순히 성공했다고 가정하고 onLoginSuccess 람다를 호출합니다.
-                // onLoginSuccess()
+                Log.d("LoginFlow", "일반 로그인 버튼 클릭") // 로그 추가
+                onLoginSuccess() // onLoginSuccess 람다 호출
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("로그인")
+            Text("로그인 / 웹뷰 보기")
         }
         Spacer(modifier = Modifier.height(8.dp))
 
-        // 회원가입 버튼
-        TextButton (
-            onClick = onSignUpClicked,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("회원가입")
-        }
-        
         // google 로그인 버튼 추가
         Button(
             onClick = onGoogleSignInClicked
-        ) { 
+        ) {
+            Log.d("LoginFlow", "구글 로그인 버튼 클릭")
             Text("Google로 로그인")
         }
     }
