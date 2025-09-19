@@ -7,6 +7,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,7 +45,7 @@ fun MainScreen() {
                 }
             }
         }
-    ) { innerPadding -> // This is the PaddingValues from Scaffold
+    ) { innerPadding ->
         val currentUrl = when (selectedItem.route) {
             "fatigue" -> BASE_URL
             "plan" -> "$BASE_URL/plan"
@@ -53,11 +54,12 @@ fun MainScreen() {
             "mypage" -> "$BASE_URL/mypage"
             else -> BASE_URL
         }
-        // Pass innerPadding to WebViewScreen
-        WebViewScreen(
-            url = currentUrl,
-            context = context,
-            modifier = Modifier.padding(innerPadding) // Apply padding here
-        )
+        key(currentUrl) {
+            WebViewScreen(
+                url = currentUrl,
+                context = context,
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
     }
 }
