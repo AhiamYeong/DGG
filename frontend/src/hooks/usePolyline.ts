@@ -1,5 +1,7 @@
 import { useRef, useCallback } from 'react';
 import type { NaverMapInstance, NaverPolylineInstance } from '@/types/map';
+import type { SimpleRoute } from '@/types/route-types';
+import type { SubPath } from '@/types/route-api-types';
 import { log } from '../utils/logger';
 import { POLYLINE_STYLES, TRAFFIC_TYPES } from '../constants';
 
@@ -20,16 +22,15 @@ const styleMap = {
   [TRAFFIC_TYPES.WALK]: POLYLINE_STYLES.WALK
 };
 
-// 강남역 -> 성수역 더미 데이터
+// test.json 기반 강남역 -> 공덕역 더미 데이터
 const dummySubPath: DummySubPath[] = [
   {
-    trafficType: TRAFFIC_TYPES.WALK, // 걷기
+    trafficType: TRAFFIC_TYPES.WALK, // 걷기 (강남역 출구)
     passShape: {
       geojson: {
         coordinates: [
           [127.0276, 37.4979], // 강남역 출구
-          [127.0280, 37.4982], // 강남역 근처
-          [127.0285, 37.4985]  // 지하철역 입구
+          [127.0276, 37.4979]  // 지하철역 입구
         ]
       }
     }
@@ -39,29 +40,71 @@ const dummySubPath: DummySubPath[] = [
     passShape: {
       geojson: {
         coordinates: [
-          [127.0285, 37.4985], // 강남역
-          [127.0290, 37.4990], // 선릉역
-          [127.0295, 37.4995], // 삼성역
-          [127.0300, 37.5000], // 종합운동장역
-          [127.0305, 37.5005], // 잠실역
-          [127.0310, 37.5010], // 잠실나루역
-          [127.0315, 37.5015], // 강변역
-          [127.0320, 37.5020], // 구의역
-          [127.0325, 37.5025], // 건대입구역
-          [127.0330, 37.5030], // 성수역
-          [127.0335, 37.5035]  // 성수역 플랫폼
+          [127.027619, 37.497952], // 강남
+          [127.014395, 37.493902], // 교대
+          [127.007702, 37.491852], // 서초
+          [126.997667, 37.481496], // 방배
+          [126.981363, 37.476575]  // 사당
         ]
       }
     }
   },
   {
-    trafficType: TRAFFIC_TYPES.WALK, // 걷기
+    trafficType: TRAFFIC_TYPES.WALK, // 환승 걷기
     passShape: {
       geojson: {
         coordinates: [
-          [127.0335, 37.5035], // 성수역 플랫폼
-          [127.0340, 37.5040], // 성수역 출구
-          [127.0345, 37.5045]  // 성수역 근처 목적지
+          [126.981363, 37.476575], // 사당
+          [126.981363, 37.476575]  // 환승
+        ]
+      }
+    }
+  },
+  {
+    trafficType: TRAFFIC_TYPES.SUBWAY, // 지하철 (4호선)
+    passShape: {
+      geojson: {
+        coordinates: [
+          [126.981668, 37.476798], // 사당
+          [126.982193, 37.486803], // 총신대입구(이수)
+          [126.980341, 37.502915], // 동작
+          [126.974396, 37.522427], // 이촌
+          [126.967948, 37.529241], // 신용산
+          [126.972987, 37.534547]  // 삼각지
+        ]
+      }
+    }
+  },
+  {
+    trafficType: TRAFFIC_TYPES.WALK, // 환승 걷기
+    passShape: {
+      geojson: {
+        coordinates: [
+          [126.972987, 37.534547], // 삼각지
+          [126.972987, 37.534547]  // 환승
+        ]
+      }
+    }
+  },
+  {
+    trafficType: TRAFFIC_TYPES.SUBWAY, // 지하철 (6호선)
+    passShape: {
+      geojson: {
+        coordinates: [
+          [126.974019, 37.535592], // 삼각지
+          [126.961437, 37.539274], // 효창공원앞
+          [126.951969, 37.543515]  // 공덕
+        ]
+      }
+    }
+  },
+  {
+    trafficType: TRAFFIC_TYPES.WALK, // 공덕역 출구
+    passShape: {
+      geojson: {
+        coordinates: [
+          [126.951969, 37.543515], // 공덕역
+          [126.950498, 37.543967]  // 공덕역 1번출구
         ]
       }
     }
@@ -128,14 +171,41 @@ export function usePolyline(map: NaverMapInstance | null) {
     });
   }, [map, clearPolylines]);
 
-  // 강남역 -> 성수역 더미 경로 그리기
-  const drawGangnamToSeongsuRoute = useCallback((): void => {
+  // 강남역 -> 공덕역 더미 경로 그리기
+  const drawGangnamToGongdeokRoute = useCallback((): void => {
     drawPolylines(dummySubPath);
+  }, [drawPolylines]);
+
+  // 선택된 경로의 폴리라인 그리기
+  const drawSelectedRoute = useCallback((route: SimpleRoute): void => {
+    if (!route.rawData || !route.rawData.subPath) {
+      log.error('경로 데이터가 없습니다.');
+      return;
+    }
+
+    const subPaths = route.rawData.subPath.map((subPath: SubPath) => ({
+      trafficType: subPath.trafficType,
+      passShape: subPath.passShape || {
+        geojson: {
+          coordinates: subPath.passStopList?.stations?.map((station) => [
+            parseFloat(station.x),
+            parseFloat(station.y)
+          ]) || []
+        }
+      }
+    }));
+
+    drawPolylines(subPaths);
+    log.map('선택된 경로 폴리라인 그리기 완료', {
+      routeName: route.name,
+      subPathCount: subPaths.length
+    });
   }, [drawPolylines]);
 
   return {
     drawPolylines,
-    drawGangnamToSeongsuRoute,
+    drawGangnamToGongdeokRoute,
+    drawSelectedRoute,
     clearPolylines
   };
 }
