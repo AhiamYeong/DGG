@@ -3,7 +3,7 @@ import { createApiClient } from '../utils/apiClient';
 import { log } from '../utils/logger';
 
 // API 설정
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'https://j13a305.p.ssafy.io/api/';
 
 // 공통 API 클라이언트 생성
 const mapApi = createApiClient(API_BASE_URL);
@@ -68,7 +68,7 @@ interface RouteResponse {
 // 장소 검색 API
 export const searchPlaces = async (query: string): Promise<SearchPlaceResponse[]> => {
   try {
-    const response = await mapApi.get(`/search/places?query=${encodeURIComponent(query)}`);
+    const response = await mapApi.get(`/v1/search/places?query=${encodeURIComponent(query)}`);
     return response.data;
   } catch (error) {
     log.error('장소 검색 오류', error);
@@ -127,7 +127,7 @@ export const searchRoutesWithTime = async (
 // 즐겨찾기 경로 목록 API
 export const getFavoriteRoutes = async (): Promise<RouteResponse[]> => {
   try {
-    const response = await mapApi.get('/routes/favorites');
+    const response = await mapApi.get('/v1/routes/favorites');
     return response.data;
   } catch (error) {
     console.error('즐겨찾기 경로 조회 오류:', error);
@@ -138,7 +138,7 @@ export const getFavoriteRoutes = async (): Promise<RouteResponse[]> => {
 // 즐겨찾기 경로 추가 API
 export const addFavoriteRoute = async (route: Omit<RouteResponse, 'id'>): Promise<RouteResponse> => {
   try {
-    const response = await mapApi.post('/routes/favorites', route);
+    const response = await mapApi.post('/v1/routes/favorites', route);
     return response.data;
   } catch (error) {
     console.error('즐겨찾기 경로 추가 오류:', error);
@@ -149,7 +149,7 @@ export const addFavoriteRoute = async (route: Omit<RouteResponse, 'id'>): Promis
 // 즐겨찾기 경로 삭제 API
 export const removeFavoriteRoute = async (id: string): Promise<void> => {
   try {
-    await mapApi.delete(`/routes/favorites/${id}`);
+    await mapApi.delete(`/v1/routes/favorites/${id}`);
   } catch (error) {
     console.error('즐겨찾기 경로 삭제 오류:', error);
     throw error;

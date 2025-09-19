@@ -1,7 +1,7 @@
 import { createApiClient } from '../utils/apiClient';
 
 // API 설정
-const API_BASE_URL = '/api/v1/search';
+const API_BASE_URL = 'https://j13a305.p.ssafy.io/api/';
 
 // 공통 API 클라이언트 생성
 const placeSearchApi = createApiClient(API_BASE_URL);
@@ -41,7 +41,7 @@ export const searchPlaces = async (
     ...(options.sort && { sort: options.sort })
   };
 
-  const response = await placeSearchApi.get('/places', { params });
+  const response = await placeSearchApi.get('/v1/search/places', { params });
   return response.data;
 };
 
