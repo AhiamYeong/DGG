@@ -5,7 +5,7 @@ interface SideSheetProps {
   position: number; // 0, 20, 70 (0: 닫힘, 20: 보통상태, 70: 확장상태)
   route: SimpleRoute;
   onPositionChange: (position: number) => void;
-  onClose: () => void;
+  onClose?: () => void; // 선택적 prop으로 변경
   headerHeight?: number; // 헤더 높이 (기본값: 0)
 }
 
@@ -19,7 +19,6 @@ export const SideSheet: React.FC<SideSheetProps> = ({
   position,
   route,
   onPositionChange,
-  onClose,
   headerHeight = 0,
 }) => {
   const [startX, setStartX] = useState(0);
@@ -348,7 +347,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
       {/* 백드롭 */}
       {position > 0 && (
         <div
-          className="fixed bg-black bg-opacity-20 transition-opacity"
+          className="fixed bg-black bg-opacity-20 transition-opacity pointer-events-none"
           style={{ 
             zIndex: 12, // 안내종료 버튼(z-15)보다 아래
             top: `${headerHeight}px`,
@@ -357,7 +356,6 @@ export const SideSheet: React.FC<SideSheetProps> = ({
             bottom: 0,
             opacity: (position / 70) * 0.3 
           }}
-          onClick={onClose}
         />
       )}
       
