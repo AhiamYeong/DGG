@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { searchPlacesWithApi } from '../api/placeSearchApi';
+import { searchPlaces } from '../api/placeSearchApi';
 import type { SearchResult } from './useNaverSearch';
 import { UI_CONSTANTS } from '../constants';
 
@@ -45,25 +45,29 @@ export const usePlaceSearch = (options: UsePlaceSearchOptions = {}): UsePlaceSea
       setError(undefined);
 
       try {
-        const response = await searchPlacesWithApi(query);
+        const response = await searchPlaces(query, options);
         
-        if (response.success) {
-          // API 응답을 SearchResult 형식으로 변환
-        const transformedResults = response.data.map(item => ({
-          ...item,
-          location: item.coordinates ? {
-            lat: item.coordinates.lat,
-            lng: item.coordinates.lng
-          } : { lat: 0, lng: 0 },
-          type: 'address' as const,
+        // API 응답을 SearchResult 형식으로 변환
+        const transformedResults = response.items.map((item: any) => ({
+          id: `place_${Date.now()}_${Math.random()}`,
+          name: item.title,
+          title: item.title,
+          address: item.address,
+          roadAddress: item.roadAddress,
+          category: 'place',
+          description: item.address,
+          distance: undefined,
+          rating: undefined,
+          isFavorite: false,
+          location: {
+            lat: 37.5665,
+            lng: 126.9780
+          },
+          type: 'landmark' as const,
           createdAt: new Date(),
           updatedAt: new Date()
         }));
         setResults(transformedResults);
-        } else {
-          setError(response.message);
-          setResults([]);
-        }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : '검색 중 오류가 발생했습니다.';
         setError(errorMessage);

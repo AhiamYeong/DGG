@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { IconMapButton } from './MapButton';
+import { MapIconButton } from '../ui/Button';
 
 interface MapControlsProps {
   onLocationClick: () => void;
@@ -30,27 +30,30 @@ export const MapControls = memo<MapControlsProps>(({
   return (
     <div className={`absolute ${positionClasses[position]} pointer-events-auto flex flex-col gap-2 ${className}`}>
       {/* 현재 위치 버튼 */}
-      <IconMapButton
+      <MapIconButton
         onClick={onLocationClick}
         iconName="location"
         variant="location"
-        title="현재 위치로 이동"
+        aria-label="현재 위치로 이동"
+        className="rounded-full shadow-lg"
       />
       
       {/* 폴리라인 테스트 버튼 */}
-      <IconMapButton
+      <MapIconButton
         onClick={onPolylineClick}
         iconName="route"
         variant="polyline"
-        title="강남역 -> 성수역 경로 표시"
+        aria-label="강남역 -> 성수역 경로 표시"
+        className="rounded-full shadow-lg"
       />
       
       {/* 폴리라인 제거 버튼 */}
-      <IconMapButton
+      <MapIconButton
         onClick={onRemoveClick}
         iconName="close"
         variant="remove"
-        title="경로 제거"
+        aria-label="경로 제거"
+        className="rounded-full shadow-lg"
       />
     </div>
   );

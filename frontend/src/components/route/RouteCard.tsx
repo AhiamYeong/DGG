@@ -22,7 +22,6 @@ const RouteCard = memo<RouteCardProps>(({
   route,
   onSelect,
   onToggleBookmark,
-  onShowOptions,
   actionLabel = '선택',
   className = ''
 }) => {
@@ -36,10 +35,6 @@ const RouteCard = memo<RouteCardProps>(({
     onToggleBookmark?.(route.id);
   }, [onToggleBookmark, route.id]);
 
-  const handleShowOptions = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation(); // 카드 선택 이벤트와 분리
-    onShowOptions?.(route.id);
-  }, [onShowOptions, route.id]);
 
   return (
     <div
@@ -124,16 +119,6 @@ const RouteCard = memo<RouteCardProps>(({
       
       {/* 액션 버튼들 */}
       <div className="flex items-center gap-2">
-        {/* 옵션 메뉴 버튼 */}
-        <Button
-          onClick={handleShowOptions}
-          className="p-2 text-secondary hover:text-font transition-colors rounded"
-          aria-label="옵션 메뉴"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-          </svg>
-        </Button>
 
         {/* 선택 버튼 */}
         <Button

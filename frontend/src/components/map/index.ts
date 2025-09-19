@@ -2,5 +2,5 @@
 export { default as MapContainer } from './MapContainer';
 export { default as NaverMap } from './NaverMap';
 export { default as MapControls } from './MapControls';
-export { default as MapButton } from './MapButton';
+// MapButton은 이제 Button 컴포넌트의 IconButton으로 통합됨
 export { default as Overlay } from './Overlay';

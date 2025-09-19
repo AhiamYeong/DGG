@@ -5,7 +5,7 @@ import type {
   AddRecentSearchRequest,
   AddFavoritePlaceRequest
 } from '../types/api-types';
-import { createApiClient, apiCall, testApiConnection } from '../utils/apiUtils';
+import { createApiClient, apiCall, testApiConnection } from '../utils/apiClient';
 import { API_CONSTANTS } from '../constants';
 
 // 타입 별칭으로 통합

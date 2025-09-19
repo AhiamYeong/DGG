@@ -50,7 +50,6 @@ export default defineConfig({
             './src/hooks/usePolyline.ts'
           ],
           'search-features': [
-            './src/api/naverSearchApi.ts',
             './src/api/placeSearchApi.ts',
             './src/hooks/useNaverSearch.ts',
             './src/hooks/usePlaceSearch.ts'
