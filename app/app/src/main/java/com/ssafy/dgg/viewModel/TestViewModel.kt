@@ -11,11 +11,11 @@ class TestViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 // API 호출
-/*                val post = RetrofitClient.testApiService.getPost(postId)
+                val post = RetrofitClient.testApiService.getPost(postId)
                 // 성공시 로그 출력
-                println("API 호출 성공: ${post.title}")*/
+                println("API 호출 성공: ${post.title}")
             } catch (e: Exception){
-                // println("API 호출 실패: ${e.message}")
+                println("API 호출 실패: ${e.message}")
             }
         }
     }
