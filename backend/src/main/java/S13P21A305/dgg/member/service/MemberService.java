@@ -32,10 +32,17 @@ public class MemberService {
     }
 
 //    @Transactional
-//    public ProfileResponseDto updateProfile(Long memberId) {
+//    public void updateProfile(Long memberId, String newNickname) {
 //        Member member = memberRepository.findById(memberId)
 //                .orElseThrow(() -> new EntityNotFoundException(memberId + "에 해당하는 사용자가 없습니다."));
 //
+//        //기존 닉네임과 변경 닉네임 같으면 종료
+//        if(newNickname.equals(member.getNickname())) return;
+//
+//        //중복 체크
+//        if(memberRepository.existsByNickname(newNickname)) {
+//
+//        }
 //
 //    }
 
