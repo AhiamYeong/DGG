@@ -40,8 +40,8 @@ public class CustomOAuth2User implements OAuth2User {
     }
 
     // dgg 고유 member id
-    public Long getMemberId(){
-        return Long.valueOf(memberDTO.getMemberId());
+    public Integer getMemberId(){
+        return Integer.valueOf(memberDTO.getMemberId());
     }
 
     // nickname

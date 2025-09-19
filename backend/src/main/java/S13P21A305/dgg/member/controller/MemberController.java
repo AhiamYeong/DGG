@@ -2,17 +2,23 @@ package S13P21A305.dgg.member.controller;
 
 import S13P21A305.dgg.auth.dto.CustomOAuth2User;
 import S13P21A305.dgg.auth.service.AuthService;
+import S13P21A305.dgg.member.domain.Member;
 import S13P21A305.dgg.member.dto.request.ProfileUpdateRequestDto;
+import S13P21A305.dgg.member.dto.request.SubmitSurveyRequestDto;
 import S13P21A305.dgg.member.dto.response.ProfileResponseDto;
 import S13P21A305.dgg.member.dto.response.ProfileUpdateResponseDto;
+import S13P21A305.dgg.member.dto.response.SubmitSurveyResponseDto;
+import S13P21A305.dgg.member.dto.response.SurveyResponseDto;
 import S13P21A305.dgg.member.service.MemberService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -27,7 +33,7 @@ public class MemberController {
      */
     @GetMapping("/profile")
     public ResponseEntity<ProfileResponseDto> getProfile(@AuthenticationPrincipal CustomOAuth2User oAuth2User){
-        Long memberId = oAuth2User.getMemberId();
+        Integer memberId = oAuth2User.getMemberId();
         return ResponseEntity.ok(memberService.getProfile(memberId));
     }
 
@@ -38,13 +44,31 @@ public class MemberController {
     public ResponseEntity<ProfileUpdateResponseDto> updateProfile(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User,
             @RequestBody ProfileUpdateRequestDto request){
-        Long memberId = oAuth2User.getMemberId();
+        Integer memberId = oAuth2User.getMemberId();
 
         return ResponseEntity.ok(memberService.updateProfile(memberId, request));
     }
 
+    /**
+     * 설문조사 제출
+     */
+    @PostMapping("/survey")
+    public ResponseEntity<SubmitSurveyResponseDto> submitSurvey(@AuthenticationPrincipal CustomOAuth2User user,
+                                                                @RequestBody List<SubmitSurveyRequestDto> request){
+        SubmitSurveyResponseDto response = memberService.submitSurvey(user.getMemberId(), request);
 
+        return ResponseEntity.status(HttpStatus.CREATED).build();
 
+    }
+
+    /**
+     * 설문조사 응답 조회
+     */
+    @GetMapping("/survey")
+    public ResponseEntity<List<SurveyResponseDto>> getSurvey(@AuthenticationPrincipal CustomOAuth2User user){
+        List<SurveyResponseDto> response = memberService.getSurvey(user.getMemberId());
+        return ResponseEntity.ok(response);
+    }
 
 
     /**
