@@ -78,12 +78,14 @@ fun LoginScreen(
         Button(
             onClick = {
                 // TODO: 여기에 실제 로그인 로직(예: API 호출)을 구현합니다.
+                // 현재는 단순히 성공했다고 가정하고 onLoginSuccess 람다를 호출합니다.
+                // 웹뷰로 변경
                 Log.d("LoginFlow", "일반 로그인 버튼 클릭") // 로그 추가
                 onLoginSuccess() // onLoginSuccess 람다 호출
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("로그인 / 웹뷰 보기")
+            Text("로그인")
         }
         Spacer(modifier = Modifier.height(8.dp))
 

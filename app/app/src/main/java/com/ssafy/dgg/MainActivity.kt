@@ -38,20 +38,6 @@ import com.ssafy.dgg.model.repository.api.RetrofitClient
 import com.ssafy.dgg.ui.screen.LoginScreen
 import com.ssafy.dgg.ui.screen.MainScreen
 import com.ssafy.dgg.ui.theme.DGGTheme
-import androidx.lifecycle.lifecycleScope
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.messaging.ktx.messaging
-import com.samsung.android.sdk.health.data.HealthDataStore
-import com.samsung.android.sdk.health.data.data.AggregatedData
-import com.samsung.android.sdk.health.data.device.DeviceGroup
-import com.samsung.android.sdk.health.data.request.DataType
-import com.samsung.android.sdk.health.data.request.DataTypes
-import com.samsung.android.sdk.health.data.request.LocalTimeFilter
-import com.samsung.android.sdk.health.data.response.DataResponse
-import com.ssafy.dgg.model.repository.api.HealthDataRepository
-import com.ssafy.dgg.model.repository.api.HealthPermissionRepository
-import com.ssafy.dgg.ui.screen.MainScreen
-import com.ssafy.dgg.ui.theme.DGGTheme
 import com.ssafy.dgg.util.HealthStoreProvider
 import com.ssafy.dgg.viewModel.HealthViewModel
 import com.ssafy.dgg.viewModel.LoginState
@@ -137,7 +123,7 @@ class MainActivity : ComponentActivity() {
         healthViewModel.loadHealthDatas(this)
 
         askNotificationPermission()
-        logRegToken()
+        // logRegToken()
 
         // googlesigninmanager 초기화
         googleSignInManager = GoogleSignInManager(
@@ -264,22 +250,22 @@ fun WebViewScreen(
                                 isLoading = true
                             }
 
-                        override fun onPageFinished(view: WebView?, url: String?) {
-                            isLoading = false
+                            override fun onPageFinished(view: WebView?, url: String?) {
+                                isLoading = false
+                            }
                         }
                     }
+                },
+                update = { webView ->
+                    webView.loadUrl(url)
                 }
-            },
-            update = { webView ->
-                webView.loadUrl(url)
-            }
-        )
-
-        // 로딩 중일 때 프로그레스 표시
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center)
             )
+
+            // 로딩 중일 때 프로그레스 표시
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
         }
-    }
-}
+    }*/
