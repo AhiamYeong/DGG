@@ -59,8 +59,17 @@ export interface SubPath {
   startID?: number;
   endID?: number;
   startExitNo?: string;
+  endExitNo?: string;
   startExitX?: number;
+  endExitX?: number;
   startExitY?: number;
+  endExitY?: number;
+  startStationCityCode?: number;
+  startStationProviderCode?: number;
+  startLocalStationID?: string;
+  startArsID?: string;
+  endStationCityCode?: number;
+  endStationProviderCode?: number;
   passStopList?: {
     stations: Station[];
   };
@@ -72,9 +81,15 @@ export interface SubPath {
 }
 
 export interface Lane {
-  name: string;
-  subwayCode: number;
-  subwayCityCode: number;
+  name?: string;
+  subwayCode?: number;
+  subwayCityCode?: number;
+  busNo?: string;
+  type?: number;
+  busID?: number;
+  busLocalBlID?: string;
+  busCityCode?: number;
+  busProviderCode?: number;
 }
 
 export interface Station {
@@ -83,6 +98,11 @@ export interface Station {
   stationName: string;
   x: string;
   y: string;
+  stationCityCode?: number;
+  stationProviderCode?: number;
+  localStationID?: string;
+  arsID?: string;
+  isNonStop?: string;
 }
 
 // 트래픽 타입 상수

@@ -30,9 +30,8 @@ export class RouteService {
    */
   static async loadTestRouteData(): Promise<RouteApiResponse> {
     try {
-      const response = await fetch('/src/api/test.json');
-      const data = await response.json();
-      return data;
+      const { default: testData } = await import('./testData');
+      return testData;
     } catch (error) {
       log.error('test.json 로드 실패:', error);
       throw error;
