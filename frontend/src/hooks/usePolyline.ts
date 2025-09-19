@@ -183,17 +183,36 @@ export function usePolyline(map: NaverMapInstance | null) {
       return;
     }
 
-    const subPaths = route.rawData.subPath.map((subPath: SubPath) => ({
-      trafficType: subPath.trafficType,
-      passShape: subPath.passShape || {
-        geojson: {
-          coordinates: subPath.passStopList?.stations?.map((station) => [
-            parseFloat(station.x),
-            parseFloat(station.y)
-          ]) || []
-        }
+    const subPaths = route.rawData.subPath.map((subPath: SubPath) => {
+      // passShape이 있으면 사용, 없으면 passStopList.stations로 좌표 생성
+      let coordinates: number[][] = [];
+      
+      if (subPath.passShape?.geojson?.coordinates) {
+        // passShape이 있는 경우
+        coordinates = subPath.passShape.geojson.coordinates;
+      } else if (subPath.passStopList?.stations) {
+        // passStopList.stations를 사용해서 좌표 생성
+        coordinates = subPath.passStopList.stations.map((station) => [
+          parseFloat(station.x), // 경도
+          parseFloat(station.y)  // 위도
+        ]);
+      } else if (subPath.startX && subPath.startY && subPath.endX && subPath.endY) {
+        // 시작점과 끝점만 있는 경우 (도보 구간)
+        coordinates = [
+          [subPath.startX, subPath.startY],
+          [subPath.endX, subPath.endY]
+        ];
       }
-    }));
+
+      return {
+        trafficType: subPath.trafficType,
+        passShape: {
+          geojson: {
+            coordinates
+          }
+        }
+      };
+    });
 
     drawPolylines(subPaths);
     log.map('선택된 경로 폴리라인 그리기 완료', {

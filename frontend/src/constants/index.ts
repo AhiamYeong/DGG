@@ -72,9 +72,9 @@ export const POLYLINE_STYLES = {
 } as const;
 
 export const TRAFFIC_TYPES = {
-  BUS: 1,
-  SUBWAY: 2,
-  WALK: 3
+  SUBWAY: 1,  // 지하철
+  BUS: 2,     // 버스
+  WALK: 3     // 도보
 } as const;
 
 export const MARKER_ICONS = {

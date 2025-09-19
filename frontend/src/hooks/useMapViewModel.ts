@@ -11,7 +11,7 @@ export function useMapViewModel() {
   const { map, isLoaded, mapRef, initializeMap, cleanupMap } = useMapInitialization();
   
   // 위치 관리
-  const { currentLocation, setCurrentLocation, getCurrentLocation, updateMapLocation } = useMapLocation();
+  const { currentLocation, setCurrentLocation, getCurrentLocation, updateMapLocation, centerMapToRouteStart } = useMapLocation();
   
   // 폴리라인 관리
   const { drawPolylines, drawGangnamToGongdeokRoute, drawSelectedRoute, clearPolylines } = usePolyline(map);
@@ -47,6 +47,7 @@ export function useMapViewModel() {
     cleanupMap,
     setCurrentLocation,
     updateMapLocation: (newLocation: NaverMapLocation) => updateMapLocation(newLocation, map),
+    centerMapToRouteStart: (route: any) => centerMapToRouteStart(route, map),
     
     // Polyline Actions
     drawPolylines,

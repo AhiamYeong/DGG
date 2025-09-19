@@ -151,7 +151,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
                 }}
               >
                 {showDetails && (
-                  <p className="text-sm font-medium text-gray-900">{route.from.name}</p>
+                  <p className="text-sm font-medium text-gray-900">{route.from.name || route.from.address || '출발지'}</p>
                 )}
               </div>
             </div>
@@ -304,7 +304,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
                 }}
               >
                 {showDetails && (
-                  <p className="text-sm font-medium text-gray-900">{route.to.name}</p>
+                  <p className="text-sm font-medium text-gray-900">{route.to.name || route.to.address || '도착지'}</p>
                 )}
               </div>
             </div>
@@ -323,11 +323,11 @@ export const SideSheet: React.FC<SideSheetProps> = ({
               <div className="p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-600">총 소요시간</span>
-                  <span className="text-lg font-bold text-gray-900">{route.totalDuration}분</span>
+                  <span className="text-lg font-bold text-gray-900">{route.totalDuration || 0}분</span>
                 </div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-600">총 거리</span>
-                  <span className="text-lg font-bold text-gray-900">{(route.totalDistance / 1000).toFixed(1)}km</span>
+                  <span className="text-lg font-bold text-gray-900">{((route.totalDistance || 0) / 1000).toFixed(1)}km</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-600">예상 요금</span>
