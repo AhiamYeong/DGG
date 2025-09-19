@@ -47,7 +47,7 @@ android {
             // applicationIdSuffix = ".debug"
             versionNameSuffix = "-DEBUG"
 
-            buildConfigField("String", "API_BASE_URL", "\"http://localhost:8080/api/v1/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://j13a305.p.ssafy.io/api/v1/\"")
             buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io\"")
 
             buildConfigField("boolean", "IS_DEBUG", "true")
@@ -65,7 +65,7 @@ android {
             // 웹뷰용 URL
             buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io/\"")
             // API 호출용 URL
-            buildConfigField("String", "API_BASE_URL", "\"https://api.dgg.com\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://j13a305.p.ssafy.io/api/v1/\"")
 
 
             buildConfigField("boolean", "IS_DEBUG", "false")

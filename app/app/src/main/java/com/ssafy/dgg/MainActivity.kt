@@ -137,18 +137,41 @@ class MainActivity : ComponentActivity() {
             }
         )
 
-/*        setContent {
+        setContent {
+            var loginState by remember { mutableStateOf<LoginState>(LoginState.LoggedOut) }
+
             DGGTheme {
                 Surface (
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ){
-                    MainScreen()
+                    when (loginState) {
+                        is LoginState.LoggedOut -> {
+                            LoginScreen(
+                                onLoginSuccess = { loginState = LoginState.LoggedIn },
+                                // onSignUpClicked = { loginState = LoginState.LoggedIn },
+                                onGoogleSignInClicked = { googleSignInManager.startSignInIntent() }
+                            )
+                        }
+                        is LoginState.LoggedIn -> {
+                            MainScreen()
+                        }
+
+                        is LoginState.Loading -> {
+                            CircularProgressIndicator()
+                        }
+
+                        is LoginState.Error -> {
+                            Text("에러 발생")
+                        }
+
+                    }
+                    // MainScreen()
                 }
             } // DGGTheme
-        } // setContent*/
+        } // setContent
 
-        setContent {
+        /* setContent {
             // 로그인 상태 관리 변수
             var loginState by remember { mutableStateOf<LoginState>(LoginState.LoggedOut) }
 
@@ -180,7 +203,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-        }
+        }*/
     }
 }
 
