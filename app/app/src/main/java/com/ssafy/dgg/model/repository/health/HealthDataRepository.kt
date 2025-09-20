@@ -1,16 +1,13 @@
-package com.ssafy.dgg.model.repository.api
+package com.ssafy.dgg.model.repository.health
 
 import android.util.Log
 import com.samsung.android.sdk.health.data.HealthDataStore
 import com.samsung.android.sdk.health.data.data.AggregatedData
 import com.samsung.android.sdk.health.data.data.HealthDataPoint
 import com.samsung.android.sdk.health.data.data.entries.SleepSession
-import com.samsung.android.sdk.health.data.request.AggregateRequest
 import com.samsung.android.sdk.health.data.request.DataType
 import com.samsung.android.sdk.health.data.request.DataTypes
 import com.samsung.android.sdk.health.data.request.LocalTimeFilter
-import com.samsung.android.sdk.health.data.request.LocalTimeGroup
-import com.samsung.android.sdk.health.data.request.LocalTimeGroupUnit
 import com.samsung.android.sdk.health.data.response.DataResponse
 import com.ssafy.dgg.model.data.HealthDataResponse
 import com.ssafy.dgg.model.data.SleepDataResponse
@@ -105,7 +102,7 @@ class HealthDataRepository(private val store: HealthDataStore) {
 
         // 데이터 집계
         val totalStep = stepsData.firstOrNull()?.value ?: 0L
-        val totalActiveTimeSec = (activityData.getOrNull(0)?.value as? java.time.Duration)?.seconds ?: 0L
+        val totalActiveTimeSec = (activityData.getOrNull(0)?.value as? Duration)?.seconds ?: 0L
         val totalCaloriesBurned = (activityData.getOrNull(1)?.value as? Float) ?: 0f
         val totalDistanceM = (activityData.getOrNull(2)?.value as? Float) ?: 0f
         val totalActiveCaloriesBurned = (activityData.getOrNull(3)?.value as? Float) ?: 0f

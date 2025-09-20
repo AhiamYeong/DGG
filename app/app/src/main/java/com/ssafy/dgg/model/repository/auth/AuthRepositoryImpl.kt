@@ -1,7 +1,6 @@
-package com.ssafy.dgg.model.repository
+package com.ssafy.dgg.model.repository.auth
 
 import android.util.Log
-import com.ssafy.dgg.auth.TokenStorage
 import com.ssafy.dgg.model.data.GoogleLoginRequest
 import com.ssafy.dgg.model.data.TokenResponse
 

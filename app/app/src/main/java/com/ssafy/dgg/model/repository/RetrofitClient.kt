@@ -1,8 +1,8 @@
-package com.ssafy.dgg.model.repository.api
+package com.ssafy.dgg.model.repository
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.ssafy.dgg.BuildConfig
-import com.ssafy.dgg.model.repository.AuthApi
+import com.ssafy.dgg.model.repository.auth.AuthApi
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
