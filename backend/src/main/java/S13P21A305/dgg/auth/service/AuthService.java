@@ -39,13 +39,13 @@ public class AuthService {
         String googleKey = "google" + sub;
 
         // DB 조회/신규 저장
-        Member member = memberRepository.findByGoogleKey(sub);
+        Member member = memberRepository.findByGoogleKey(googleKey);
         if (member == null) {
             member = Member.builder()
-                    .googleKey(googleKey)     // ✅ 우리 서비스 식별자(고정 규칙)
-                    .nickname(name)                // 닉네임/표시명
+                    .googleKey(googleKey)           // 우리 서비스 식별자
+                    .nickname(name)                 // 닉네임/표시명
                     .email(email)
-                    .role(MemberRole.GUEST)       // 가입=로그인 허용이면 MEMBER로 통일
+                    .role(MemberRole.GUEST)         // 첫 가입자면 GUEST
                     .build();
 
             memberRepository.save(member);
@@ -59,11 +59,11 @@ public class AuthService {
         String role = member.getRole().toString();
 
         // 3) 서버 자체 JWT 발급 (만료시간은 ms 단위)
-        long expiresMs = 60L * 60L * 24 * 14 * 1000L; // 24시간
+        long expiresMs = 60L * 60L * 24 * 14 * 1000L; // 2주 - 개발환경
         String jwt = jwtUtil.createJwt(memberId, role, expiresMs);
 
-        // 4) 쿠키 발급 (JWTFilter가 Authorization 쿠키만 읽으므로 이름을 그대로 맞춘다)
-        response.addCookie(createAuthCookie("Authorization", jwt, (int) (expiresMs / 1000)));
+        // 4) 쿠키 발급 (JWTFilter가 ACCESS_TOKEN 쿠키만 읽으므로 이름을 그대로 맞춘다)
+        response.addCookie(createAuthCookie("ACCESS_TOKEN", jwt, (int) (expiresMs / 1000)));
 
         // 5) JSON 응답
         return ResponseEntity.ok(Map.of(
