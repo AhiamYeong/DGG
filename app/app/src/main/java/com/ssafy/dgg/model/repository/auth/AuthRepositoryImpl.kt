@@ -2,19 +2,18 @@ package com.ssafy.dgg.model.repository.auth
 
 import android.util.Log
 import com.ssafy.dgg.model.data.GoogleLoginRequest
-import com.ssafy.dgg.model.data.TokenResponse
 
 /* 실제 서버 통신 구현 */
 class AuthRepositoryImpl  (
     private val authApi: AuthApi,
 ): AuthRepository {
-    override suspend fun loginWithGoogle(request: GoogleLoginRequest): TokenResponse {
+    override suspend fun loginWithGoogle(request: GoogleLoginRequest): Boolean {
         val response = authApi.loginWithGoogle(request) // 객체 바로 전달
         Log.d("LoginFlow", "request: $request")
-        // val requestBody = GoogleLoginRequest(idToken = idToken)
+
         if (response.isSuccessful) {
-            val body = response.body() ?: throw Exception("서버 응답 없음")
-            return TokenResponse(body.sub, body.expiresIn, body.tokenType, body.email, body.nickname, body.accessToken)
+            // cookieJar 형식으로 변경 (body 제거)
+            return true
         } else {
             throw Exception("로그인 실패: ${response.code()} ${response.message()}")
 

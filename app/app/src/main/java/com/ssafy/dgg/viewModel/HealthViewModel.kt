@@ -6,17 +6,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.samsung.android.sdk.health.data.HealthDataStore
 import com.samsung.android.sdk.health.data.data.AggregatedData
 import com.samsung.android.sdk.health.data.request.DataType
-import com.ssafy.dgg.model.data.HealthDataResponse
-import com.ssafy.dgg.model.repository.api.HealthDataRepository
-import com.ssafy.dgg.model.repository.api.HealthPermissionRepository
-import com.ssafy.dgg.ui.screen.items
+import com.ssafy.dgg.model.repository.health.HealthDataRepository
+import com.ssafy.dgg.model.repository.health.HealthPermissionRepository
 import com.ssafy.dgg.util.HealthStoreProvider
 import com.ssafy.dgg.util.formatDuration
 import kotlinx.coroutines.launch
-import java.time.LocalDate
+
 class HealthViewModel(
     private val permissionRepo: HealthPermissionRepository,
     private val dataRepo: HealthDataRepository

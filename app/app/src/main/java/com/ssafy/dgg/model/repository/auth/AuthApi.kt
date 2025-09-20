@@ -12,10 +12,11 @@ import retrofit2.http.POST
 
 interface AuthApi {
     // 로그인 검증
+    // JWT가 body가 아니라 set-cookie로
     @POST("auth/google")
     suspend fun loginWithGoogle(
         @Body request: GoogleLoginRequest
-    ): Response<TokenResponse>
+    ): Response<Unit>
 
     // 2️⃣ 토큰 갱신 (선택)
     @POST("/auth/refresh")
