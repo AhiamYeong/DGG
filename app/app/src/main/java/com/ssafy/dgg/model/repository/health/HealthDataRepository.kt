@@ -9,8 +9,8 @@ import com.samsung.android.sdk.health.data.request.DataType
 import com.samsung.android.sdk.health.data.request.DataTypes
 import com.samsung.android.sdk.health.data.request.LocalTimeFilter
 import com.samsung.android.sdk.health.data.response.DataResponse
-import com.ssafy.dgg.model.data.HealthDataResponse
-import com.ssafy.dgg.model.data.SleepDataResponse
+import com.ssafy.dgg.model.data.ActivityDataRequest
+import com.ssafy.dgg.model.data.SleepDataRequest
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -93,7 +93,7 @@ class HealthDataRepository(private val store: HealthDataStore) {
     }
 
     /* DTO로 데이터 변환 */
-    suspend fun getHealthDataResponse(store: HealthDataStore): HealthDataResponse {
+    suspend fun getHealthDataResponse(store: HealthDataStore): ActivityDataRequest {
         val TAG = "dataToDTO"
         Log.d(TAG, "Aggregating health data for DTO...")
 
@@ -107,7 +107,7 @@ class HealthDataRepository(private val store: HealthDataStore) {
         val totalDistanceM = (activityData.getOrNull(2)?.value as? Float) ?: 0f
         val totalActiveCaloriesBurned = (activityData.getOrNull(3)?.value as? Float) ?: 0f
 
-        return HealthDataResponse(
+        return ActivityDataRequest(
             windowEnd = Instant.now().atZone(ZoneId.systemDefault()).toString(),
             totalStep = totalStep,
             totalActiveTimeSec = totalActiveTimeSec,
@@ -117,7 +117,7 @@ class HealthDataRepository(private val store: HealthDataStore) {
         )
     }
 
-    suspend fun getSleepDataResponse(store: HealthDataStore): SleepDataResponse {
+    suspend fun getSleepDataResponse(store: HealthDataStore): SleepDataRequest {
         Log.d("dataToDTO", "Aggregating sleep data for DTO...")
 
         val sleepDataList = getSleep(store)
@@ -146,7 +146,7 @@ class HealthDataRepository(private val store: HealthDataStore) {
         val endInstant = goalTimes?.second?.let { LocalDate.now().atTime(it).atZone(ZoneId.systemDefault()).toInstant() }
             ?: Instant.now()
 
-        return SleepDataResponse(
+        return SleepDataRequest(
             sleepDate = sleepDate,
             sleepScore = sleepScore,
             sleepDuration = totalSleepDuration,
