@@ -48,7 +48,10 @@ object RetrofitClient {
 
     fun getCookies(host: String): List<Cookie>? = cookieStore[host]
 
-    // 객체 생성
+    fun clearCookies() {
+        cookieStore.clear()
+    }
+
     val authApiService: AuthApi by lazy {
         retrofit.create(AuthApi::class.java)
     }
