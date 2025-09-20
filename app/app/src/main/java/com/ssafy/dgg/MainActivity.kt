@@ -1,6 +1,6 @@
 package com.ssafy.dgg
 
-import LoginViewModel
+import AuthViewModel
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -31,10 +31,10 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
 import com.ssafy.dgg.auth.GoogleSignInManager
 import com.ssafy.dgg.auth.TokenStorage
-import com.ssafy.dgg.model.repository.AuthRepositoryImpl
-import com.ssafy.dgg.model.repository.api.HealthDataRepository
-import com.ssafy.dgg.model.repository.api.HealthPermissionRepository
-import com.ssafy.dgg.model.repository.api.RetrofitClient
+import com.ssafy.dgg.model.repository.RetrofitClient
+import com.ssafy.dgg.model.repository.auth.AuthRepositoryImpl
+import com.ssafy.dgg.model.repository.health.HealthDataRepository
+import com.ssafy.dgg.model.repository.health.HealthPermissionRepository
 import com.ssafy.dgg.ui.screen.LoginScreen
 import com.ssafy.dgg.ui.screen.MainScreen
 import com.ssafy.dgg.ui.theme.DGGTheme
@@ -119,7 +119,7 @@ class MainActivity : ComponentActivity() {
             authApi = RetrofitClient.authApiService,
         )
         // UI ~ 비즈니스 로직 연결 -> compose UI가 viewmodel의 loginState를 관찰
-        val loginViewModel = LoginViewModel(tokenStorage, authRepository)
+        val authViewModel = AuthViewModel(authRepository)
         healthViewModel.loadHealthDatas(this)
 
         askNotificationPermission()
@@ -130,7 +130,7 @@ class MainActivity : ComponentActivity() {
             this,
             onSignInSuccess = { idToken ->
                 Log.d("LoginFlow", "ID token 획득: $idToken")
-                loginViewModel.loginWithGoogle(idToken)
+                authViewModel.loginWithGoogle(idToken)
             },
             onSignInFailure = { exception ->
                 Log.e("LoginFlow", "로그인 실패", exception)
