@@ -88,7 +88,19 @@ public class MemberService {
             throw new IllegalArgumentException("답변이 비어 있습니다.");
         }
 
-        //request로 엔티티 값 변환
+        // 요청의 survey id 목록 추출
+        List<Integer> surveyIds = request.stream()
+                .map(SubmitSurveyRequestDto::getSurveyQuestionId)
+                .toList();
+
+        //이미 제출한 항목이 있는지 확인
+        List<Integer> existingIds = surveyAnswerRepository.findExistingSurveyIds(memberId, surveyIds);
+
+        if(!existingIds.isEmpty()) {
+            throw new IllegalStateException("이미 제출하신 설문이 있습니다.");
+        }
+
+        // request로 들어온 신규 설문조사 응답 저장
         List<SurveyAnswer> toSave = request.stream()
                 .map(dto -> SurveyAnswer.builder()
                         .memberId(memberId)
@@ -101,8 +113,7 @@ public class MemberService {
         surveyAnswerRepository.saveAll(toSave);
 
         //응답
-        return SubmitSurveyResponseDto.builder()
-                .build();
+        return SubmitSurveyResponseDto.builder().build();
     }
 
     /**
