@@ -8,9 +8,10 @@ import lombok.Setter;
 @Setter
 @Builder
 public class RecommendedRouteDTO {
-	private long routeId;
+	@com.fasterxml.jackson.annotation.JsonProperty("routeId")
+	private String routeKey; // 캐시 키
 	private String name; // 경로이름
-	private int timeTaken; // 소요시간, min단위
+	private int timeTaken; // 소요시간
 	private String arrivalTime;
-	private int fatigue; // 피로도, %단위
+	private int fatigue; // 피로도
 }
