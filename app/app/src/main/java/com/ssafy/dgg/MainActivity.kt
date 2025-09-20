@@ -35,6 +35,7 @@ import com.ssafy.dgg.model.repository.RetrofitClient
 import com.ssafy.dgg.model.repository.auth.AuthRepositoryImpl
 import com.ssafy.dgg.model.repository.health.HealthDataRepository
 import com.ssafy.dgg.model.repository.health.HealthPermissionRepository
+import com.ssafy.dgg.model.repository.health.HealthRepositoryImpl
 import com.ssafy.dgg.ui.screen.LoginScreen
 import com.ssafy.dgg.ui.screen.MainScreen
 import com.ssafy.dgg.ui.theme.DGGTheme
@@ -102,9 +103,12 @@ class MainActivity : ComponentActivity() {
         val store = HealthStoreProvider.getStore(applicationContext)
         val permissionRepo = HealthPermissionRepository(store)
         val dataRepo = HealthDataRepository(store)
+        val healthRepo = HealthRepositoryImpl(
+            healthApi = RetrofitClient.healthApiService
+        )
 
         // 마지막 줄이 HealthViewModel 객체를 반환하도록 함
-        HealthViewModel(permissionRepo, dataRepo)
+        HealthViewModel(permissionRepo, dataRepo, healthRepo)
     }
 
     private lateinit var googleSignInManager: GoogleSignInManager
@@ -118,9 +122,20 @@ class MainActivity : ComponentActivity() {
         val authRepository = AuthRepositoryImpl(
             authApi = RetrofitClient.authApiService,
         )
+        val healthRepository = HealthRepositoryImpl(
+            healthApi = RetrofitClient.healthApiService
+        )
         // UI ~ 비즈니스 로직 연결 -> compose UI가 viewmodel의 loginState를 관찰
         val authViewModel = AuthViewModel(authRepository)
         healthViewModel.loadHealthDatas(this)
+
+        healthViewModel.activityStatus.observe(this) { status ->
+            Toast.makeText(this, status, Toast.LENGTH_SHORT).show()
+        }
+
+        healthViewModel.sleepStatus.observe(this) { status ->
+            Toast.makeText(this, status, Toast.LENGTH_SHORT).show()
+        }
 
         askNotificationPermission()
         // logRegToken()

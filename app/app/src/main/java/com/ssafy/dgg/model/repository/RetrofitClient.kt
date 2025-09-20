@@ -3,6 +3,7 @@ package com.ssafy.dgg.model.repository
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.ssafy.dgg.BuildConfig
 import com.ssafy.dgg.model.repository.auth.AuthApi
+import com.ssafy.dgg.model.repository.health.HealthApi
 import kotlinx.serialization.json.Json
 import okhttp3.Cookie
 import okhttp3.CookieJar
@@ -45,11 +46,14 @@ object RetrofitClient {
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
 
-    // 로그인용
+    fun getCookies(host: String): List<Cookie>? = cookieStore[host]
+
+    // 객체 생성
     val authApiService: AuthApi by lazy {
         retrofit.create(AuthApi::class.java)
     }
 
-    fun getCookies(host: String): List<Cookie>? = cookieStore[host]
-
+    val healthApiService: HealthApi by lazy {
+        retrofit.create(HealthApi::class.java)
+    }
 }
