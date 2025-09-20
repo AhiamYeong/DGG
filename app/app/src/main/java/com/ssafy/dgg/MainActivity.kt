@@ -30,7 +30,6 @@ import androidx.core.content.ContextCompat
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
 import com.ssafy.dgg.auth.GoogleSignInManager
-import com.ssafy.dgg.auth.TokenStorage
 import com.ssafy.dgg.model.repository.RetrofitClient
 import com.ssafy.dgg.model.repository.auth.AuthRepositoryImpl
 import com.ssafy.dgg.model.repository.health.HealthDataRepository
@@ -117,8 +116,6 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-        // 로그인 토큰 저장용 앱 내 스토리지
-        val tokenStorage = TokenStorage(this)
         val authRepository = AuthRepositoryImpl(
             authApi = RetrofitClient.authApiService,
         )
@@ -153,7 +150,8 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
-            var loginState by remember { mutableStateOf<LoginState>(LoginState.LoggedOut) }
+            // authViewModel 값만 위임해 참조
+            val loginState by authViewModel.loginState
 
             DGGTheme {
                 Surface (
@@ -163,7 +161,7 @@ class MainActivity : ComponentActivity() {
                     when (loginState) {
                         is LoginState.LoggedOut -> {
                             LoginScreen(
-                                onLoginSuccess = { loginState = LoginState.LoggedIn },
+                                onLoginSuccess = { authViewModel.forceLogin() },
                                 // onSignUpClicked = { loginState = LoginState.LoggedIn },
                                 onGoogleSignInClicked = { googleSignInManager.startSignInIntent() }
                             )

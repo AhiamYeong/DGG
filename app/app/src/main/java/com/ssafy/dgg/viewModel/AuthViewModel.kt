@@ -1,5 +1,6 @@
 
 import android.util.Log
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -29,8 +30,8 @@ class AuthViewModel(
     private val _loginState = mutableStateOf<LoginState>(
         if (LoginUtil.isLoggedIn()) LoginState.LoggedIn else LoginState.LoggedOut
     )
-    var loginState = _loginState
-
+    // 외부에 읽기 전용으로 공개
+    val loginState: State<LoginState> = _loginState
     // 구글 로그인 ID token 처리 함수
     fun loginWithGoogle(idToken: String) {
         // 로그인 시도중임을 UI에 알리기
@@ -79,5 +80,10 @@ class AuthViewModel(
         // 상태 변경
         _loginState.value = LoginState.LoggedOut
         Log.d("LoginFlow", "로그아웃 완료 (WebView + RetrofitClient 쿠키 삭제)")
+    }
+
+    // 테스트용 - 열어두기
+    fun forceLogin() {
+        _loginState.value = LoginState.LoggedIn
     }
 }
