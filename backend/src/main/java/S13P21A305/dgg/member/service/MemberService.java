@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -173,6 +174,15 @@ public class MemberService {
         surveyAnswerRepository.saveAll(toSave);
 
         return getSurvey(memberId);
+    }
+
+    /**
+     * 사용자의 알람 허용 여부 조회
+     */
+    public PermissionResponseDto getPermissions(Integer memberId){
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저는 존재하지 않습니다."));
+        return new PermissionResponseDto(member.isPushPermission(), member.isSleepPermission());
     }
 
 }

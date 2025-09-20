@@ -35,11 +35,11 @@ public class Member {
     private MemberRole role;
 
     @Column(name="health_permission", insertable=false)
-    private Boolean healthPermission;
+    private boolean healthPermission;
     @Column(name="push_permission", insertable=false)
-    private Boolean pushPermission;
+    private boolean pushPermission;
     @Column(name="sleep_permission", insertable=false)
-    private Boolean sleepPermission;
+    private boolean sleepPermission;
 
     @Column(name="fatigue", insertable=false)
     private Integer fatigue;

@@ -10,8 +10,7 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
     // 회원가입 로직에서 필요. dgg 기존 고객인지
     Member findByGoogleKey(String googleKey);
 
+    // 닉네임이 존재하는지 찾기
     boolean existsByNickname(String nickname);
 
-//    @Query("SELECT m.email FROM Member m WHERE m.id= :memverId")
-//    String findEmailById(Long memberId);
 }

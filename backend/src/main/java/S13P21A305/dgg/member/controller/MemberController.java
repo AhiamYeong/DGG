@@ -95,5 +95,13 @@ public class MemberController {
         );
     }
 
+    /**
+     * member 알림 허용 여부 조회
+     */
+    @GetMapping("/alarm/settings")
+    public ResponseEntity<PermissionResponseDto> getPermissions(@AuthenticationPrincipal CustomOAuth2User user) {
+        Integer memberId = user.getMemberId();
+        return ResponseEntity.ok(memberService.getPermissions(memberId));
+    }
 
 }
