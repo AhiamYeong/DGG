@@ -15,5 +15,5 @@ public class RouteResponseDTO {
 	private List<String> stopoverAddresses;
 	private String departureTime;
 	private String destinationTime;
-	private List<RecommendedRouteDTO>  recommendedRoutes;
+	private List<RecommendedRouteDTO> recommendedRoutes;
 }
