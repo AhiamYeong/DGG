@@ -2,6 +2,7 @@ package S13P21A305.dgg.member.service;
 
 import S13P21A305.dgg.member.domain.Member;
 import S13P21A305.dgg.member.domain.SurveyAnswer;
+import S13P21A305.dgg.member.dto.request.PermissionUpdateRequestDto;
 import S13P21A305.dgg.member.dto.request.ProfileUpdateRequestDto;
 import S13P21A305.dgg.member.dto.request.SubmitSurveyRequestDto;
 import S13P21A305.dgg.member.dto.request.UpdateSurveyRequestDto;
@@ -179,10 +180,26 @@ public class MemberService {
     /**
      * 사용자의 알람 허용 여부 조회
      */
+    @Transactional
     public PermissionResponseDto getPermissions(Integer memberId){
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저는 존재하지 않습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 정보가 존재하지 않습니다."));
         return new PermissionResponseDto(member.isPushPermission(), member.isSleepPermission());
     }
+
+    /**
+     * 사용자의 알림 허용 여부 수정
+     */
+    @Transactional
+    public PermissionResponseDto updatePermissions(Integer memberId, PermissionUpdateRequestDto request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 정보가 존재하지 않습니다."));
+
+        member.setPushPermission(request.isGeneralEnabled());
+        member.setSleepPermission(request.isSleepEnabled());
+
+        return new PermissionResponseDto(member.isPushPermission(), member.isSleepPermission());
+    }
+
 
 }
