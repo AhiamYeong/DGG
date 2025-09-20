@@ -1,4 +1,4 @@
-package com.ssafy.dgg.model.repository.api
+package com.ssafy.dgg.model.repository.health
 
 import com.samsung.android.sdk.health.data.permission.AccessType
 import com.samsung.android.sdk.health.data.permission.Permission

@@ -2,7 +2,7 @@ package com.ssafy.dgg.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ssafy.dgg.model.repository.api.RetrofitClient
+import com.ssafy.dgg.model.repository.RetrofitClient
 import kotlinx.coroutines.launch
 
 class TestViewModel : ViewModel() {

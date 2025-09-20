@@ -1,9 +1,12 @@
-package com.ssafy.dgg.model.repository.api
+package com.ssafy.dgg.model.repository
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.ssafy.dgg.BuildConfig
-import com.ssafy.dgg.model.repository.AuthApi
+import com.ssafy.dgg.model.repository.auth.AuthApi
 import kotlinx.serialization.json.Json
+import okhttp3.Cookie
+import okhttp3.CookieJar
+import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -17,8 +20,23 @@ object RetrofitClient {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
+    private val cookieStore = mutableMapOf<String, List<Cookie>>()
+
+    // cookieJar로 쿠키 받기
     private val client = OkHttpClient.Builder()
         .addInterceptor(logging)
+        .cookieJar(object : CookieJar {
+
+            // 서버 응답에서 Set-Cookie 헤더가 오면 자동 호출됨
+            override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+                cookieStore[url.host] = cookies
+            }
+
+            // 요청 보낼 때 저장된 쿠키를 꺼내서 자동으로 붙임
+            override fun loadForRequest(url: HttpUrl): List<Cookie> {
+                return cookieStore[url.host] ?: emptyList()
+            }
+        })
         .build()
 
     private val retrofit = Retrofit.Builder()
@@ -31,4 +49,7 @@ object RetrofitClient {
     val authApiService: AuthApi by lazy {
         retrofit.create(AuthApi::class.java)
     }
+
+    fun getCookies(host: String): List<Cookie>? = cookieStore[host]
+
 }
