@@ -13,6 +13,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MemberService {
 
     private final MemberRepository memberRepository;
@@ -130,6 +132,10 @@ public class MemberService {
         List<SurveyAnswer> existing = surveyAnswerRepository.findByMemberIdAndSurveyIdIn(memberId, surveyIds);
         Map<Integer, SurveyAnswer> bySurveyId = existing.stream()
                 .collect(Collectors.toMap(SurveyAnswer::getSurveyId, Function.identity()));
+
+        log.info("memberId={}", memberId);
+        log.info("incoming surveyIds={}", request.stream().map(UpdateSurveyRequestDto::getSurveyQuestionId).toList());
+
 
         //수정 or 신규 생성
         LocalDateTime now = LocalDateTime.now();
