@@ -8,6 +8,7 @@ import com.ssafy.dgg.model.data.GoogleLoginRequest
 import com.ssafy.dgg.model.repository.RetrofitClient
 import com.ssafy.dgg.model.repository.auth.AuthRepository
 import com.ssafy.dgg.util.CookieSyncUtil
+import com.ssafy.dgg.util.LoginUtil
 import com.ssafy.dgg.viewModel.LoginState
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -24,8 +25,10 @@ class AuthViewModel(
     private val client = RetrofitClient
     private val cookieSyncUtil = CookieSyncUtil
 
-    // compose에서 관찰할 로그인 상태
-    private val _loginState = mutableStateOf<LoginState>(LoginState.LoggedOut)
+    // compose에서 관찰할 로그인 상태 -> 초기상태 확인
+    private val _loginState = mutableStateOf<LoginState>(
+        if (LoginUtil.isLoggedIn()) LoginState.LoggedIn else LoginState.LoggedOut
+    )
     var loginState = _loginState
 
     // 구글 로그인 ID token 처리 함수
@@ -65,10 +68,16 @@ class AuthViewModel(
     fun logout() {
         // 기존처럼 tokenStorage 지울 필요 없음 (토큰 직접 안 씀) 대신 WebView 쿠키 삭제 처리
         val cookieManager = android.webkit.CookieManager.getInstance()
-        cookieManager.removeAllCookies(null)
+        cookieManager.removeAllCookies {
+            Log.d("LoginFlow", "WebView 쿠키 삭제 완료: $it")
+        }
         cookieManager.flush()
 
+        // RetrofitClient 쿠키 삭제
+        client.clearCookies()
+
+        // 상태 변경
         _loginState.value = LoginState.LoggedOut
-        Log.d("LoginFlow", "로그아웃: 쿠키 삭제 완료")
+        Log.d("LoginFlow", "로그아웃 완료 (WebView + RetrofitClient 쿠키 삭제)")
     }
 }
