@@ -2,6 +2,7 @@ package S13P21A305.dgg.member.service;
 
 import S13P21A305.dgg.member.domain.Member;
 import S13P21A305.dgg.member.domain.SurveyAnswer;
+import S13P21A305.dgg.member.dto.request.PermissionUpdateRequestDto;
 import S13P21A305.dgg.member.dto.request.ProfileUpdateRequestDto;
 import S13P21A305.dgg.member.dto.request.SubmitSurveyRequestDto;
 import S13P21A305.dgg.member.dto.request.UpdateSurveyRequestDto;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -174,5 +176,30 @@ public class MemberService {
 
         return getSurvey(memberId);
     }
+
+    /**
+     * 사용자의 알람 허용 여부 조회
+     */
+    @Transactional
+    public PermissionResponseDto getPermissions(Integer memberId){
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 정보가 존재하지 않습니다."));
+        return new PermissionResponseDto(member.isPushPermission(), member.isSleepPermission());
+    }
+
+    /**
+     * 사용자의 알림 허용 여부 수정
+     */
+    @Transactional
+    public PermissionResponseDto updatePermissions(Integer memberId, PermissionUpdateRequestDto request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 정보가 존재하지 않습니다."));
+
+        member.setPushPermission(request.isGeneralEnabled());
+        member.setSleepPermission(request.isSleepEnabled());
+
+        return new PermissionResponseDto(member.isPushPermission(), member.isSleepPermission());
+    }
+
 
 }

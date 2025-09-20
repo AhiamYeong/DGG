@@ -3,6 +3,7 @@ package S13P21A305.dgg.member.controller;
 import S13P21A305.dgg.auth.dto.CustomOAuth2User;
 import S13P21A305.dgg.auth.service.AuthService;
 import S13P21A305.dgg.member.domain.Member;
+import S13P21A305.dgg.member.dto.request.PermissionUpdateRequestDto;
 import S13P21A305.dgg.member.dto.request.ProfileUpdateRequestDto;
 import S13P21A305.dgg.member.dto.request.SubmitSurveyRequestDto;
 import S13P21A305.dgg.member.dto.request.UpdateSurveyRequestDto;
@@ -95,5 +96,20 @@ public class MemberController {
         );
     }
 
+    /**
+     * member 알림 허용 여부 조회
+     */
+    @GetMapping("/alarm/settings")
+    public ResponseEntity<PermissionResponseDto> getPermissions(@AuthenticationPrincipal CustomOAuth2User user) {
+        Integer memberId = user.getMemberId();
+        return ResponseEntity.ok(memberService.getPermissions(memberId));
+    }
+
+    @PatchMapping("/alarm/settings")
+    public ResponseEntity<PermissionResponseDto> updatePermissions(@AuthenticationPrincipal CustomOAuth2User user,
+                                                                   @RequestBody PermissionUpdateRequestDto request) {
+        Integer memberId = user.getMemberId();
+        return ResponseEntity.ok(memberService.updatePermissions(memberId, request));
+    }
 
 }
