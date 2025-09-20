@@ -17,6 +17,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 
+/* 서버에 보낼 헬스 데이터 DTO로 정제 */
 class HealthDataRepository(private val store: HealthDataStore) {
 
     // 오늘 날짜 범위 설정
