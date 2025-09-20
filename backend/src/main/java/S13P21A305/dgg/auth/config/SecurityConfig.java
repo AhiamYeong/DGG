@@ -70,7 +70,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/alarms/**").permitAll()
                         .requestMatchers("/internal/push/**").permitAll()
                         .requestMatchers("/api/v1/mypage/**").hasAnyRole("GUEST","MEMBER")
-                        .anyRequest().permitAll());
+                        .requestMatchers("/api/v1/maps/**").permitAll()
+                    .anyRequest().permitAll());
 //                        .anyRequest().authenticated());
 
         //세션 설정 : STATELESS
