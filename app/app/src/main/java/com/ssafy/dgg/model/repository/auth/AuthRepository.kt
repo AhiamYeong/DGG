@@ -1,8 +1,7 @@
-package com.ssafy.dgg.model.repository
+package com.ssafy.dgg.model.repository.auth
 
 import com.ssafy.dgg.model.data.GoogleLoginRequest
 import com.ssafy.dgg.model.data.TokenResponse
-import retrofit2.http.Body
 
 /* Repository 인터페이스 */
 interface AuthRepository {
