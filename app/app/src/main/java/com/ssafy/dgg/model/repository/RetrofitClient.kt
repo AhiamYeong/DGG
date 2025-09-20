@@ -1,5 +1,6 @@
 package com.ssafy.dgg.model.repository
 
+import android.util.Log
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.ssafy.dgg.BuildConfig
 import com.ssafy.dgg.model.repository.auth.AuthApi
@@ -31,11 +32,15 @@ object RetrofitClient {
             // 서버 응답에서 Set-Cookie 헤더가 오면 자동 호출됨
             override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
                 cookieStore[url.host] = cookies
+                Log.d("CookieCheck", "Saved cookies for ${url.host}: $cookies")
+
             }
 
             // 요청 보낼 때 저장된 쿠키를 꺼내서 자동으로 붙임
             override fun loadForRequest(url: HttpUrl): List<Cookie> {
-                return cookieStore[url.host] ?: emptyList()
+                val cookies = cookieStore[url.host] ?: emptyList()
+                Log.d("CookieCheck", "Load cookies for ${url.host}: $cookies")
+                return cookies
             }
         })
         .build()
@@ -48,7 +53,10 @@ object RetrofitClient {
 
     fun getCookies(host: String): List<Cookie>? = cookieStore[host]
 
-    // 객체 생성
+    fun clearCookies() {
+        cookieStore.clear()
+    }
+
     val authApiService: AuthApi by lazy {
         retrofit.create(AuthApi::class.java)
     }

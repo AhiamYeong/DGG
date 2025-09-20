@@ -3,34 +3,24 @@ package com.ssafy.dgg
 import AuthViewModel
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
 import com.ssafy.dgg.auth.GoogleSignInManager
-import com.ssafy.dgg.auth.TokenStorage
 import com.ssafy.dgg.model.repository.RetrofitClient
 import com.ssafy.dgg.model.repository.auth.AuthRepositoryImpl
 import com.ssafy.dgg.model.repository.health.HealthDataRepository
@@ -117,8 +107,6 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-        // 로그인 토큰 저장용 앱 내 스토리지
-        val tokenStorage = TokenStorage(this)
         val authRepository = AuthRepositoryImpl(
             authApi = RetrofitClient.authApiService,
         )
@@ -127,15 +115,7 @@ class MainActivity : ComponentActivity() {
         )
         // UI ~ 비즈니스 로직 연결 -> compose UI가 viewmodel의 loginState를 관찰
         val authViewModel = AuthViewModel(authRepository)
-        healthViewModel.loadHealthDatas(this)
 
-        healthViewModel.activityStatus.observe(this) { status ->
-            Toast.makeText(this, status, Toast.LENGTH_SHORT).show()
-        }
-
-        healthViewModel.sleepStatus.observe(this) { status ->
-            Toast.makeText(this, status, Toast.LENGTH_SHORT).show()
-        }
 
         askNotificationPermission()
         // logRegToken()
@@ -153,7 +133,8 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
-            var loginState by remember { mutableStateOf<LoginState>(LoginState.LoggedOut) }
+            // authViewModel 값만 위임해 참조
+            val loginState by authViewModel.loginState
 
             DGGTheme {
                 Surface (
@@ -163,13 +144,22 @@ class MainActivity : ComponentActivity() {
                     when (loginState) {
                         is LoginState.LoggedOut -> {
                             LoginScreen(
-                                onLoginSuccess = { loginState = LoginState.LoggedIn },
+                                onLoginSuccess = { authViewModel.forceLogin() },
                                 // onSignUpClicked = { loginState = LoginState.LoggedIn },
                                 onGoogleSignInClicked = { googleSignInManager.startSignInIntent() }
                             )
                         }
                         is LoginState.LoggedIn -> {
                             MainScreen()
+                            healthViewModel.loadHealthDatas(this)
+
+                            healthViewModel.activityStatus.observe(this) { status ->
+                                Toast.makeText(this, status, Toast.LENGTH_SHORT).show()
+                            }
+
+                            healthViewModel.sleepStatus.observe(this) { status ->
+                                Toast.makeText(this, status, Toast.LENGTH_SHORT).show()
+                            }
                         }
 
                         is LoginState.Loading -> {
@@ -185,125 +175,5 @@ class MainActivity : ComponentActivity() {
                 }
             } // DGGTheme
         } // setContent
-
-        /* setContent {
-            // 로그인 상태 관리 변수
-            var loginState by remember { mutableStateOf<LoginState>(LoginState.LoggedOut) }
-
-            DGGTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    when (loginState) {
-                        is LoginState.LoggedOut -> {
-                            LoginScreen(
-                                onLoginSuccess = { loginState = LoginState.LoggedIn },
-                                // onSignUpClicked = { loginState = LoginState.LoggedIn },
-                                onGoogleSignInClicked = { googleSignInManager.startSignInIntent() }
-                            )
-                        }
-                        is LoginState.LoggedIn -> {
-                            MainScreen()
-                        }
-
-                        is LoginState.Loading -> {
-                            CircularProgressIndicator()
-                        }
-
-                        is LoginState.Error -> {
-                            Text("에러 발생")
-                        }
-
-                    }
-                }
-            }
-        }*/
     }
 }
-
-@Composable
-fun WebViewScreen(
-    url: String,
-    modifier: Modifier = Modifier
-) {
-    var isLoading by remember { mutableStateOf(true) }
-
-    Box(
-        modifier = modifier.fillMaxSize()
-    ) {
-        AndroidView(
-            factory = { context ->
-                WebView(context).apply {
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    settings.loadWithOverviewMode = true
-                    settings.useWideViewPort = true
-
-                    webViewClient = object : WebViewClient() {
-                        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                            isLoading = true
-                        }
-
-                        override fun onPageFinished(view: WebView?, url: String?) {
-                            isLoading = false
-                        }
-                    }
-                }
-            },
-        )
-    }
-}
-
-
-    /* companion object {
-        private const val TAG = "MainActivity"
-    }*/
-
-
-    /*@Composable
-    fun WebViewScreen(
-        url: String,
-        modifier: Modifier = Modifier
-    ) {
-        var isLoading by remember { mutableStateOf(true) }
-
-        Box(
-            modifier = modifier.fillMaxSize()
-        ) {
-            AndroidView(
-                factory = { context ->
-                    WebView(context).apply {
-                        settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
-                        settings.loadWithOverviewMode = true
-                        settings.useWideViewPort = true
-
-                        webViewClient = object : WebViewClient() {
-                            override fun onPageStarted(
-                                view: WebView?,
-                                url: String?,
-                                favicon: Bitmap?
-                            ) {
-                                isLoading = true
-                            }
-
-                            override fun onPageFinished(view: WebView?, url: String?) {
-                                isLoading = false
-                            }
-                        }
-                    }
-                },
-                update = { webView ->
-                    webView.loadUrl(url)
-                }
-            )
-
-            // 로딩 중일 때 프로그레스 표시
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-        }
-    }*/
