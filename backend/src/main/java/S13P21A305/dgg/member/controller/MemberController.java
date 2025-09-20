@@ -5,10 +5,8 @@ import S13P21A305.dgg.auth.service.AuthService;
 import S13P21A305.dgg.member.domain.Member;
 import S13P21A305.dgg.member.dto.request.ProfileUpdateRequestDto;
 import S13P21A305.dgg.member.dto.request.SubmitSurveyRequestDto;
-import S13P21A305.dgg.member.dto.response.ProfileResponseDto;
-import S13P21A305.dgg.member.dto.response.ProfileUpdateResponseDto;
-import S13P21A305.dgg.member.dto.response.SubmitSurveyResponseDto;
-import S13P21A305.dgg.member.dto.response.SurveyResponseDto;
+import S13P21A305.dgg.member.dto.request.UpdateSurveyRequestDto;
+import S13P21A305.dgg.member.dto.response.*;
 import S13P21A305.dgg.member.service.MemberService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -70,7 +68,17 @@ public class MemberController {
         return ResponseEntity.ok(response);
     }
 
-
+    /**
+     * 설문조사 수정
+     */
+    @PutMapping("/survey")
+    public ResponseEntity<List<SurveyResponseDto>> updateSurvey(
+            @AuthenticationPrincipal CustomOAuth2User user,
+            @RequestBody List<UpdateSurveyRequestDto> request) {
+        Integer memberId = user.getMemberId();
+        List<SurveyResponseDto> response = memberService.updateSurvey(memberId, request);
+        return ResponseEntity.ok(response);
+    }
 
 
     /**
