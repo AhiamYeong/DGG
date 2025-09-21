@@ -16,7 +16,7 @@ interface SearchModeProps {
   // 경로 결과 관련 props
   routeResults: SimpleRoute[];
   actionLabel: string;
-  onSelectRoute: (route: SimpleRoute) => void;
+  onSelectRoute: (route: SimpleRoute) => Promise<void>;
   onCloseRouteResults: () => void;
   
   // 시간 선택 관련 props

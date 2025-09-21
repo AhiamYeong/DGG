@@ -2,20 +2,48 @@
 
 // 새로운 백엔드 API 응답 타입 정의
 export interface NewBackendRouteApiResponse {
-  departureAdress: string;
-  destinationAdress: string;
-  stopoverAdress: string;
+  departureAddress: string;
+  destinationAddress: string;
+  stopoverAddresses: string[];
   departureTime: string;
   destinationTime: string;
   recommendedRoutes: RecommendedRoute[];
 }
 
 export interface RecommendedRoute {
-  routeId: number;
+  routeKey: string; // redis에 캐시되는 키
   name: string;
   timeTaken: number; // min 단위
   arrivalTime: string;
   fatigue: number; // % 단위
+}
+
+// 안내시작 API 응답 타입
+export interface RouteStartResponse {
+  routeId: string;
+}
+
+// 상세 경로 API 응답 타입
+export interface RouteDetailResponse {
+  totalTime: number;
+  departureTime: string;
+  arrivalTime: string;
+  fatigue: number;
+  data: RouteDetailStep[];
+}
+
+export interface RouteDetailStep {
+  order: number;
+  type: 'SUBWAY' | 'BUS' | 'WALKING';
+  lineName: string | null;
+  timeTaken: number;
+  startPoint: string;
+  endPoint: string;
+  startLat: number;
+  startLng: number;
+  endLat: number;
+  endLng: number;
+  path: { lat: number; lng: number }[] | null;
 }
 
 export interface RouteApiResponse {

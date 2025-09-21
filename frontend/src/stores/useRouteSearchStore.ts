@@ -41,8 +41,8 @@ interface RouteSearchActions {
   setDepartureTime: (time: Date) => void;
   setSelectedDepartureOption: (option: 'now' | 'schedule') => void;
   
-  // 경로 선택
-  selectRoute: (route: SimpleRoute) => void;
+  // 경로 선택 (안내시작)
+  selectRoute: (route: SimpleRoute) => Promise<void>;
   
   // 검색 히스토리
   addSearchHistory: (origin: string, destination: string, waypoints?: string[]) => void;
@@ -169,13 +169,40 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
         }
       },
 
-      // 경로 선택
-      selectRoute: (route: SimpleRoute) => {
-        log.route('경로 선택', route);
-        // 네비게이션 시작
-        useNavigationStore.getState().startNavigation(route);
-        // 검색 결과 화면 닫기
-        get().closeRouteResults();
+      // 경로 선택 (안내시작)
+      selectRoute: async (route: SimpleRoute) => {
+        log.route('경로 선택 (안내시작)', route);
+        
+        try {
+          // routeKey가 있는지 확인
+          if (!route.routeKey) {
+            throw new Error('경로 키가 없습니다. 다시 검색해주세요.');
+          }
+
+          // RouteService를 사용하여 2단계 API 호출
+          const { RouteService } = await import('../api/routeService');
+          const routeDetail = await RouteService.startNavigation(route.routeKey);
+          
+          // 상세 경로 데이터를 steps로 변환
+          const steps = RouteService.convertDetailDataToSteps(routeDetail);
+          
+          // route 객체에 상세 정보 업데이트
+          const updatedRoute: SimpleRoute = {
+            ...route,
+            steps: steps,
+            totalDuration: routeDetail.totalTime,
+            fatigueLevel: routeDetail.fatigue
+          };
+
+          // 네비게이션 시작
+          useNavigationStore.getState().startNavigation(updatedRoute);
+          // 검색 결과 화면 닫기
+          get().closeRouteResults();
+        } catch (error) {
+          log.error('안내시작 실패', error);
+          // 에러 처리 (사용자에게 알림)
+          alert('안내시작에 실패했습니다. 다시 시도해주세요.');
+        }
       },
 
       // 검색 히스토리 추가
