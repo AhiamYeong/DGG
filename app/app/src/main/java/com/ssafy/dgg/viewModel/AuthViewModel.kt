@@ -46,12 +46,14 @@ class AuthViewModel(
                 // cookieJar로 변경 (accesstoken intercept)
                 if (success){
                     // cookie 받기: host 단위로 저장 (host만 꺼내기)
-                    val baseUrl = BuildConfig.WEB_URL
-                    val host = baseUrl.toHttpUrl().host
-                    val cookies = client.getCookies(host)
+                    val webHost = BuildConfig.WEB_URL.toHttpUrl().host
+                    val cookies = client.getCookies(webHost)
+                    val apiHost = BuildConfig.API_BASE_URL.toHttpUrl().host
 
                     // cookie 심기: domain 단위로 붙음 -> web에 붙여주기
-                    cookieSyncUtil.syncToWebView(BuildConfig.WEB_URL, cookies)
+                    cookieSyncUtil.syncToWebView(webHost, cookies)
+                    cookieSyncUtil.syncToWebView(apiHost, cookies)  // API 도메인
+
                     _loginState.value = LoginState.LoggedIn
                     Log.d("LoginFlow", "쿠키 동기화 완료: $cookies")
                     Log.d("LoginFlow", "로그인 상태 변경: ${_loginState.value}")
