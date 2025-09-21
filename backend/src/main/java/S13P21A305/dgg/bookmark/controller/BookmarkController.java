@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -84,6 +85,21 @@ public class BookmarkController {
 		if (memberId == null) return ResponseEntity.status(401).build();
 
 		bookmarkService.renameBookmark(bookmarkRouteId, memberId, req.getName());
+
+		return ResponseEntity.noContent().build();
+	}
+
+	// 경로 즐겨찾기에서 특정 경로 삭제 - soft delete 적용X
+	@DeleteMapping("/routes/{bookmarkRouteId}")
+	public ResponseEntity<Void> delete(
+		@PathVariable Long bookmarkRouteId,
+		@AuthenticationPrincipal CustomOAuth2User member,
+		@RequestHeader(name = "X-DGG-MEMBER-ID", required = false) Integer memberIdHeader
+	) {
+		Integer memberId = (member != null) ? member.getMemberId() : memberIdHeader;
+		if (memberId == null) return ResponseEntity.status(401).build();
+
+		bookmarkService.deleteBookmark(bookmarkRouteId, memberId);
 
 		return ResponseEntity.noContent().build();
 	}
