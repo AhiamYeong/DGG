@@ -1,71 +1,113 @@
 /** @format */
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { mypageApi, InfoProps } from "../../api/mypageApi";
 
 export default function ProfileInfoPage() {
-  const [nickname, setNickname] = useState("홍길동"); // 초기값 예시
-  const [email, setEmail] = useState("test@example.com");
+  const [profile, setProfile] = useState<InfoProps | null>(null);
+  const [originalProfile, setOriginalProfile] = useState<InfoProps | null>(
+    null
+  );
+  const [isEditing, setIsEditing] = useState(false);
 
-  const handleSave = () => {
-    console.log("저장:", { nickname, email });
-    // TODO: API 연동
+  // 프로필 조회
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await mypageApi.get<InfoProps>("mypage/profile");
+        setProfile(res.data);
+        setOriginalProfile(res.data);
+      } catch (err) {
+        console.error("프로필 조회 실패", err);
+      }
+    })();
+  }, []);
+
+  // 저장
+  const handleSave = async () => {
+    if (!profile) return;
+    try {
+      const res = await mypageApi.patch<InfoProps>("mypage/profile", profile, {
+        withCredentials: true,
+      });
+      alert("저장 성공");
+      setProfile(res.data);
+      setOriginalProfile(res.data);
+      setIsEditing(false);
+    } catch (err) {
+      console.error("저장 실패", err);
+      alert("저장 실패");
+    }
   };
 
+  // 취소
   const handleCancel = () => {
-    // TODO: 원래 값으로 되돌리기
-    console.log("취소");
+    if (originalProfile) {
+      setProfile(originalProfile);
+    }
+    setIsEditing(false);
   };
 
   return (
     <div className="flex flex-col items-center p-6">
-      {/* 페이지 제목 */}
       <h2 className="text-lg font-semibold mb-4">개인정보 수정</h2>
 
-      {/* 카드 */}
       <div className="bg-gray-100 rounded-lg p-6 w-full max-w-md shadow-md">
-        <h3 className="font-medium mb-3">회원정보 변경</h3>
+        <h3 className="font-medium mb-3">회원정보</h3>
 
         <div className="space-y-3">
           {/* 닉네임 */}
           <div>
             <label className="block text-sm text-gray-700 mb-1">닉네임</label>
-            <input
-              type="text"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-green-300"
-            />
+            {isEditing ? (
+              <input
+                type="text"
+                value={profile?.nickname ?? ""}
+                onChange={(e) =>
+                  setProfile(
+                    (prev) => prev && { ...prev, nickname: e.target.value }
+                  )
+                }
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-green-300"
+              />
+            ) : (
+              <p className="text-sm text-gray-800">{profile?.nickname}</p>
+            )}
           </div>
 
-          {/* 이메일 */}
+          {/* 이메일 → 항상 읽기 전용 */}
           <div>
             <label className="block text-sm text-gray-700 mb-1">이메일</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-green-300"
-            />
+            <p className="text-sm text-gray-800">{profile?.email}</p>
           </div>
         </div>
 
         {/* 버튼 영역 */}
         <div className="flex gap-2 mt-6">
-          <button
-            onClick={handleSave}
-            className="flex-1 bg-green-400 text-white rounded-md py-2 text-sm font-medium hover:bg-green-500 transition"
-          >
-            저장
-          </button>
-          <button
-            onClick={handleCancel}
-            className="flex-1 bg-gray-200 text-gray-700 rounded-md py-2 text-sm font-medium hover:bg-gray-300 transition"
-          >
-            취소
-          </button>
+          {isEditing ? (
+            <>
+              <button
+                onClick={handleSave}
+                className="flex-1 bg-green-400 text-white rounded-md py-2 text-sm font-medium hover:bg-green-500 transition"
+              >
+                저장
+              </button>
+              <button
+                onClick={handleCancel}
+                className="flex-1 bg-gray-200 text-gray-700 rounded-md py-2 text-sm font-medium hover:bg-gray-300 transition"
+              >
+                취소
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex-1 bg-blue-400 text-white rounded-md py-2 text-sm font-medium hover:bg-blue-500 transition"
+            >
+              수정
+            </button>
+          )}
         </div>
 
-        {/* 회원탈퇴 */}
         <div className="text-right mt-3">
           <button className="text-sm text-gray-500 hover:underline">
             회원탈퇴
