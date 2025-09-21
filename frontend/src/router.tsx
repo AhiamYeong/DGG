@@ -1,13 +1,15 @@
-import { createBrowserRouter } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+/** @format */
+
+import { createBrowserRouter } from "react-router-dom";
+import { lazy, Suspense } from "react";
 
 // Lazy load pages for code splitting
-const FatiguePage = lazy(() => import('./pages/FatiguePage'));
-const MainMapPage = lazy(() => import('./pages/MainMapPage'));
-const PlanPage = lazy(() => import('./pages/PlanPage'));
-const AlarmPage = lazy(() => import('./pages/AlarmPage'));
-const MyPage = lazy(() => import('./pages/MyPage'));
-const SearchPage = lazy(() => import('./pages/SearchPage'));
+const FatiguePage = lazy(() => import("./pages/FatiguePage"));
+const MainMapPage = lazy(() => import("./pages/MainMapPage"));
+const PlanPage = lazy(() => import("./pages/PlanPage"));
+const AlarmPage = lazy(() => import("./pages/AlarmPage"));
+const MyPage = lazy(() => import("./pages/MyPage"));
+const SearchPage = lazy(() => import("./pages/SearchPage"));
 
 // Loading component
 const PageLoader = () => (
@@ -19,51 +21,51 @@ const PageLoader = () => (
 // Create router with Suspense wrapper
 export const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: (
       <Suspense fallback={<PageLoader />}>
         <FatiguePage />
       </Suspense>
-    )
+    ),
   },
   {
-    path: '/map',
+    path: "/map",
     element: (
       <Suspense fallback={<PageLoader />}>
         <MainMapPage />
       </Suspense>
-    )
+    ),
   },
   {
-    path: '/plan',
+    path: "/plan",
     element: (
       <Suspense fallback={<PageLoader />}>
         <PlanPage />
       </Suspense>
-    )
+    ),
   },
   {
-    path: '/alarm',
+    path: "/alarm",
     element: (
       <Suspense fallback={<PageLoader />}>
         <AlarmPage />
       </Suspense>
-    )
+    ),
   },
   {
-    path: '/mypage',
+    path: "/mypage/*",
     element: (
       <Suspense fallback={<PageLoader />}>
         <MyPage />
       </Suspense>
-    )
+    ),
   },
   {
-    path: '/search',
+    path: "/search",
     element: (
       <Suspense fallback={<PageLoader />}>
         <SearchPage />
       </Suspense>
-    )
-  }
+    ),
+  },
 ]);
