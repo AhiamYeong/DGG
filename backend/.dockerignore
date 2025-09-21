@@ -1,8 +1,0 @@
-.git
-.gitignore
-.gradle
-build
-**/node_modules
-*.iml
-*.log
-.DS_Store
