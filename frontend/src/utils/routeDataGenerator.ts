@@ -1,54 +1,17 @@
-import type { SimpleRoute, RouteStep } from '../types/route-types';
-import type { Location, TimeSlot } from '../types/common-types';
+import type { SimpleRoute } from '../types/route-types';
+import type { TimeSlot } from '../types/common-types';
 
 /**
  * 경로 추천 결과를 위한 더미 데이터 생성기
  */
 
-// 현재 시간 기준으로 시간 슬롯 생성
-const createTimeSlot = (minutesFromNow: number): TimeSlot => {
-  const now = new Date();
-  const time = new Date(now.getTime() + minutesFromNow * 60000);
-  
-  return {
-    hour: time.getHours(),
-    minute: time.getMinutes()
-  };
-};
-
-// 기본 위치 데이터
-const createLocation = (name: string, address: string): Location => ({
-  name,
-  address,
-  latitude: 37.5665 + (Math.random() - 0.5) * 0.1,
-  longitude: 126.9780 + (Math.random() - 0.5) * 0.1
-});
-
-// 경로 단계 생성
-const createRouteStep = (
-  type: 'walk' | 'bus' | 'subway' | 'transfer',
-  description: string,
-  duration: number,
-  distance?: number,
-  lineInfo?: { name: string; color: string; direction: string; stationCount?: number }
-): RouteStep => ({
-  id: `step-${Math.random().toString(36).substr(2, 9)}`,
-  type,
-  description,
-  duration,
-  distance,
-  lineInfo,
-  createdAt: new Date(),
-  updatedAt: new Date()
-});
-
 /**
  * 경로 추천 결과 더미 데이터 생성 (주석화)
  */
 export const generateRouteRecommendations = (
-  from: string,
-  to: string,
-  departureTime?: TimeSlot
+  _from: string,
+  _to: string,
+  _departureTime?: TimeSlot
 ): SimpleRoute[] => {
   // 더미 데이터 생성 기능을 주석화
   throw new Error('더미 데이터 생성 기능이 비활성화되었습니다. 실제 API를 사용하세요.');
