@@ -1,4 +1,4 @@
-package S13P21A305.dgg.bookmark.dto;
+package S13P21A305.dgg.bookmark.route.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

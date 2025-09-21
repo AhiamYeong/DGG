@@ -1,10 +1,10 @@
-package S13P21A305.dgg.bookmark.service;
+package S13P21A305.dgg.bookmark.route.service;
 
 import java.util.List;
 
-import S13P21A305.dgg.bookmark.dto.BookmarkRouteDetailDTO;
-import S13P21A305.dgg.bookmark.dto.BookmarkRouteListDTO;
-import S13P21A305.dgg.bookmark.dto.BookmarkRouteSaveRequestDTO;
+import S13P21A305.dgg.bookmark.route.dto.BookmarkRouteDetailDTO;
+import S13P21A305.dgg.bookmark.route.dto.BookmarkRouteListDTO;
+import S13P21A305.dgg.bookmark.route.dto.BookmarkRouteSaveRequestDTO;
 
 public interface BookmarkService {
 	Long saveRouteBookmark(Integer memberId, BookmarkRouteSaveRequestDTO req); // 즐겨찾기 추가

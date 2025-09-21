@@ -1,4 +1,4 @@
-package S13P21A305.dgg.bookmark.controller;
+package S13P21A305.dgg.bookmark.route.controller;
 
 import java.util.List;
 import java.util.Map;
@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import S13P21A305.dgg.auth.dto.CustomOAuth2User;
-import S13P21A305.dgg.bookmark.dto.BookmarkRouteDetailDTO;
-import S13P21A305.dgg.bookmark.dto.BookmarkRouteListDTO;
-import S13P21A305.dgg.bookmark.dto.BookmarkRouteRenameRequestDTO;
-import S13P21A305.dgg.bookmark.dto.BookmarkRouteSaveRequestDTO;
-import S13P21A305.dgg.bookmark.service.BookmarkService;
+import S13P21A305.dgg.bookmark.route.dto.BookmarkRouteDetailDTO;
+import S13P21A305.dgg.bookmark.route.dto.BookmarkRouteListDTO;
+import S13P21A305.dgg.bookmark.route.dto.BookmarkRouteRenameRequestDTO;
+import S13P21A305.dgg.bookmark.route.dto.BookmarkRouteSaveRequestDTO;
+import S13P21A305.dgg.bookmark.route.service.BookmarkService;
 import lombok.RequiredArgsConstructor;
 
 @RestController

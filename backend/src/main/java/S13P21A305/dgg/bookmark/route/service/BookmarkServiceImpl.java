@@ -1,17 +1,17 @@
-package S13P21A305.dgg.bookmark.service;
+package S13P21A305.dgg.bookmark.route.service;
 
-import S13P21A305.dgg.bookmark.dto.BookmarkRouteDetailDTO;
-import S13P21A305.dgg.bookmark.dto.BookmarkRouteListDTO;
-import S13P21A305.dgg.bookmark.entity.BookmarkRoute;
-import S13P21A305.dgg.bookmark.entity.BookmarkRouteInfo;
-import S13P21A305.dgg.bookmark.repository.BookmarkRouteInfoRepository;
-import S13P21A305.dgg.bookmark.repository.BookmarkRouteRepository;
+import S13P21A305.dgg.bookmark.route.dto.BookmarkRouteDetailDTO;
+import S13P21A305.dgg.bookmark.route.dto.BookmarkRouteListDTO;
+import S13P21A305.dgg.bookmark.route.entity.BookmarkRoute;
+import S13P21A305.dgg.bookmark.route.entity.BookmarkRouteInfo;
+import S13P21A305.dgg.bookmark.route.repository.BookmarkRouteInfoRepository;
+import S13P21A305.dgg.bookmark.route.repository.BookmarkRouteRepository;
 import S13P21A305.dgg.common.dto.Point;
 import S13P21A305.dgg.global.external.dto.OdSayResponseDTO;
 import S13P21A305.dgg.global.external.service.GeocodingService;
 import S13P21A305.dgg.member.domain.Member;
 import S13P21A305.dgg.member.repository.MemberRepository;
-import S13P21A305.dgg.bookmark.dto.BookmarkRouteSaveRequestDTO;
+import S13P21A305.dgg.bookmark.route.dto.BookmarkRouteSaveRequestDTO;
 import S13P21A305.dgg.route.dto.RouteDetailDTO;
 import S13P21A305.dgg.route.dto.RouteMetaDTO;
 import S13P21A305.dgg.route.entity.*;
