@@ -1,12 +1,11 @@
-package S13P21A305.dgg.bookmark.repository;
+package S13P21A305.dgg.bookmark.route.repository;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 
-import S13P21A305.dgg.bookmark.entity.BookmarkRoute;
+import S13P21A305.dgg.bookmark.route.entity.BookmarkRoute;
 import jakarta.transaction.Transactional;
 
 public interface BookmarkRouteRepository extends JpaRepository<BookmarkRoute, Long> {
