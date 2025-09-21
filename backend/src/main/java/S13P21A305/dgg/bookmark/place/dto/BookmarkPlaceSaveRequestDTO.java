@@ -8,6 +8,6 @@ import lombok.Setter;
 public class BookmarkPlaceSaveRequestDTO {
 	private String placeName; // 장소 별칭
 	private String address; // 검색 주소
-	private double latitude;
-	private double longitude;
+	private Double latitude;
+	private Double longitude;
 }
