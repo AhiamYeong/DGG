@@ -4,7 +4,7 @@ import type { SimpleRoute } from '@/types/route-types';
 
 interface RouteListProps {
   routes: SimpleRoute[];
-  onSelectRoute: (route: SimpleRoute) => void;
+  onSelectRoute: (route: SimpleRoute) => Promise<void>;
   onToggleBookmark?: (id: string) => void;
   onShowOptions?: (id: string) => void;
   emptyMessage?: string;
@@ -30,8 +30,8 @@ const RouteList = memo<RouteListProps>(({
   className = ''
 }) => {
   // 이벤트 핸들러들을 useCallback으로 최적화
-  const handleSelectRoute = useCallback((route: SimpleRoute) => {
-    onSelectRoute(route);
+  const handleSelectRoute = useCallback(async (route: SimpleRoute) => {
+    await onSelectRoute(route);
   }, [onSelectRoute]);
 
   const handleToggleBookmark = useCallback((id: string) => {

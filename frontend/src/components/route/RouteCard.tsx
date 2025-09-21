@@ -5,7 +5,7 @@ import { getFatigueLevel } from '@/constants';
 
 interface RouteCardProps {
   route: SimpleRoute;
-  onSelect: (route: SimpleRoute) => void;
+  onSelect: (route: SimpleRoute) => Promise<void>;
   onToggleBookmark?: (id: string) => void;
   onShowOptions?: (id: string) => void;
   actionLabel?: string;
@@ -27,8 +27,8 @@ const RouteCard = memo<RouteCardProps>(({
   className = ''
 }) => {
   // 이벤트 핸들러들을 useCallback으로 최적화
-  const handleSelect = useCallback(() => {
-    onSelect(route);
+  const handleSelect = useCallback(async () => {
+    await onSelect(route);
   }, [onSelect, route]);
 
   const handleToggleBookmark = useCallback((e: React.MouseEvent) => {

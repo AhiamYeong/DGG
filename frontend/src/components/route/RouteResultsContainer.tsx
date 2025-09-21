@@ -9,7 +9,7 @@ interface RouteResultsContainerProps {
   routes: SimpleRoute[];
   actionLabel: string;
   selectedDepartureOption: 'now' | 'schedule';
-  onSelectRoute: (route: SimpleRoute) => void;
+  onSelectRoute: (route: SimpleRoute) => Promise<void>;
   onDepartureOptionChange?: (option: 'now' | 'schedule') => void;
   onClose?: () => void;
   currentOrigin?: string;

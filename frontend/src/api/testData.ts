@@ -1,3 +1,5 @@
+// 더미 데이터 주석화
+/*
 const testRouteData: any = {
     "result": {
         "searchType": 0,
@@ -2930,5 +2932,7 @@ const testRouteData: any = {
         ]
     }
 };
+*/
 
-export default testRouteData;
+// 더미 데이터 비활성화
+export default null;
