@@ -52,17 +52,17 @@ public class FcmService {
                 SendResponse r = resp.getResponses().get(i);
                 String token = tokens.get(i); // 요청했던 같은 인덱스의 토큰
 
+                // FcmService 실패 처리 패치
                 if (!r.isSuccessful()) {
                     MessagingErrorCode code = r.getException().getMessagingErrorCode();
                     log.warn("[FCM] send fail token={}, code={}, err={}", token, code, r.getException().getMessage());
 
-                    // 토큰 무효 → 비활성화
-                    if (code == MessagingErrorCode.UNREGISTERED
-                            || code == MessagingErrorCode.INVALID_ARGUMENT) {
+                    // (1) INVALID_ARGUMENT 은 비활성화하지 않음
+                    if (code == MessagingErrorCode.UNREGISTERED) {
                         try {
                             userDeviceTokenPort.disableToken(token);
                             log.info("[FCM] disabled invalid token={}", token);
-                        } catch (Exception ignore) { /* repo 에러는 다음으로 */ }
+                        } catch (Exception ignore) {}
                     }
                 }
             }

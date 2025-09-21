@@ -1,32 +1,25 @@
 package S13P21A305.dgg.alarm.domain;
 
 import jakarta.persistence.*;
-        import lombok.Getter;
-import lombok.Setter;
-
+import lombok.Getter; import lombok.Setter;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
-@Entity
-@Table(name="alarm_event",
-        indexes = {
-                @Index(name="idx_alarm_event_member_time", columnList="member_id,departure_at"),
-                @Index(name="idx_alarm_event_target", columnList="target_type,target_id")
-        })
+@Entity @Table(name = "alarm_event")
+@Getter @Setter
 public class AlarmEvent {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public enum TargetType { PLAN, ROUTE, SLEEP, CUSTOM }
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "member_id", nullable=false)
+    @Column(name="member_id", nullable=false)
     private Integer memberId;
 
     private String title;
 
-    @Column(name="target_type", nullable=false, columnDefinition="enum('PLAN','ROUTE','SLEEP','CUSTOM')")
     @Enumerated(EnumType.STRING)
-    private TargetType targetType;
+    @Column(name="target_type", nullable=false)
+    private TargetType targetType = TargetType.ROUTE;
 
     @Column(name="target_id")
     private Integer targetId;
@@ -40,11 +33,9 @@ public class AlarmEvent {
     @Column(name="destination_name")
     private String destinationName;
 
-    @Column(name="created_at", insertable=false, updatable=false)
+    @Column(name="created_at", updatable=false, insertable=false)
     private LocalDateTime createdAt;
 
-    @Column(name="updated_at", insertable=false, updatable=false)
+    @Column(name="updated_at", insertable=false)
     private LocalDateTime updatedAt;
-
-    public enum TargetType { PLAN, ROUTE, SLEEP, CUSTOM }
 }

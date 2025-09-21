@@ -1,38 +1,30 @@
 package S13P21A305.dgg.alarm.domain;
 
 import jakarta.persistence.*;
-import lombok.*;
-
+import lombok.Getter; import lombok.Setter;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(
-        name = "user_device",
-        indexes = @Index(name = "idx_user_device_member_enabled", columnList = "member_id,is_enabled"),
-        uniqueConstraints = @UniqueConstraint(name = "uq_user_device_token", columnNames = "push_token")
-)
-@Getter @Setter @NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Entity @Table(name="user_device")
+@Getter @Setter
 public class UserDevice {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "member_id", nullable=false)
+    @Column(name="member_id", nullable=false)
     private Integer memberId;
 
-    @Column(name = "push_token", nullable=false, length=512)
+    @Column(name="push_token", nullable=false, unique=true, length = 512)
     private String pushToken;
 
     @Column(name="is_enabled", nullable=false)
-    private Boolean isEnabled = true;
+    private Boolean enabled = true;
 
-    @Column(name = "last_seen_at")
+    @Column(name="last_seen_at")
     private LocalDateTime lastSeenAt;
 
-    @Column(name="created_at", insertable=false, updatable=false)
+    @Column(name="created_at", updatable=false, insertable=false)
     private LocalDateTime createdAt;
 
-    @Column(name="updated_at", insertable=false, updatable=false)
+    @Column(name="updated_at", insertable=false)
     private LocalDateTime updatedAt;
 }
