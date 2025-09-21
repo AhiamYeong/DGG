@@ -18,6 +18,8 @@ import S13P21A305.dgg.route.entity.*;
 import S13P21A305.dgg.route.repository.*;
 import S13P21A305.dgg.route.service.RouteCacheService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +36,7 @@ import java.util.*;
 // 조회시 출발시각 기준으로 각 leg의 timeTaken으로 계산해서 프론트로 전달 - TODO: 실시간 API 연동 필요
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class BookmarkServiceImpl implements BookmarkService {
 
 	private final MemberRepository memberRepository;
@@ -396,5 +399,27 @@ public class BookmarkServiceImpl implements BookmarkService {
 				.createdAt(br.getCreatedAt() != null ? br.getCreatedAt().format(FMT) : null)
 				.build())
 			.toList();
+	}
+
+	@Override
+	@Transactional
+	public void renameBookmark(Long bookmarkRouteId, Integer memberId, String newName) {
+		BookmarkRoute br = bookmarkRouteRepository.findById(bookmarkRouteId)
+			.orElseThrow(() -> new NoSuchElementException("즐겨찾기 목록에 없음"));
+
+		Integer ownerId = (br.getMember() != null) ? br.getMember().getId() : null;
+
+		// log.info("즐겨찾기 이름수정 확인로그 - memberId(header)={}, ownerId(entity)={}", memberId, ownerId);
+
+		// br.getMember() - memberEntity, memberId - Integer => equals 타입 불일치 => Object.equals로 비교
+		if (!Objects.equals(ownerId, memberId)) {
+			throw new SecurityException("권한이 없습니다.");
+		}
+
+		if (newName == null || newName.isBlank()) {
+			throw new IllegalStateException("수정하려는 경로 이름을 입력해주세요.");
+		}
+
+		br.setName(newName);
 	}
 }
