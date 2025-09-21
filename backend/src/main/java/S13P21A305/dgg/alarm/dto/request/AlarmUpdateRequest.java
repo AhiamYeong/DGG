@@ -1,13 +1,14 @@
 package S13P21A305.dgg.alarm.dto.request;
 
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/** 알림(이벤트 + 오프셋들) 수정 */
 public record AlarmUpdateRequest(
-        String title,
-        LocalDateTime departureAt,
-        String departureName,
-        String destinationName,
-        List<Integer> offsets // null이면 변화 없음, 빈 리스트면 모두 비활성
+        @NotNull Integer memberId,
+        String eventTitle,
+        LocalDateTime departureTime,
+        String departure,
+        String destination,
+        List<Integer> offsetMinutesList // 주어지면 upsert/disable
 ) {}
