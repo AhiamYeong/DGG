@@ -1,5 +1,6 @@
 package S13P21A305.dgg.bookmark.service;
 
+import S13P21A305.dgg.bookmark.dto.BookmarkRouteDetailDTO;
 import S13P21A305.dgg.bookmark.entity.BookmarkRoute;
 import S13P21A305.dgg.bookmark.entity.BookmarkRouteInfo;
 import S13P21A305.dgg.bookmark.repository.BookmarkRouteInfoRepository;
@@ -28,6 +29,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+// 구간 구조만 bookmark_route_info에 저장
+// 조회시 출발시각 기준으로 각 leg의 timeTaken으로 계산해서 프론트로 전달 - TODO: 실시간 API 연동 필요
 @RequiredArgsConstructor
 @Service
 public class BookmarkServiceImpl implements BookmarkService {
@@ -107,6 +110,7 @@ public class BookmarkServiceImpl implements BookmarkService {
 			bri.setType(ri.getType());
 			bri.setLineName(ri.getLineName());
 			bri.setWalkDistance(ri.getWalkDistance());
+			bri.setTimeTaken(ri.getTimeTaken());
 
 			bri.setStartLat(ri.getStartLat());
 			bri.setStartLng(ri.getStartLng());
@@ -272,5 +276,109 @@ public class BookmarkServiceImpl implements BookmarkService {
 
 			bookmarkRouteInfoRepository.save(bri);
 		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public BookmarkRouteDetailDTO getBookmarkDetail(Long bookmarkRouteId, Integer memberId, boolean realtime, String departAt) {
+		// 즐겨찾기 조회 + 회원 검증
+		BookmarkRoute br = bookmarkRouteRepository.findById(bookmarkRouteId)
+			.orElseThrow(() -> new NoSuchElementException("즐겨찾기 경로 없음: " + bookmarkRouteId));
+
+		if (memberId != null && br.getMember() != null &&
+			!br.getMember().getId().equals(memberId)) {
+			throw new SecurityException("권한이 없습니다.");
+		}
+
+		// 저장된 경로 구간 조회
+		List<BookmarkRouteInfo> infos = bookmarkRouteInfoRepository
+			.findAllByBookmarkIdOrderByOrder(bookmarkRouteId);
+
+		// 출발 기준시각 - departAt이 있으면 그 시간, 없으면 now()
+		LocalDateTime departTime = (departAt != null && !departAt.isBlank())
+			? LocalDateTime.parse(departAt, FMT)
+			: LocalDateTime.now();
+
+		List<RouteDetailDTO.Leg> legs = new ArrayList<>();
+		int totalMinutes = 0;
+		LocalDateTime cursor = departTime;
+
+		for (BookmarkRouteInfo bi : infos) {
+			RouteDetailDTO.Leg leg = RouteDetailDTO.Leg.builder()
+				.order(bi.getOrder())
+				.type(bi.getType().name())
+				.lineName(bi.getLineName())
+				.startPoint(bi.getDepartureName())
+				.endPoint(bi.getDestinationName())
+				.startLat(bi.getStartLat())
+				.startLng(bi.getStartLng())
+				.endLat(bi.getEndLat())
+				.endLng(bi.getEndLng())
+				.build();
+
+			// DB에 저장된 정적 소요시간 사용. 없으면 0.
+			int staticMinutes = safeInt(bi.getTimeTaken(), 0);
+
+			int waitMinutes = 0;
+			if (realtime) {
+				// TODO: 지하철/버스 실시간 API 붙이기
+				waitMinutes = estimateWaitMinutesStub(bi, cursor);
+			}
+
+			int legMinutes = staticMinutes + waitMinutes; // 구간 소요시간
+			leg.setTimeTaken(legMinutes);
+
+			// 다음 구간 출발시간 갱신
+			cursor = cursor.plusMinutes(legMinutes);
+			totalMinutes += legMinutes;
+
+			// 좌표가 비어있다면 보강
+			leg = enrichLegWithGeocodingIfNeeded(leg);
+
+			legs.add(leg);
+		}
+
+		String arrival = departTime.plusMinutes(totalMinutes).format(FMT);
+
+		return BookmarkRouteDetailDTO.builder()
+			.bookmarkRouteId(bookmarkRouteId)
+			.name(br.getName())
+			.totalTime(totalMinutes)
+			.arrivalTime(arrival)
+			.data(legs)
+			.build();
+	}
+
+	private int safeInt(Integer v, int def) {
+		return v != null ? v : def;
+	}
+
+	// 지금은 0, 지하철/버스 실시간 API 붙여서 계산해야됨
+	private int estimateWaitMinutesStub(BookmarkRouteInfo bi, LocalDateTime when) {
+		switch (bi.getType()) {
+			case SUBWAY:
+				// TODO: startStationId + subwayLineId로 다음 지하철 대기시간 계산
+				return 0;
+			case BUS:
+				// TODO: startStopId + busRouteId로 다음 버스 대기시간 계산
+				return 0;
+			default:
+				return 0;
+		}
+	}
+
+	// 좌표가 비어있으면 지오코딩으로 보충
+	private RouteDetailDTO.Leg enrichLegWithGeocodingIfNeeded(RouteDetailDTO.Leg leg) {
+		if ((leg.getStartLat() == null || leg.getStartLng() == null)
+			&& leg.getStartPoint() != null && !leg.getStartPoint().isBlank()) {
+			Point p = geocodingService.getCoordinates(leg.getStartPoint());
+			if (p != null) { leg.setStartLat(p.lat()); leg.setStartLng(p.lon()); }
+		}
+		if ((leg.getEndLat() == null || leg.getEndLng() == null)
+			&& leg.getEndPoint() != null && !leg.getEndPoint().isBlank()) {
+			Point p = geocodingService.getCoordinates(leg.getEndPoint());
+			if (p != null) { leg.setEndLat(p.lat()); leg.setEndLng(p.lon()); }
+		}
+		return leg;
 	}
 }

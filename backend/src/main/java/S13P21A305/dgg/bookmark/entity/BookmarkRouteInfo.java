@@ -64,6 +64,9 @@ public class BookmarkRouteInfo {
 	@Column(name = "created_at")
 	private LocalDateTime createdAt;
 
+	@Column(name = "time_taken")
+	private Integer timeTaken; // 소요시간
+
 	@PrePersist
 	void onCreate(){ this.createdAt = LocalDateTime.now(); }
 
