@@ -1,5 +1,6 @@
 package S13P21A305.dgg.bookmark.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import S13P21A305.dgg.auth.dto.CustomOAuth2User;
 import S13P21A305.dgg.bookmark.dto.BookmarkRouteDetailDTO;
+import S13P21A305.dgg.bookmark.dto.BookmarkRouteListDTO;
 import S13P21A305.dgg.bookmark.dto.BookmarkRouteSaveRequestDTO;
 import S13P21A305.dgg.bookmark.service.BookmarkService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,18 @@ import lombok.RequiredArgsConstructor;
 public class BookmarkController {
 
 	private final BookmarkService bookmarkService;
+
+	// 즐겨찾기 목록 조회
+	@GetMapping("/routes")
+	public ResponseEntity<List<BookmarkRouteListDTO>> getList(
+		@AuthenticationPrincipal CustomOAuth2User member,
+		@RequestHeader(name = "X-DGG-MEMBER-ID", required = false) Integer memberIdHeader
+	) {
+		Integer memberId = (member != null) ? member.getMemberId() : memberIdHeader;
+		if (memberId == null) return ResponseEntity.status(401).build();
+
+		return ResponseEntity.ok(bookmarkService.getBookmarkList(memberId));
+	}
 
 	// 즐겨찾기 추가
 	@PostMapping("/routes")
