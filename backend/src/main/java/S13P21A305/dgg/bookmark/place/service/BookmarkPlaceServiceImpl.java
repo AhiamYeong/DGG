@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import S13P21A305.dgg.bookmark.place.dto.BookmarkPlaceRenameRequestDTO;
 import S13P21A305.dgg.bookmark.place.dto.BookmarkPlaceResponseDTO;
 import S13P21A305.dgg.bookmark.place.dto.BookmarkPlaceSaveRequestDTO;
 import S13P21A305.dgg.bookmark.place.entity.BookmarkPlace;
@@ -52,6 +53,21 @@ public class BookmarkPlaceServiceImpl implements BookmarkPlaceService {
 	@Transactional(readOnly = true)
 	public List<BookmarkPlaceResponseDTO> getBookmarkList(Integer memberId) {
 		return placeRepo.findAllByMember_IdOrderById(memberId).stream().map(this::toDto).toList();
+	}
+
+	@Override
+	@Transactional
+	public BookmarkPlaceResponseDTO renamePlace(Long placeId, Integer memberId, BookmarkPlaceRenameRequestDTO req) {
+		if (req.getPlaceName() == null || req.getPlaceName().isBlank()) {
+			throw new IllegalArgumentException("새 별칭을 입력하세요.");
+		}
+
+		BookmarkPlace p = placeRepo.findByIdAndMember_Id(placeId, memberId)
+			.orElseThrow(() -> new SecurityException("대상이 없거나 권한이 없습니다."));
+
+		p.setPlaceName(req.getPlaceName());
+
+		return toDto(p);
 	}
 
 	private BookmarkPlaceResponseDTO toDto(BookmarkPlace p) {
