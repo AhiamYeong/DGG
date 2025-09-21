@@ -387,13 +387,22 @@ public class RouteServiceImpl implements RouteService {
 	}
 
 	private RouteDetailDTO.Leg enrichLegWithGeocoding(RouteDetailDTO.Leg leg) {
-		if (leg.getStartLat() == null || leg.getStartLng() == null) {
+		if ((leg.getStartLat() == null || leg.getStartLng() == null)
+			&& leg.getStartPoint() != null && !leg.getStartPoint().isBlank()) {
 			Point p = geocodingService.getCoordinates(leg.getStartPoint());
-			if (p != null) { leg.setStartLat(p.lat()); leg.setStartLng(p.lon()); }
+			if (p != null) {
+				leg.setStartLat(p.lat());
+				leg.setStartLng(p.lon());
+			}
 		}
-		if (leg.getEndLat() == null || leg.getEndLng() == null) {
+		// 끝 좌표가 없을 때만 시도
+		if ((leg.getEndLat() == null || leg.getEndLng() == null)
+			&& leg.getEndPoint() != null && !leg.getEndPoint().isBlank()) {
 			Point p = geocodingService.getCoordinates(leg.getEndPoint());
-			if (p != null) { leg.setEndLat(p.lat()); leg.setEndLng(p.lon()); }
+			if (p != null) {
+				leg.setEndLat(p.lat());
+				leg.setEndLng(p.lon());
+			}
 		}
 
 		return leg;
