@@ -6,6 +6,7 @@ import { MapContainer } from '../components/map';
 import { NavigationMode, SearchMode } from '../components/navigation';
 import { TimePicker } from '../components/ui';
 import { MAP_DEFAULTS } from '../constants';
+import type { PlaceInfo } from '../types/route-types';
 
 export default function MainMapPage() {
   // 지도 관련 로직
@@ -27,6 +28,8 @@ export default function MainMapPage() {
     routeResults,
     actionLabel,
     showDepartureOptions,
+    currentOrigin,
+    currentDestination,
     showTimePicker,
     departureTime,
     selectedDepartureOption,
@@ -60,6 +63,11 @@ export default function MainMapPage() {
     getCurrentLocation();
   }, [getCurrentLocation]);
 
+  const handleRouteSearch = useCallback((origin: PlaceInfo, destination: PlaceInfo, waypoints?: PlaceInfo[]) => {
+    // 통합된 주소 정보를 전역 상태에 저장
+    startRouteSearch(origin, destination, waypoints);
+  }, [startRouteSearch]);
+
   // 현재 위치가 변경될 때 마커 표시
   useEffect(() => {
     if (currentLocation && currentLocation.lat !== MAP_DEFAULTS.DEFAULT_CENTER.lat && currentLocation.lng !== MAP_DEFAULTS.DEFAULT_CENTER.lng) {
@@ -69,10 +77,14 @@ export default function MainMapPage() {
 
   // 네비게이션 시작 시 선택된 경로의 폴리라인과 마커 그리기
   useEffect(() => {
+    console.log('네비게이션 useEffect 트리거:', { isNavigating, currentRoute: !!currentRoute, hasRawData: !!currentRoute?.rawData });
+    
     if (isNavigating && currentRoute && currentRoute.rawData) {
+      console.log('네비게이션 시작 - 경로 처리 시작');
       drawSelectedRoute(currentRoute);
       createSelectedRouteMarkers(currentRoute);
       // 지도를 경로 시작점으로 이동
+      console.log('지도 중심 이동 호출');
       centerMapToRouteStart(currentRoute);
     }
   }, [isNavigating, currentRoute, drawSelectedRoute, createSelectedRouteMarkers, centerMapToRouteStart]);
@@ -103,7 +115,7 @@ export default function MainMapPage() {
           />
         ) : (
           <SearchMode
-            onSearch={startRouteSearch}
+            onSearch={handleRouteSearch}
             onDepartureOptionChange={setSelectedDepartureOption}
             selectedDepartureOption={selectedDepartureOption}
             showDepartureOptions={showDepartureOptions}
@@ -114,6 +126,8 @@ export default function MainMapPage() {
             onCloseRouteResults={closeRouteResults}
             showTimePicker={showTimePicker}
             onLocationClick={handleLocationClick}
+            currentOrigin={currentOrigin}
+            currentDestination={currentDestination}
           />
         )}
       </div>

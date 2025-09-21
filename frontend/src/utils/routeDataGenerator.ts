@@ -43,13 +43,17 @@ const createRouteStep = (
 });
 
 /**
- * 경로 추천 결과 더미 데이터 생성
+ * 경로 추천 결과 더미 데이터 생성 (주석화)
  */
 export const generateRouteRecommendations = (
   from: string,
   to: string,
   departureTime?: TimeSlot
 ): SimpleRoute[] => {
+  // 더미 데이터 생성 기능을 주석화
+  throw new Error('더미 데이터 생성 기능이 비활성화되었습니다. 실제 API를 사용하세요.');
+  
+  /*
   // const now = new Date();
   // const isCurrentTime = !departureTime || 
   //   (departureTime.hour === now.getHours() && 
@@ -153,6 +157,7 @@ export const generateRouteRecommendations = (
   };
 
   return [minFatigueRoute, minTimeRoute, minTransferRoute];
+  */
 };
 
 /**

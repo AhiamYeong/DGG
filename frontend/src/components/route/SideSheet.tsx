@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import type { SimpleRoute } from '@/types/route-types';
+import { SUBWAY_LINE_COLORS } from '@/constants';
 
 interface SideSheetProps {
   position: number; // 0, 20, 70 (0: 닫힘, 20: 보통상태, 70: 확장상태)
@@ -24,6 +25,14 @@ export const SideSheet: React.FC<SideSheetProps> = ({
   const [startX, setStartX] = useState(0);
   const [startPosition, setStartPosition] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // 스크롤 드래그 상태
+  const [scrollStartY, setScrollStartY] = useState(0);
+  const [scrollStartX, setScrollStartX] = useState(0);
+  const [scrollStartTop, setScrollStartTop] = useState(0);
+  const [isScrollDragging, setIsScrollDragging] = useState(false);
+  const [scrollContainer, setScrollContainer] = useState<HTMLDivElement | null>(null);
+  const [gestureType, setGestureType] = useState<'none' | 'scroll' | 'resize'>('none');
 
   // 드래그 시작 핸들러
   const handleDragStart = useCallback((clientX: number) => {
@@ -40,6 +49,71 @@ export const SideSheet: React.FC<SideSheetProps> = ({
     const newPosition = Math.max(20, Math.min(70, startPosition + (deltaX / window.innerWidth) * 100));
     onPositionChange(newPosition);
   }, [isDragging, startX, startPosition, onPositionChange]);
+
+  // 제스처 타입 결정 함수
+  const determineGestureType = useCallback((deltaX: number, deltaY: number) => {
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+    
+    // 수평 이동이 더 크면 사이드바 크기 조절
+    if (absX > absY && absX > 10) {
+      return 'resize';
+    }
+    // 수직 이동이 더 크면 스크롤
+    if (absY > absX && absY > 10) {
+      return 'scroll';
+    }
+    return 'none';
+  }, []);
+
+  // 스크롤 드래그 시작 핸들러
+  const handleScrollDragStart = useCallback((clientX: number, clientY: number) => {
+    if (!scrollContainer) return;
+    setScrollStartX(clientX);
+    setScrollStartY(clientY);
+    setScrollStartTop(scrollContainer.scrollTop);
+    setGestureType('none');
+  }, [scrollContainer]);
+
+  // 스크롤 드래그 이동 핸들러
+  const handleScrollDragMove = useCallback((clientX: number, clientY: number) => {
+    if (!scrollContainer) return;
+    
+    const deltaX = clientX - scrollStartX;
+    const deltaY = clientY - scrollStartY;
+    
+    // 제스처 타입이 결정되지 않았다면 결정
+    if (gestureType === 'none') {
+      const newGestureType = determineGestureType(deltaX, deltaY);
+      setGestureType(newGestureType);
+      
+      if (newGestureType === 'resize') {
+        // 사이드바 크기 조절로 전환
+        setIsScrollDragging(false);
+        setIsDragging(true);
+        setStartX(scrollStartX);
+        setStartPosition(position);
+        // 사이드바 크기 조절 이벤트 트리거
+        handleDragMove(clientX);
+        return;
+      } else if (newGestureType === 'scroll') {
+        setIsScrollDragging(true);
+        return;
+      }
+    }
+    
+    // 스크롤 제스처인 경우에만 스크롤 처리
+    if (gestureType === 'scroll' && isScrollDragging) {
+      const newScrollTop = Math.max(0, scrollStartTop - deltaY);
+      scrollContainer.scrollTop = newScrollTop;
+    }
+  }, [scrollContainer, scrollStartX, scrollStartY, scrollStartTop, gestureType, isScrollDragging, determineGestureType, position]);
+
+  // 스크롤 드래그 종료 핸들러
+  const handleScrollDragEnd = useCallback(() => {
+    setIsScrollDragging(false);
+    setGestureType('none');
+  }, []);
 
   // 드래그 종료 핸들러
   const handleDragEnd = useCallback(() => {
@@ -93,6 +167,28 @@ export const SideSheet: React.FC<SideSheetProps> = ({
     handleDragEnd();
   }, [handleDragEnd]);
 
+  // 스크롤용 터치 이벤트 핸들러
+  const handleScrollTouchStart = useCallback((e: React.TouchEvent) => {
+    // 제스처 타입이 결정되기 전까지는 이벤트 전파 허용
+    handleScrollDragStart(e.touches[0].clientX, e.touches[0].clientY);
+  }, [handleScrollDragStart]);
+
+  const handleScrollTouchMove = useCallback((e: TouchEvent) => {
+    // 제스처 타입이 결정되었거나 스크롤 드래그 중일 때만 이벤트 차단
+    if (gestureType === 'scroll' || isScrollDragging) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    handleScrollDragMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, [gestureType, isScrollDragging, handleScrollDragMove]);
+
+  const handleScrollTouchEnd = useCallback(() => {
+    if (gestureType === 'resize' || isDragging) {
+      handleDragEnd();
+    }
+    handleScrollDragEnd();
+  }, [gestureType, isDragging, handleDragEnd, handleScrollDragEnd]);
+
   // 전역 이벤트 리스너 등록/해제
   useEffect(() => {
     if (isDragging) {
@@ -109,6 +205,19 @@ export const SideSheet: React.FC<SideSheetProps> = ({
       document.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
+
+  // 스크롤 드래그 이벤트 리스너 등록/해제
+  useEffect(() => {
+    if (gestureType !== 'none' || isScrollDragging || isDragging) {
+      document.addEventListener('touchmove', handleScrollTouchMove, { passive: false });
+      document.addEventListener('touchend', handleScrollTouchEnd);
+    }
+
+    return () => {
+      document.removeEventListener('touchmove', handleScrollTouchMove);
+      document.removeEventListener('touchend', handleScrollTouchEnd);
+    };
+  }, [gestureType, isScrollDragging, isDragging, handleScrollTouchMove, handleScrollTouchEnd]);
 
 
   if (position === 0) return null;
@@ -129,15 +238,26 @@ export const SideSheet: React.FC<SideSheetProps> = ({
 
     return (
       <div className="flex flex-col h-full">
+        {/* 헤더와의 연결을 위한 상단 패딩 */}
+        <div style={{ height: `${headerHeight}px` }} className="bg-white/95 backdrop-blur-sm border-b border-gray-200" />
+        
         {/* 경로 다이어그램 */}
-        <div className={`flex-1 ${showDetails ? 'px-6 py-4' : 'flex justify-center items-center'}`}>
+        <div 
+          ref={setScrollContainer}
+          className={`flex-1 ${showDetails ? 'px-6 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100' : 'flex justify-center items-center'}`} 
+          style={showDetails ? { 
+            maxHeight: 'calc(100vh - 200px)',
+            touchAction: 'pan-y'
+          } : {}}
+          onTouchStart={showDetails ? handleScrollTouchStart : undefined}
+        >
           <div className="flex flex-col">
             {/* 출발 노드와 정보 */}
             <div className="flex items-center py-2" style={{ gap: `${nodeSpacing}px` }}>
               {/* 왼쪽: 노드 */}
               <div className="flex flex-col items-center">
                 <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-xs font-medium text-gray-700">출발</span>
+                  <span className="text-xs">🏁</span>
                 </div>
               </div>
               
@@ -180,9 +300,11 @@ export const SideSheet: React.FC<SideSheetProps> = ({
 
             {/* 경로 단계들을 노드로 표시 */}
             {(route.steps && route.steps.length > 0 ? route.steps : [
-              { id: '1', type: 'walk', description: '출발지에서 지하철역까지', duration: 3 },
-              { id: '2', type: 'subway', description: '2호선 이용', duration: 20, lineInfo: { name: '2호선', direction: '강남방향', stationCount: 8 } },
-              { id: '3', type: 'walk', description: '지하철역에서 도착지까지', duration: 2 }
+              { id: '1', type: 'subway', description: '2호선 이용', duration: 20, lineInfo: { name: '2호선', direction: '강남방향', stationCount: 8 } },
+              { id: '2', type: 'transfer', description: '사당역에서 4호선으로 환승', duration: 3, transferInfo: { fromLine: '2호선', toLine: '4호선', station: '사당역' } },
+              { id: '3', type: 'subway', description: '4호선 이용', duration: 15, lineInfo: { name: '4호선', direction: '삼각지방향', stationCount: 5 } },
+              { id: '4', type: 'transfer', description: '삼각지역에서 6호선으로 환승', duration: 3, transferInfo: { fromLine: '4호선', toLine: '6호선', station: '삼각지역' } },
+              { id: '5', type: 'subway', description: '6호선 이용', duration: 8, lineInfo: { name: '6호선', direction: '공덕방향', stationCount: 2 } }
             ]).map((step: any, index: number) => (
               <div key={step.id}>
                 {/* 노드와 상세 정보 */}
@@ -192,22 +314,25 @@ export const SideSheet: React.FC<SideSheetProps> = ({
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                       step.type === 'walk' ? 'bg-gray-300' :
                       step.type === 'bus' ? 'bg-green-500' :
-                      step.type === 'subway' ? 'bg-blue-500' :
-                      'bg-orange-500'
-                    }`}>
+                      step.type === 'subway' ? '' :
+                      step.type === 'transfer' ? 'bg-gray-300' :
+                      'bg-gray-400'
+                    }`} style={step.type === 'subway' && step.lineInfo?.name ? {
+                      backgroundColor: SUBWAY_LINE_COLORS[step.lineInfo.name as keyof typeof SUBWAY_LINE_COLORS] || SUBWAY_LINE_COLORS['기타']
+                    } : {}}>
                       {step.type === 'walk' && (
-                        <span className="text-xs font-medium text-gray-700">걷기</span>
+                        <span className="text-xs">🚶</span>
                       )}
                       {step.type === 'bus' && (
-                        <span className="text-xs font-medium text-white">버스</span>
+                        <span className="text-xs">🚌</span>
                       )}
                       {step.type === 'subway' && (
-                        <span className="text-xs font-medium text-white">
-                          {step.lineInfo?.name || '지하철'}
+                        <span className="text-xs font-bold text-white">
+                          {step.lineInfo?.name?.replace('호선', '') || '🚇'}
                         </span>
                       )}
                       {step.type === 'transfer' && (
-                        <span className="text-xs font-medium text-white">환승</span>
+                        <span className="text-xs">🔄</span>
                       )}
                     </div>
                   </div>
@@ -223,8 +348,10 @@ export const SideSheet: React.FC<SideSheetProps> = ({
                   >
                     {showDetails && (
                       <>
-                        <p className="text-sm font-medium text-gray-900">{step.description}</p>
-                        {step.duration && (
+                        {step.type !== 'transfer' && (
+                          <p className="text-sm font-medium text-gray-900">{step.description}</p>
+                        )}
+                        {step.duration && step.duration > 0 && step.type !== 'transfer' && (
                           <p className="text-xs text-gray-500">{step.duration}분 소요</p>
                         )}
                         {step.lineInfo && (
@@ -232,13 +359,21 @@ export const SideSheet: React.FC<SideSheetProps> = ({
                             {step.lineInfo.direction} {step.lineInfo.stationCount && `(${step.lineInfo.stationCount}개역)`}
                           </p>
                         )}
+                        {step.transferInfo && (
+                          <>
+                            <p className="text-sm font-medium text-gray-900">
+                              {step.transferInfo.fromLine} → {step.transferInfo.toLine}
+                            </p>
+                            <p className="text-xs text-gray-500">환승 소요시간 {step.duration}분</p>
+                          </>
+                        )}
                       </>
                     )}
                   </div>
                 </div>
 
                 {/* 간선 (마지막 단계가 아닌 경우) */}
-                {index < (route.steps && route.steps.length > 0 ? route.steps.length : 3) - 1 && (
+                {index < (route.steps && route.steps.length > 0 ? route.steps.length : 5) - 1 && (
                   <div className="flex items-center py-1" style={{ gap: `${nodeSpacing}px` }}>
                     <div className="w-8 flex justify-center">
                       <div 
@@ -290,7 +425,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
               {/* 왼쪽: 노드 */}
               <div className="flex flex-col items-center">
                 <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-xs font-medium text-gray-700">도착</span>
+                  <span className="text-xs">🎯</span>
                 </div>
               </div>
               
@@ -310,32 +445,32 @@ export const SideSheet: React.FC<SideSheetProps> = ({
             </div>
           </div>
 
-          {/* 경로 요약 정보 (확장 상태일 때만 표시) */}
-          <div 
-            className="mt-6 transition-all duration-300 ease-out"
-            style={{
-              opacity: showDetails ? 1 : 0,
-              transform: showDetails ? 'translateY(0)' : 'translateY(10px)',
-              willChange: 'opacity, transform'
-            }}
-          >
+            {/* 경로 요약 정보 (확장 상태일 때만 표시) */}
             {showDetails && (
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-600">총 소요시간</span>
-                  <span className="text-lg font-bold text-gray-900">{route.totalDuration || 0}분</span>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-600">총 거리</span>
-                  <span className="text-lg font-bold text-gray-900">{((route.totalDistance || 0) / 1000).toFixed(1)}km</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">예상 요금</span>
-                  <span className="text-lg font-bold text-gray-900">{(route.price || 0).toLocaleString()}원</span>
+              <div 
+                className="mt-6 transition-all duration-300 ease-out"
+                style={{
+                  opacity: showDetails ? 1 : 0,
+                  transform: showDetails ? 'translateY(0)' : 'translateY(10px)',
+                  willChange: 'opacity, transform'
+                }}
+              >
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-600">총 소요시간</span>
+                    <span className="text-lg font-bold text-gray-900">{route.totalDuration || 0}분</span>
+                  </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-600">총 거리</span>
+                    <span className="text-lg font-bold text-gray-900">{((route.totalDistance || 0) / 1000).toFixed(1)}km</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">예상 요금</span>
+                    <span className="text-lg font-bold text-gray-900">{(route.price || 0).toLocaleString()}원</span>
+                  </div>
                 </div>
               </div>
             )}
-          </div>
         </div>
       </div>
     );
@@ -347,10 +482,10 @@ export const SideSheet: React.FC<SideSheetProps> = ({
       {/* 백드롭 */}
       {position > 0 && (
         <div
-          className="fixed bg-black bg-opacity-20 transition-opacity pointer-events-none"
+          className="absolute bg-black bg-opacity-20 transition-opacity pointer-events-none"
           style={{ 
-            zIndex: 12, // 안내종료 버튼(z-15)보다 아래
-            top: `${headerHeight}px`,
+            zIndex: 10,
+            top: 0,
             left: 0,
             right: 0,
             bottom: 0,
@@ -361,14 +496,14 @@ export const SideSheet: React.FC<SideSheetProps> = ({
       
       {/* 사이드 시트 */}
       <div
-        className="fixed bg-white shadow-2xl transition-transform duration-200 ease-out"
+        className="absolute bg-white shadow-2xl transition-transform duration-200 ease-out"
         style={{
-          zIndex: 25, // 안내종료 버튼(z-20)보다 위에 위치
+          zIndex: 20,
           left: 0,
-          width: `${position}%`, // position 값에 따라 동적 너비 조정 (20% ~ 70%)
-          top: `${headerHeight}px`,
-          height: `calc(100vh - ${headerHeight}px)`,
-          borderRadius: '0 12px 12px 0', // 오른쪽 모서리만 둥글게
+          width: `${position}%`,
+          top: 0,
+          height: '100%',
+          borderRadius: '0 12px 12px 0',
         }}
         onTouchStart={handleTouchStart}
         onMouseDown={handleMouseDown}

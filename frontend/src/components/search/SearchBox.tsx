@@ -1,12 +1,12 @@
-import { useEffect } from 'react';
 import { useSearchStore } from '../../stores/useSearchStore';
 import { Button } from '../ui';
 import SearchInput from './SearchInput';
 import WaypointInput from './WaypointInput';
 import { ROUTE_CONSTANTS } from '../../constants';
+import type { PlaceInfo } from '../../types/route-types';
 
 interface SearchBoxProps {
-  onSearch: (origin: string, destination: string, waypoints?: string[]) => void;
+  onSearch: (origin: PlaceInfo, destination: PlaceInfo, waypoints?: PlaceInfo[]) => void;
   onDepartureOptionChange?: (option: 'now' | 'schedule') => void;
   selectedDepartureOption?: 'now' | 'schedule';
   showDepartureOptions?: boolean;
@@ -30,21 +30,29 @@ export default function SearchBox({ onSearch, onDepartureOptionChange, selectedD
     clearWaypoint
   } = useSearchStore();
 
-  // 컴포넌트 마운트 시 상태 로깅
-  useEffect(() => {
-    console.log('SearchBox 마운트 - 현재 상태:', { origin, destination });
-  }, [origin, destination]);
 
   const handleSearch = () => {
     if (origin.trim() && destination.trim()) {
-      // 도로명 주소가 있으면 도로명 주소를 사용, 없으면 장소명 사용
-      const departureAddress = originRoadAddress || origin.trim();
-      const destinationAddress = destinationRoadAddress || destination.trim();
-      const waypointAddresses = waypoints
-        .map(wp => wp.roadAddress || wp.value.trim())
-        .filter(address => address);
+      // 통합된 주소 정보 생성
+      const originInfo: PlaceInfo = {
+        name: origin.trim(),
+        address: originRoadAddress || origin.trim()
+      };
       
-      onSearch(departureAddress, destinationAddress, waypointAddresses);
+      const destinationInfo: PlaceInfo = {
+        name: destination.trim(),
+        address: destinationRoadAddress || destination.trim()
+      };
+      
+      const waypointInfos: PlaceInfo[] = waypoints
+        .map(wp => ({
+          name: wp.value.trim(),
+          address: wp.roadAddress || wp.value.trim()
+        }))
+        .filter(wp => wp.name);
+      
+      
+      onSearch(originInfo, destinationInfo, waypointInfos);
     }
   };
 
