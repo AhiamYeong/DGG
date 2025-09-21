@@ -1,4 +1,4 @@
-package S13P21A305.dgg.bookmark.entity;
+package S13P21A305.dgg.bookmark.route.entity;
 
 import java.io.Serializable;
 
