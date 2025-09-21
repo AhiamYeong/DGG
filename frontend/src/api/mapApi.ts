@@ -139,7 +139,12 @@ export const searchRoutesWithTime = async (
     // 더 자세한 에러 정보 로깅
     console.error('=== API 에러 상세 정보 ===');
     console.error('요청 URL:', '/v1/maps/routes');
-    console.error('요청 데이터:', JSON.stringify(requestBody, null, 2));
+    console.error('요청 데이터:', JSON.stringify({
+      departureAddress,
+      destinationAddress,
+      stopoverAddresses: stopoverAddresses?.slice(0, 2) || [],
+      startTime
+    }, null, 2));
     console.error('에러 상태:', error.response?.status);
     console.error('에러 메시지:', error.response?.data);
     console.error('에러 전체:', error);

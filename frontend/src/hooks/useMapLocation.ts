@@ -117,8 +117,8 @@ export function useMapLocation() {
       console.log('지도 중심 이동 시작:', startLocation);
       const newCenter = new window.naver.maps.LatLng(startLocation.lat, startLocation.lng);
       
-      // 지도 중심 이동 (panTo 사용)
-      map.panTo(newCenter as any);
+      // 지도 중심 이동 (setCenter 사용)
+      map.setCenter({ lat: newCenter.lat(), lng: newCenter.lng() });
       
       // 약간의 지연 후 줌 레벨 설정
       setTimeout(() => {

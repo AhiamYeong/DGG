@@ -28,9 +28,7 @@ export const RouteResultsContainer: React.FC<RouteResultsContainerProps> = ({
   selectedDepartureOption,
   onSelectRoute,
   onDepartureOptionChange,
-  onClose,
-  currentOrigin,
-  currentDestination
+  onClose
 }) => {
   if (!isOpen) return null;
 
