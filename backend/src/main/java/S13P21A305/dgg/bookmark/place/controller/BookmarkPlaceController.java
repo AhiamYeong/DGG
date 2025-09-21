@@ -5,13 +5,16 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import S13P21A305.dgg.auth.dto.CustomOAuth2User;
+import S13P21A305.dgg.bookmark.place.dto.BookmarkPlaceRenameRequestDTO;
 import S13P21A305.dgg.bookmark.place.dto.BookmarkPlaceResponseDTO;
 import S13P21A305.dgg.bookmark.place.dto.BookmarkPlaceSaveRequestDTO;
 import S13P21A305.dgg.bookmark.place.service.BookmarkPlaceService;
@@ -52,5 +55,18 @@ public class BookmarkPlaceController {
 		Integer memberId = resolveMemberId(member, memberIdHeader);
 
 		return ResponseEntity.ok(service.getBookmarkList(memberId));
+	}
+
+	// 장소 이름 수정
+	@PutMapping("{placeId}")
+	public ResponseEntity<BookmarkPlaceResponseDTO> rename(
+		@PathVariable Long placeId,
+		@AuthenticationPrincipal CustomOAuth2User member,
+		@RequestHeader(name = "X-DGG-MEMBER-ID", required = false) Integer memberIdHeader,
+		@RequestBody BookmarkPlaceRenameRequestDTO req
+	) {
+		Integer memberId = resolveMemberId(member, memberIdHeader);
+
+		return ResponseEntity.ok(service.renamePlace(placeId, memberId, req));
 	}
 }
