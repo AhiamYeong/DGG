@@ -1,6 +1,8 @@
 /** @format */
-import FatigueHistory from "../components/fatigue/FatigueHistory";
 import character from "../assets/character.png";
+import FatigueHistory from "../components/fatigue/FatigueHistory";
+import FatigueProgressbar from "../components/fatigue/FatigueProgressBar";
+import FatigueButtons from "../components/fatigue/FatigueButtons";
 
 // 전부 하드코딩 된 페이지 -> 동적으로 연결 필요
 export default function FatiguePage() {
@@ -17,13 +19,10 @@ export default function FatiguePage() {
 
           {/* 현재 피로도 */}
           <div className="mt-4">
-            <p className="text-sm">현재 피로도</p>
-            <div className="w-full bg-gray-200 rounded-full h-4">
-              <div
-                className="bg-orange-400 h-4 rounded-full"
-                style={{ width: "20%" }}
-              ></div>
-            </div>
+            <FatigueProgressbar
+              label="현재 피로도"
+              value={20}
+            ></FatigueProgressbar>
           </div>
 
           {/* 캐릭터 */}
@@ -34,17 +33,7 @@ export default function FatiguePage() {
 
           {/* 버튼 */}
           {/* TODO: 아이콘 추가 */}
-          <div className="flex flex-wrap gap-2 justify-center">
-            <button className="px-4 py-2 rounded-lg bg-gray-100">
-              커피 마셨어요
-            </button>
-            <button className="px-4 py-2 rounded-lg bg-gray-100">
-              낮잠 잤어요
-            </button>
-            <button className="px-4 py-2 rounded-lg bg-gray-100">
-              산책 했어요
-            </button>
-          </div>
+          <FatigueButtons></FatigueButtons>
         </div>
       </div>
       <FatigueHistory></FatigueHistory>
