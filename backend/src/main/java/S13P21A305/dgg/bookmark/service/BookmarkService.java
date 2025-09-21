@@ -11,4 +11,5 @@ public interface BookmarkService {
 	BookmarkRouteDetailDTO getBookmarkDetail(Long bookmarkRouteId, Integer memberId, boolean realtime, String departAt); // 즐겨찾기 상세조회
 	List<BookmarkRouteListDTO> getBookmarkList(Integer memberId); // 경로 즐겨찾기 목록 조회
 	void renameBookmark(Long bookmarkRouteId, Integer memberId, String newName); // 경로 즐겨찾기 이름 수정
+	void deleteBookmark(Long bookmarkRouteId, Integer memberId); // 특정 경로 삭제
 }

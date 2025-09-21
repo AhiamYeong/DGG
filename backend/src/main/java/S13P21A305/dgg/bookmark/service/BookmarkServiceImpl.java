@@ -422,4 +422,15 @@ public class BookmarkServiceImpl implements BookmarkService {
 
 		br.setName(newName);
 	}
+
+	@Override
+	@Transactional
+	public void deleteBookmark(Long bookmarkRouteId, Integer memberId) {
+		// memberId인 사용자의 즐겨찾기 id 삭제 - 실제로 삭제된 행의 수
+		long result = bookmarkRouteRepository.deleteByIdAndMember_Id(bookmarkRouteId, memberId);
+
+		if (result == 0) { // 삭제 안됨
+			throw new NoSuchElementException("삭제 대상이 없거나 권한이 없습니다.");
+		}
+	}
 }
