@@ -1,0 +1,87 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties\
+.kotlin
+
+# Build
+/build/
+/app/build/
+/*/build/
+/captures/
+/.gradle/
+
+# IDE
+/.idea/*
+!/.idea/codeStyles/
+/.idea/workspace.xml
+/.idea/libraries/
+*.iml
+/local.properties
+
+# Memory dumps
+*.hprof
+
+# Gradle
+.gradle/
+gradle-app.setting
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+*.swp
+*.swo
+
+# Security
+*.jks
+*.keystore
+*.env
+google-services.json  # Firebase 설정파일 (민감정보 포함)
+keystore.properties
+
+# Android Studio
+/app/release/
+/app/debug/
+*.apk
+*.ap_
+*.aab
+
+# NDK (네이티브 개발시)
+/obj/
+/libs/
+
+# Logs
+*.log
+
+# Proguard
+proguard/
+
+# External native build
+/.externalNativeBuild/
+/.cxx/
+
+# Android Profiling
+*.trace
