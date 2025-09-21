@@ -73,4 +73,8 @@ public class BookmarkRouteInfo {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "bookmark_id", insertable = false, updatable = false)
 	private BookmarkRoute bookmark;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "bookmark_id", insertable=false, updatable=false)
+	private BookmarkRoute bookmarkRoute;
 }
