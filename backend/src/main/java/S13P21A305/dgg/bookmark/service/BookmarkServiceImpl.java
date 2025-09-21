@@ -1,6 +1,7 @@
 package S13P21A305.dgg.bookmark.service;
 
 import S13P21A305.dgg.bookmark.dto.BookmarkRouteDetailDTO;
+import S13P21A305.dgg.bookmark.dto.BookmarkRouteListDTO;
 import S13P21A305.dgg.bookmark.entity.BookmarkRoute;
 import S13P21A305.dgg.bookmark.entity.BookmarkRouteInfo;
 import S13P21A305.dgg.bookmark.repository.BookmarkRouteInfoRepository;
@@ -380,5 +381,20 @@ public class BookmarkServiceImpl implements BookmarkService {
 			if (p != null) { leg.setEndLat(p.lat()); leg.setEndLng(p.lon()); }
 		}
 		return leg;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<BookmarkRouteListDTO> getBookmarkList(Integer memberId) {
+		return bookmarkRouteRepository.findAllByMember_IdOrderById(memberId)
+			.stream()
+			.map(br -> BookmarkRouteListDTO.builder()
+				.bookmarkRouteId(br.getId())
+				.name(br.getName())
+				.departureName(br.getDepartureName())
+				.destinationName(br.getDestinationName())
+				.createdAt(br.getCreatedAt() != null ? br.getCreatedAt().format(FMT) : null)
+				.build())
+			.toList();
 	}
 }
