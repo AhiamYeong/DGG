@@ -238,7 +238,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
 
     return (
       <div className="flex flex-col h-full">
-        {/* 헤더와의 연결을 위한 상단 패딩 */}
+        {/* 헤더와의 연결을 위한 상단 패딩 - 헤더 아래에서 시작 */}
         <div style={{ height: `${headerHeight}px` }} className="bg-white/95 backdrop-blur-sm border-b border-gray-200" />
         
         {/* 경로 다이어그램 */}
@@ -479,24 +479,9 @@ export const SideSheet: React.FC<SideSheetProps> = ({
 
   return (
     <>
-      {/* 백드롭 */}
-      {position > 0 && (
-        <div
-          className="absolute bg-black bg-opacity-20 transition-opacity pointer-events-none"
-          style={{ 
-            zIndex: 10,
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: (position / 70) * 0.3 
-          }}
-        />
-      )}
-      
       {/* 사이드 시트 */}
       <div
-        className="absolute bg-white shadow-2xl transition-transform duration-200 ease-out"
+        className="absolute bg-white shadow-2xl transition-transform duration-200 ease-out pointer-events-auto"
         style={{
           zIndex: 20,
           left: 0,
@@ -507,11 +492,35 @@ export const SideSheet: React.FC<SideSheetProps> = ({
         }}
         onTouchStart={handleTouchStart}
         onMouseDown={handleMouseDown}
+        onClick={(e) => {
+          e.stopPropagation();
+          console.log('📄 SideSheet 터치됨!');
+        }}
       >
         
         {/* 통합된 UI 렌더링 */}
         {renderUnifiedUI()}
       </div>
+      
+      {/* 맵 터치 방지 영역 - 사이드시트 영역만 */}
+      <div
+        className="absolute pointer-events-auto"
+        style={{
+          zIndex: 19,
+          left: 0,
+          width: `${position}%`,
+          top: 0,
+          height: '100%',
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          console.log('🚫 맵 터치 방지 영역 터치됨!');
+        }}
+        onTouchStart={(e) => {
+          e.stopPropagation();
+          console.log('🚫 맵 터치 방지 영역 터치 시작!');
+        }}
+      />
     </>
   );
 };

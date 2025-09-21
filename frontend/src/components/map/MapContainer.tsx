@@ -23,7 +23,11 @@ export const MapContainer = memo<MapContainerProps>(({
   onCleanup
 }) => {
   return (
-    <div className="absolute inset-0 z-0">
+    <div 
+      className="absolute inset-0 z-0"
+      onClick={() => console.log('🗺️ MapContainer 터치됨!')}
+      onTouchStart={() => console.log('🗺️ MapContainer 터치 시작!')}
+    >
       <NaverMap 
         center={currentLocation}
         height="100vh"

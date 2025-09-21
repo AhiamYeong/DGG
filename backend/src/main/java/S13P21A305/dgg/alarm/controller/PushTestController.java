@@ -3,6 +3,7 @@ package S13P21A305.dgg.alarm.controller;
 
 import S13P21A305.dgg.alarm.fcm.FcmService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,12 +13,19 @@ import java.util.Map;
 @RequiredArgsConstructor
 @RequestMapping("/internal/push")
 public class PushTestController {
-    private final FcmService fcmService;
+    @Autowired(required = false)
+    private FcmService fcmService;
 
     @PostMapping("/test")
     public ResponseEntity<?> push(@RequestParam Integer memberId,
                                   @RequestParam(defaultValue = "테스트 푸시") String title,
                                   @RequestParam(defaultValue = "본문") String body) {
+
+        if (fcmService == null) {
+            Map<String, Object> resp = new java.util.LinkedHashMap<>();
+            resp.put("error", "FCM service is not available");
+            return ResponseEntity.ok(resp);
+        }
 
         var res = fcmService.sendToMember(memberId, title, body, Map.of("kind", "test"));
 

@@ -70,52 +70,62 @@ export const RouteInfo: React.FC<RouteInfoProps> = ({
           </button>
         </div>
 
-        {/* 현재 단계 정보 */}
-        {currentStep && (
-          <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-            <div className="flex-shrink-0">
-              {currentStep.type === 'walk' && (
-                <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-              )}
-              {currentStep.type === 'bus' && (
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">버스</span>
-                </div>
-              )}
-              {currentStep.type === 'subway' && (
-                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ 
-                  backgroundColor: currentStep.lineInfo?.name 
-                    ? SUBWAY_LINE_COLORS[currentStep.lineInfo.name as keyof typeof SUBWAY_LINE_COLORS] || SUBWAY_LINE_COLORS['기타']
-                    : '#0066CC' 
-                }}>
-                  <span className="text-white text-xs font-bold">
-                    {currentStep.lineInfo?.name?.replace('호선', '') || '🚇'}
-                  </span>
-                </div>
-              )}
-              {currentStep.type === 'transfer' && (
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-xs">🔄</span>
-                </div>
-              )}
-            </div>
-            <div className="flex-1">
-              <p className="text-base font-medium text-gray-900">{currentStep.description}</p>
-              {currentStep.duration && (
-                <p className="text-sm text-gray-500">{currentStep.duration}분 소요</p>
-              )}
-            </div>
-            {remainingSteps > 0 && (
-              <div className="text-sm text-gray-500">
-                {remainingSteps}단계 남음
+        {/* 현재 단계 정보 - 항상 표시 */}
+        <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+          <div className="flex-shrink-0">
+            {currentStep ? (
+              <>
+                {currentStep.type === 'walk' && (
+                  <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                )}
+                {currentStep.type === 'bus' && (
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">버스</span>
+                  </div>
+                )}
+                {currentStep.type === 'subway' && (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ 
+                    backgroundColor: currentStep.lineInfo?.name 
+                      ? SUBWAY_LINE_COLORS[currentStep.lineInfo.name as keyof typeof SUBWAY_LINE_COLORS] || SUBWAY_LINE_COLORS['기타']
+                      : '#0066CC' 
+                  }}>
+                    <span className="text-white text-xs font-bold">
+                      {currentStep.lineInfo?.name?.replace('호선', '') || '🚇'}
+                    </span>
+                  </div>
+                )}
+                {currentStep.type === 'transfer' && (
+                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                    <span className="text-xs">🔄</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
               </div>
             )}
           </div>
-        )}
+          <div className="flex-1">
+            <p className="text-base font-medium text-gray-900">
+              {currentStep ? currentStep.description : '경로 안내 시작'}
+            </p>
+            {currentStep?.duration && (
+              <p className="text-sm text-gray-500">{currentStep.duration}분 소요</p>
+            )}
+          </div>
+          {currentStep && remainingSteps > 0 && (
+            <div className="text-sm text-gray-500">
+              {remainingSteps}단계 남음
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

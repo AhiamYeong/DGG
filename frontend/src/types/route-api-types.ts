@@ -11,17 +11,15 @@ export interface NewBackendRouteApiResponse {
 }
 
 export interface RecommendedRoute {
-  routeKey: string; // redis에 캐시되는 키
+  routeId: string; // 실제 API에서는 routeId로 응답
   name: string;
   timeTaken: number; // min 단위
   arrivalTime: string;
   fatigue: number; // % 단위
 }
 
-// 안내시작 API 응답 타입
-export interface RouteStartResponse {
-  routeId: string;
-}
+// 안내시작 API 응답 타입 - 실제로는 숫자(routeId)를 반환
+export type RouteStartResponse = number;
 
 // 상세 경로 API 응답 타입
 export interface RouteDetailResponse {

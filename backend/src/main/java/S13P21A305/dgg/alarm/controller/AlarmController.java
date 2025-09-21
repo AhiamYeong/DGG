@@ -7,6 +7,7 @@ import S13P21A305.dgg.alarm.dto.response.AlarmResponse;
 import S13P21A305.dgg.alarm.service.AlarmService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,10 +52,14 @@ public class AlarmController {
     }
 
     //-----------------------테스트 용-------------------------
-    private final S13P21A305.dgg.alarm.fcm.FcmService fcmService;
+    @Autowired(required = false)
+    private S13P21A305.dgg.alarm.fcm.FcmService fcmService;
 
     @PostMapping("/test-push")
     public Map<String, Object> testPush(@RequestParam Integer memberId) {
+        if (fcmService == null) {
+            return Map.of("error", "FCM service is not available");
+        }
         var result = fcmService.sendToMember(memberId, "테스트 알림", "푸시가 도착해야 정상!", Map.of("type","TEST"));
         return Map.of(
                 "total", result.total(),

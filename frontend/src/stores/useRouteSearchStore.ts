@@ -171,20 +171,35 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
 
       // 경로 선택 (안내시작)
       selectRoute: async (route: SimpleRoute) => {
+        console.log('=== selectRoute 시작 ===');
+        console.log('선택된 route:', route);
+        console.log('route.routeKey:', route.routeKey);
+        console.log('route.routeKey 타입:', typeof route.routeKey);
+        
         log.route('경로 선택 (안내시작)', route);
         
         try {
           // routeKey가 있는지 확인
           if (!route.routeKey) {
+            console.log('❌ routeKey가 없습니다!');
             throw new Error('경로 키가 없습니다. 다시 검색해주세요.');
           }
 
+          console.log('✅ routeKey 확인됨:', route.routeKey);
+
           // RouteService를 사용하여 2단계 API 호출
+          console.log('=== RouteService import 시작 ===');
           const { RouteService } = await import('../api/routeService');
+          console.log('✅ RouteService import 완료');
+          
+          console.log('=== RouteService.startNavigation 호출 ===');
           const routeDetail = await RouteService.startNavigation(route.routeKey);
+          console.log('✅ RouteService.startNavigation 완료:', routeDetail);
           
           // 상세 경로 데이터를 steps로 변환
+          console.log('=== convertDetailDataToSteps 호출 ===');
           const steps = RouteService.convertDetailDataToSteps(routeDetail);
+          console.log('✅ convertDetailDataToSteps 완료:', steps);
           
           // route 객체에 상세 정보 업데이트
           const updatedRoute: SimpleRoute = {
@@ -193,12 +208,22 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
             totalDuration: routeDetail.totalTime,
             fatigueLevel: routeDetail.fatigue
           };
+          console.log('✅ updatedRoute 생성 완료:', updatedRoute);
 
           // 네비게이션 시작
+          console.log('=== 네비게이션 시작 ===');
           useNavigationStore.getState().startNavigation(updatedRoute);
+          console.log('✅ 네비게이션 시작 완료');
+          
           // 검색 결과 화면 닫기
           get().closeRouteResults();
-        } catch (error) {
+          console.log('✅ selectRoute 성공 완료');
+        } catch (error: any) {
+          console.log('=== selectRoute 에러 ===');
+          console.log('에러 객체:', error);
+          console.log('에러 메시지:', error.message);
+          console.log('에러 스택:', error.stack);
+          
           log.error('안내시작 실패', error);
           // 에러 처리 (사용자에게 알림)
           alert('안내시작에 실패했습니다. 다시 시도해주세요.');

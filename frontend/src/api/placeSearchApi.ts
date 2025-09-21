@@ -1,7 +1,8 @@
 import { createApiClient } from '../utils/apiClient';
 
 // API 설정
-const API_BASE_URL = 'https://j13a305.p.ssafy.io/api/';
+const API_BASE_URL = 'http://localhost:8080/api/'; // 로컬 개발용
+// const API_BASE_URL = 'https://j13a305.p.ssafy.io/api/'; // 배포용 (임시 주석처리)
 
 // 공통 API 클라이언트 생성
 const placeSearchApi = createApiClient(API_BASE_URL);

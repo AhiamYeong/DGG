@@ -5,6 +5,7 @@ import S13P21A305.dgg.alarm.fcm.FcmService;
 import S13P21A305.dgg.alarm.repository.ReminderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -18,11 +19,17 @@ import java.util.Map;
 public class ReminderScheduler {
 
     private final ReminderRepository reminderRepository;
-    private final FcmService fcmService;
+    @Autowired(required = false)
+    private FcmService fcmService;
 
     // 매 30초마다 체크
     @Scheduled(fixedDelay = 30_000)
     public void pollAndSend() {
+        if (fcmService == null) {
+            log.debug("[Reminder] FCM service is not available, skipping reminder processing");
+            return;
+        }
+
         LocalDateTime now = LocalDateTime.now();
         // 조건: scheduled_at <= now, sent_at is null, enabled=true
         List<Reminder> due = reminderRepository.findAll().stream()

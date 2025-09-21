@@ -3,7 +3,8 @@ import { createApiClient } from '../utils/apiClient';
 import { log } from '../utils/logger';
 
 // API 설정
-const API_BASE_URL = 'https://j13a305.p.ssafy.io/api/';
+const API_BASE_URL = 'http://localhost:8080/api/'; // 로컬 개발용
+// const API_BASE_URL = 'https://j13a305.p.ssafy.io/api/'; // 배포용 (임시 주석처리)
 
 // 공통 API 클라이언트 생성
 const mapApi = createApiClient(API_BASE_URL);
@@ -189,11 +190,36 @@ export const removeFavoriteRoute = async (id: string): Promise<void> => {
 // 안내시작 API
 export const startRouteGuidance = async (routeKey: string): Promise<any> => {
   try {
+    console.log('=== 안내시작 API 시작 ===');
+    console.log('routeKey:', routeKey);
+    console.log('요청 URL:', `/v1/maps/routes/${routeKey}/start`);
+    console.log('요청 헤더:', { 'X-DGG-MEMBER-ID': '1' });
+    
     log.route('안내시작 API 요청', { routeKey });
-    const response = await mapApi.post(`/v1/maps/routes/${routeKey}/start`);
+    
+    const response = await mapApi.post(`/v1/maps/routes/${routeKey}/start`, {}, {
+      headers: {
+        'X-DGG-MEMBER-ID': '1' // 테스트용 회원 ID
+      }
+    });
+    
+    console.log('=== 안내시작 API 응답 ===');
+    console.log('응답 상태:', response.status);
+    console.log('응답 헤더:', response.headers);
+    console.log('응답 데이터:', response.data);
+    console.log('응답 데이터 타입:', typeof response.data);
+    
     log.route('안내시작 API 응답', response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
+    console.log('=== 안내시작 API 에러 ===');
+    console.log('에러 객체:', error);
+    console.log('에러 메시지:', error.message);
+    console.log('에러 응답:', error.response);
+    console.log('에러 상태:', error.response?.status);
+    console.log('에러 데이터:', error.response?.data);
+    console.log('에러 헤더:', error.response?.headers);
+    
     log.error('안내시작 API 오류', error);
     throw error;
   }
@@ -202,11 +228,36 @@ export const startRouteGuidance = async (routeKey: string): Promise<any> => {
 // 상세 경로 조회 API
 export const getRouteDetail = async (routeId: string): Promise<any> => {
   try {
+    console.log('=== 상세 경로 조회 API 시작 ===');
+    console.log('routeId:', routeId);
+    console.log('요청 URL:', `/v1/maps/routes/${routeId}`);
+    console.log('요청 헤더:', { 'X-DGG-MEMBER-ID': '1' });
+    
     log.route('상세 경로 조회 API 요청', { routeId });
-    const response = await mapApi.get(`/v1/maps/routes/${routeId}`);
+    
+    const response = await mapApi.get(`/v1/maps/routes/${routeId}`, {
+      headers: {
+        'X-DGG-MEMBER-ID': '1' // 테스트용 회원 ID
+      }
+    });
+    
+    console.log('=== 상세 경로 조회 API 응답 ===');
+    console.log('응답 상태:', response.status);
+    console.log('응답 헤더:', response.headers);
+    console.log('응답 데이터:', response.data);
+    console.log('응답 데이터 타입:', typeof response.data);
+    
     log.route('상세 경로 조회 API 응답', response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
+    console.log('=== 상세 경로 조회 API 에러 ===');
+    console.log('에러 객체:', error);
+    console.log('에러 메시지:', error.message);
+    console.log('에러 응답:', error.response);
+    console.log('에러 상태:', error.response?.status);
+    console.log('에러 데이터:', error.response?.data);
+    console.log('에러 헤더:', error.response?.headers);
+    
     log.error('상세 경로 조회 API 오류', error);
     throw error;
   }
