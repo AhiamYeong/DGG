@@ -11,3 +11,9 @@ export interface InfoProps {
   nickname: string;
   email: string;
 }
+
+// 설문조사 응답 interface
+export interface SurveyAnswerProps {
+  surveyQuestionId: number;
+  answerValue: number;
+}

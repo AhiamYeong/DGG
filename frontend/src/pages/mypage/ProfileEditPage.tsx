@@ -1,7 +1,9 @@
 /** @format */
 
-import { useState } from "react";
+import { mypageApi, SurveyAnswerProps } from "@/api/mypageApi";
+import { useEffect, useState } from "react";
 
+// 질문 - fix
 type Question = {
   id: number;
   text: string;
@@ -18,13 +20,51 @@ const questions: Question[] = [
 export default function ProfileEditPage() {
   const [answers, setAnswers] = useState<{ [key: number]: number }>({});
 
+  // 기존 설문 불러오기
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await mypageApi.get<SurveyAnswerProps[]>("mypage/survey");
+
+        // 배열을 객체 {id: value}로 변환해서 상태에 저장
+        const loadedAnswers: { [key: number]: number } = {};
+        res.data.forEach((a) => {
+          loadedAnswers[a.surveyQuestionId] = a.answerValue;
+        });
+
+        setAnswers(loadedAnswers);
+        console.log("불러온 답변:", res.data);
+      } catch (err) {
+        console.error("설문 조회 실패:", err);
+      }
+    })();
+  }, []);
+
   const handleSelect = (questionId: number, optionIndex: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
   };
 
-  const handleSave = () => {
-    console.log("저장된 답변:", answers);
-    // TODO: API 연동
+  // 설문 제출 (post)
+  const handleSave = async () => {
+    // 객체 → 배열 변환
+    const payload: SurveyAnswerProps[] = Object.entries(answers).map(
+      ([key, value]) => ({
+        surveyQuestionId: Number(key),
+        answerValue: value,
+      })
+    );
+
+    console.log("저장된 답변 (payload):", payload);
+
+    try {
+      const res = await mypageApi.post<SurveyAnswerProps[]>(
+        "mypage/survey",
+        payload
+      );
+      console.log(res);
+    } catch (err) {
+      console.error("제출 실패:", err);
+    }
   };
 
   const handleCancel = () => {
