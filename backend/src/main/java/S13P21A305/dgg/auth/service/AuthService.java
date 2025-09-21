@@ -8,14 +8,18 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionSystemException;
 
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final GoogleTokenVerifierService googleVerifier;
@@ -48,11 +52,43 @@ public class AuthService {
                     .role(MemberRole.GUEST)         // 첫 가입자면 GUEST
                     .build();
 
-            memberRepository.save(member);
+//            memberRepository.save(member);
+
+            try {
+                memberRepository.save(member);
+            } catch (DataIntegrityViolationException e) {
+                // DB 제약조건 위반 (UNIQUE, NOT NULL 등)
+                log.error("DB 제약조건 위반: {}", e.getMessage());
+                throw new RuntimeException("이미 존재하는 회원입니다.");
+            } catch (TransactionSystemException e) {
+                // JPA validation 오류나 트랜잭션 커밋 실패
+                log.error("트랜잭션 실패: {}", e.getMessage());
+                throw new RuntimeException("저장 중 문제가 발생했습니다.");
+            } catch (Exception e) {
+                // 그 외 모든 예외
+                log.error("예상치 못한 오류: {}", e.getMessage(), e);
+                throw new RuntimeException("알 수 없는 오류가 발생했습니다.");
+            }
+
         } else {
             member.setEmail(email);
             member.setNickname(name);
-            memberRepository.save(member);
+//            memberRepository.save(member);
+            try {
+                memberRepository.save(member);
+            } catch (DataIntegrityViolationException e) {
+                // DB 제약조건 위반 (UNIQUE, NOT NULL 등)
+                log.error("DB 제약조건 위반: {}", e.getMessage());
+                throw new RuntimeException("이미 존재하는 회원입니다.");
+            } catch (TransactionSystemException e) {
+                // JPA validation 오류나 트랜잭션 커밋 실패
+                log.error("트랜잭션 실패: {}", e.getMessage());
+                throw new RuntimeException("저장 중 문제가 발생했습니다.");
+            } catch (Exception e) {
+                // 그 외 모든 예외
+                log.error("예상치 못한 오류: {}", e.getMessage(), e);
+                throw new RuntimeException("알 수 없는 오류가 발생했습니다.");
+            }
         }
 
         Integer memberId = member.getId();
