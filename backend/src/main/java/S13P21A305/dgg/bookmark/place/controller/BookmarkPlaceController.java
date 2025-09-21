@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -58,7 +59,7 @@ public class BookmarkPlaceController {
 	}
 
 	// 장소 이름 수정
-	@PutMapping("{placeId}")
+	@PutMapping("/{placeId}")
 	public ResponseEntity<BookmarkPlaceResponseDTO> rename(
 		@PathVariable Long placeId,
 		@AuthenticationPrincipal CustomOAuth2User member,
@@ -68,5 +69,18 @@ public class BookmarkPlaceController {
 		Integer memberId = resolveMemberId(member, memberIdHeader);
 
 		return ResponseEntity.ok(service.renamePlace(placeId, memberId, req));
+	}
+
+	// 장소 즐겨찾기 목록에서 특정 장소 삭제
+	@DeleteMapping("/{placeId}")
+	public ResponseEntity<Void> delete(
+		@PathVariable Long placeId,
+		@AuthenticationPrincipal CustomOAuth2User member,
+		@RequestHeader(name = "X-DGG-MEMBER-ID", required = false) Integer memberIdHeader
+	) {
+		Integer memberId = resolveMemberId(member, memberIdHeader);
+		service.deletePlace(placeId, memberId);
+
+		return  ResponseEntity.noContent().build();
 	}
 }

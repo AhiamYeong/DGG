@@ -70,6 +70,16 @@ public class BookmarkPlaceServiceImpl implements BookmarkPlaceService {
 		return toDto(p);
 	}
 
+	@Override
+	@Transactional
+	public void deletePlace(Long placeId, Integer memberId) {
+		long deleted = placeRepo.deleteByIdAndMember_Id(placeId, memberId);
+
+		if (deleted != 1) {
+			throw new SecurityException("대상이 없거나 권한이 없습니다.");
+		}
+	}
+
 	private BookmarkPlaceResponseDTO toDto(BookmarkPlace p) {
 		return BookmarkPlaceResponseDTO.builder()
 			.bookmarkPlaceId(p.getId())
