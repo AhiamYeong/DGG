@@ -1,8 +1,11 @@
 package S13P21A305.dgg.bookmark.place.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import S13P21A305.dgg.bookmark.place.dto.BookmarkPlaceResponseDTO;
 import S13P21A305.dgg.bookmark.place.dto.BookmarkPlaceSaveRequestDTO;
 import S13P21A305.dgg.bookmark.place.entity.BookmarkPlace;
 import S13P21A305.dgg.bookmark.place.repository.BookmarkPlaceRepository;
@@ -43,5 +46,21 @@ public class BookmarkPlaceServiceImpl implements BookmarkPlaceService {
 		placeRepo.save(p);
 
 		return p.getId();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<BookmarkPlaceResponseDTO> getBookmarkList(Integer memberId) {
+		return placeRepo.findAllByMember_IdOrderById(memberId).stream().map(this::toDto).toList();
+	}
+
+	private BookmarkPlaceResponseDTO toDto(BookmarkPlace p) {
+		return BookmarkPlaceResponseDTO.builder()
+			.bookmarkPlaceId(p.getId())
+			.placeName(p.getPlaceName())
+			.address(p.getAddress())
+			.latitude(p.getLatitude())
+			.longitude(p.getLongitude())
+			.build();
 	}
 }
