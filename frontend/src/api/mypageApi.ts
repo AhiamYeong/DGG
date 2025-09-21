@@ -17,3 +17,9 @@ export interface SurveyAnswerProps {
   surveyQuestionId: number;
   answerValue: number;
 }
+
+// 알람 설정 interface
+export interface AlarmSettingsProps {
+  generalEnabled: boolean;
+  sleepEnabled: boolean;
+}
