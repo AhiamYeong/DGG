@@ -105,21 +105,51 @@ export const searchRoutesWithTime = async (
   stopoverAddresses?: string[]
 ): Promise<any> => {
   try {
+    // stopoverAddresses는 최소 빈배열, 최대 2개
+    const validStopoverAddresses = stopoverAddresses && stopoverAddresses.length > 0 
+      ? stopoverAddresses.slice(0, 2) // 최대 2개로 제한
+      : []; // 빈배열로 설정
+
     const requestBody = {
       departureAddress,
       destinationAddress,
-      startTime,
-      ...(stopoverAddresses && stopoverAddresses.length > 0 && { stopoverAddresses })
+      stopoverAddresses: validStopoverAddresses,
+      startTime
     };
 
     log.route('경로 검색 API 요청', requestBody);
+    console.log('API 요청 형식:', JSON.stringify(requestBody, null, 2));
+
+    // 백엔드 서버 상태 확인을 위한 헬스체크 먼저 시도
+    try {
+      console.log('백엔드 서버 헬스체크 시도...');
+      await mapApi.get('/health');
+      console.log('백엔드 서버 정상');
+    } catch (healthError) {
+      console.warn('백엔드 서버 헬스체크 실패:', healthError);
+    }
 
     const response = await mapApi.post('/v1/maps/routes', requestBody);
     
     log.route('경로 검색 API 응답', response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     log.error('경로 검색 오류', error);
+    
+    // 더 자세한 에러 정보 로깅
+    console.error('=== API 에러 상세 정보 ===');
+    console.error('요청 URL:', '/v1/maps/routes');
+    console.error('요청 데이터:', JSON.stringify({
+      departureAddress,
+      destinationAddress,
+      stopoverAddresses: stopoverAddresses?.slice(0, 2) || [],
+      startTime
+    }, null, 2));
+    console.error('에러 상태:', error.response?.status);
+    console.error('에러 메시지:', error.response?.data);
+    console.error('에러 전체:', error);
+    console.error('========================');
+    
     throw error;
   }
 };
@@ -152,6 +182,32 @@ export const removeFavoriteRoute = async (id: string): Promise<void> => {
     await mapApi.delete(`/v1/routes/favorites/${id}`);
   } catch (error) {
     console.error('즐겨찾기 경로 삭제 오류:', error);
+    throw error;
+  }
+};
+
+// 안내시작 API
+export const startRouteGuidance = async (routeKey: string): Promise<any> => {
+  try {
+    log.route('안내시작 API 요청', { routeKey });
+    const response = await mapApi.post(`/v1/maps/routes/${routeKey}/start`);
+    log.route('안내시작 API 응답', response.data);
+    return response.data;
+  } catch (error) {
+    log.error('안내시작 API 오류', error);
+    throw error;
+  }
+};
+
+// 상세 경로 조회 API
+export const getRouteDetail = async (routeId: string): Promise<any> => {
+  try {
+    log.route('상세 경로 조회 API 요청', { routeId });
+    const response = await mapApi.get(`/v1/maps/routes/${routeId}`);
+    log.route('상세 경로 조회 API 응답', response.data);
+    return response.data;
+  } catch (error) {
+    log.error('상세 경로 조회 API 오류', error);
     throw error;
   }
 };

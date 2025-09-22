@@ -1,34 +1,39 @@
-import { generateRouteRecommendations } from '../utils/routeDataGenerator';
+// import { generateRouteRecommendations } from '../utils/routeDataGenerator'; // 주석화됨
 import { isCurrentTime, getActionLabel, formatDateTimeForApi } from '../utils/timeUtils';
-import { searchRoutesWithTime } from './mapApi';
+import { searchRoutesWithTime, startRouteGuidance, getRouteDetail } from './mapApi';
 import type { SimpleRoute } from '../types/route-types';
-import type { RouteApiResponse, RoutePath, SubPath } from '../types/route-api-types';
+import type { NewBackendRouteApiResponse, RecommendedRoute, RouteStartResponse, RouteDetailResponse } from '../types/route-api-types';
 import { log } from '../utils/logger';
+import { getFatigueLevel } from '../constants';
 
-// 기존 API 응답 타입 (백엔드용)
-interface BackendRouteApiResponse {
-  departureAddress: string;
-  destinationAddress: string;
-  recommendedRoutes: RecommendedRoute[];
-}
+// 기존 API 응답 타입 (백엔드용) - 사용하지 않음
+// interface BackendRouteApiResponse {
+//   departureAddress: string;
+//   destinationAddress: string;
+//   recommendedRoutes: RecommendedRoute[];
+// }
 
-interface RecommendedRoute {
-  routeId?: number;
-  name?: string;
-  timeTaken?: number;
-  arrivalTime?: string;
-  fatigue?: number;
-}
+// interface RecommendedRoute {
+//   routeId?: number;
+//   name?: string;
+//   timeTaken?: number;
+//   arrivalTime?: string;
+//   fatigue?: number;
+// }
 
 /**
  * 경로 검색 관련 비즈니스 로직을 담당하는 서비스 클래스
  */
 export class RouteService {
   /**
-   * test.json 데이터 로드
+   * test.json 데이터 로드 (주석화)
    * @returns test.json의 경로 데이터
    */
-  static async loadTestRouteData(): Promise<RouteApiResponse> {
+  static async loadTestRouteData(): Promise<any> {
+    // test.json 데이터 로드 기능을 주석화
+    throw new Error('test.json 데이터 로드 기능이 비활성화되었습니다. 실제 API를 사용하세요.');
+    
+    /*
     try {
       const { default: testData } = await import('./testData');
       return testData;
@@ -36,6 +41,7 @@ export class RouteService {
       log.error('test.json 로드 실패:', error);
       throw error;
     }
+    */
   }
 
   /**
@@ -44,15 +50,22 @@ export class RouteService {
    * @param destination 도착지
    * @returns 경로 추천 결과
    */
-  static async searchRoutes(origin: string, destination: string): Promise<SimpleRoute[]> {
+  static async searchRoutes(_origin: string, _destination: string): Promise<SimpleRoute[]> {
     try {
-      // test.json 데이터 사용
-      const testData = await this.loadTestRouteData();
-      return this.convertTestDataToRoutes(testData, origin, destination);
+      // test.json 데이터 사용 (주석화)
+      // const testData = await this.loadTestRouteData();
+      // return this.convertTestDataToRoutes(testData, origin, destination);
+      
+      // 더미 데이터 반환 (주석화)
+      // return generateRouteRecommendations(origin, destination);
+      
+      // 실제 API 호출로 변경
+      throw new Error('실제 API 호출을 사용하세요');
     } catch (error) {
       log.error('경로 검색 실패:', error);
-      // 폴백: 더미 데이터 반환
-      return generateRouteRecommendations(origin, destination);
+      // 폴백: 더미 데이터 반환 (주석화)
+      // return generateRouteRecommendations(origin, destination);
+      throw error;
     }
   }
 
@@ -92,7 +105,9 @@ export class RouteService {
     destination: string,
     departureTime: Date,
     selectedOption: 'now' | 'schedule',
-    waypoints?: string[]
+    waypoints?: string[],
+    originName?: string,
+    destinationName?: string
   ): Promise<{
     routes: SimpleRoute[];
     actionLabel: string;
@@ -117,8 +132,8 @@ export class RouteService {
         waypoints
       );
 
-      // API 응답을 SimpleRoute 형식으로 변환
-      const routes = this.convertApiResponseToRoutes(apiResponse);
+      // API 응답을 SimpleRoute 형식으로 변환 (지명 사용)
+      const routes = this.convertApiResponseToRoutes(apiResponse, originName, destinationName);
       
       // 액션 라벨 결정
       const actionLabel = this.calculateActionLabel(departureTime, selectedOption);
@@ -130,8 +145,42 @@ export class RouteService {
     } catch (error) {
       log.error('백엔드 API 호출 실패, 더미 데이터 사용:', error);
       
-      // 폴백: 더미 데이터 사용
-      const routes = await this.searchRoutes(origin, destination);
+      // 개발 중에는 더미 데이터 사용 (백엔드 API 준비 완료 후 제거)
+      console.warn('⚠️ 백엔드 API 호출 실패 - 더미 데이터 사용 중');
+      
+      // 폴백: 새로운 API 형식의 더미 데이터 사용
+      const dummyApiResponse: NewBackendRouteApiResponse = {
+        departureAddress: "서울특별시 강남구 강남대로 396", // 도로명 주소 (API 응답 형식)
+        destinationAddress: "서울특별시 마포구 마포대로 100", // 도로명 주소 (API 응답 형식)
+        stopoverAddresses: waypoints && waypoints.length > 0 ? waypoints.slice(0, 2) : [],
+        departureTime: formatDateTimeForApi(departureTime),
+        destinationTime: formatDateTimeForApi(new Date(departureTime.getTime() + 50 * 60 * 1000)), // 50분 후
+        recommendedRoutes: [
+          {
+            routeKey: "dummy-route-key-1",
+            name: "최소 피로도",
+            timeTaken: 48,
+            arrivalTime: "2025-12-12 18:46:00",
+            fatigue: 40
+          },
+          {
+            routeKey: "dummy-route-key-2",
+            name: "최소 시간",
+            timeTaken: 38,
+            arrivalTime: "2025-12-12 18:36:00",
+            fatigue: 90
+          },
+          {
+            routeKey: "dummy-route-key-3",
+            name: "최소 환승",
+            timeTaken: 45,
+            arrivalTime: "2025-12-12 18:43:00",
+            fatigue: 60
+          }
+        ]
+      };
+
+      const routes = this.convertApiResponseToRoutes(dummyApiResponse, originName, destinationName);
       const actionLabel = this.calculateActionLabel(departureTime, selectedOption);
 
       return {
@@ -141,132 +190,81 @@ export class RouteService {
     }
   }
 
-  /**
-   * test.json 데이터를 SimpleRoute 형식으로 변환
-   */
-  private static convertTestDataToRoutes(testData: RouteApiResponse, origin: string, destination: string): SimpleRoute[] {
-    if (!testData || !testData.result || !testData.result.path) {
-      return [];
-    }
+  // convertTestDataToRoutes 메서드 제거됨 (주석화)
 
-    return testData.result.path.map((path: RoutePath, index: number) => {
-      const info = path.info;
-      const now = new Date();
-      const departureTime = { hour: now.getHours(), minute: now.getMinutes() };
-      const arrivalTime = { 
-        hour: (now.getHours() + Math.floor(info.totalTime / 60)) % 24, 
-        minute: (now.getMinutes() + info.totalTime % 60) % 60 
-      };
-
-      return {
-        id: `test-route-${index}`,
-        name: `${info.firstStartStation} → ${info.lastEndStation}`,
-        totalDuration: info.totalTime,
-        totalDistance: info.totalDistance,
-        departureTime,
-        arrivalTime,
-        price: info.payment,
-        from: { 
-          latitude: 0, 
-          longitude: 0, 
-          name: origin || info.firstStartStation,
-          address: origin || info.firstStartStation
-        },
-        to: { 
-          latitude: 0, 
-          longitude: 0, 
-          name: destination || info.lastEndStation,
-          address: destination || info.lastEndStation
-        },
-        steps: this.convertSubPathsToSteps(path.subPath),
-        recommendationType: 'minTime' as const,
-        description: `지하철 ${info.subwayTransitCount}번 환승, 버스 ${info.busTransitCount}번 환승, 총 ${info.totalTime}분`,
-        isBookmarked: false,
-        fatigueLevel: Math.min(100, Math.max(0, 50 + ((info.subwayTransitCount + info.busTransitCount) * 10))),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        // test.json 원본 데이터 저장
-        rawData: path
-      };
-    });
-  }
+  // convertSubPathsToSteps 메서드 제거됨 (주석화)
 
   /**
-   * SubPath 배열을 Step 배열로 변환
+   * 새로운 백엔드 API 응답을 SimpleRoute 형식으로 변환
    */
-  private static convertSubPathsToSteps(subPaths: SubPath[]): any[] {
-    return subPaths.map((subPath, index) => {
-      // trafficType에 따른 타입 결정
-      let type: string;
-      let description: string;
-      
-      if (subPath.trafficType === 1) {
-        // 지하철
-        type = 'subway';
-        const lineName = subPath.lane?.[0]?.name || '지하철';
-        const stationCount = subPath.stationCount || 0;
-        description = `${lineName} 이용 (${stationCount}개역)`;
-      } else if (subPath.trafficType === 2) {
-        // 버스
-        type = 'bus';
-        const busNo = subPath.lane?.[0]?.busNo || '버스';
-        const stationCount = subPath.stationCount || 0;
-        description = `${busNo}번 버스 이용 (${stationCount}개정류장)`;
-      } else {
-        // 도보 (trafficType === 3)
-        type = 'walk';
-        description = '도보';
-      }
-
-      return {
-        id: `step-${index}`,
-        type,
-        description,
-        duration: subPath.sectionTime,
-        distance: subPath.distance,
-        lineInfo: subPath.trafficType === 1 ? {
-          name: subPath.lane?.[0]?.name || '지하철',
-          direction: subPath.way || '',
-          stationCount: subPath.stationCount || 0
-        } : subPath.trafficType === 2 ? {
-          name: subPath.lane?.[0]?.busNo || '버스',
-          direction: subPath.way || '',
-          stationCount: subPath.stationCount || 0
-        } : undefined,
-        stations: subPath.passStopList?.stations || [],
-        startName: subPath.startName,
-        endName: subPath.endName,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-    });
-  }
-
-  /**
-   * 백엔드 API 응답을 SimpleRoute 형식으로 변환
-   */
-  private static convertApiResponseToRoutes(apiResponse: BackendRouteApiResponse): SimpleRoute[] {
+  private static convertApiResponseToRoutes(apiResponse: NewBackendRouteApiResponse, originName?: string, destinationName?: string): SimpleRoute[] {
     if (!apiResponse || !apiResponse.recommendedRoutes) {
       return [];
     }
 
-    return apiResponse.recommendedRoutes.map((route: RecommendedRoute, index: number) => ({
-      id: route.routeId?.toString() || `route-${index}`,
-      name: route.name || `경로 ${index + 1}`,
-      totalDuration: route.timeTaken || 0,
-      totalDistance: 0,
-      departureTime: { hour: 0, minute: 0 },
-      arrivalTime: { hour: 0, minute: 0 },
-      from: { latitude: 0, longitude: 0, name: apiResponse.departureAddress },
-      to: { latitude: 0, longitude: 0, name: apiResponse.destinationAddress },
-      steps: [],
-      recommendationType: 'minTime' as const,
-      description: route.name || `경로 ${index + 1}`,
-      isBookmarked: false,
-      fatigueLevel: route.fatigue,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }));
+    return apiResponse.recommendedRoutes.map((route: RecommendedRoute, index: number) => {
+      // 출발 시간 파싱
+      const departureTimeStr = apiResponse.departureTime;
+      const departureTimeMatch = departureTimeStr.match(/(\d{2}):(\d{2}):(\d{2})/);
+      const departureTime = departureTimeMatch 
+        ? { hour: parseInt(departureTimeMatch[1]), minute: parseInt(departureTimeMatch[2]) }
+        : { hour: 0, minute: 0 };
+
+      // 도착 시간 파싱
+      const arrivalTimeStr = route.arrivalTime;
+      const arrivalTimeMatch = arrivalTimeStr?.match(/(\d{2}):(\d{2}):(\d{2})/);
+      const arrivalTime = arrivalTimeMatch 
+        ? { hour: parseInt(arrivalTimeMatch[1]), minute: parseInt(arrivalTimeMatch[2]) }
+        : { hour: 0, minute: 0 };
+
+      // 피로도 레벨 계산
+      const fatigueInfo = getFatigueLevel(route.fatigue || 50);
+
+      return {
+        id: route.routeKey || `route-${index}`, // routeKey를 id로 사용
+        name: route.name || `경로 ${index + 1}`,
+        totalDuration: route.timeTaken || 0,
+        totalDistance: 0, // API에서 거리 정보가 없으므로 0으로 설정
+        departureTime,
+        arrivalTime,
+        from: { 
+          latitude: 0, 
+          longitude: 0, 
+          name: originName || apiResponse.departureAddress || '출발지',
+          address: apiResponse.departureAddress || '출발지'
+        },
+        to: { 
+          latitude: 0, 
+          longitude: 0, 
+          name: destinationName || apiResponse.destinationAddress || '도착지',
+          address: apiResponse.destinationAddress || '도착지'
+        },
+        steps: [], // API에서 상세 경로 정보가 없으므로 빈 배열
+        recommendationType: this.getRecommendationType(route.name || ''),
+        description: `${route.name || `경로 ${index + 1}`} - ${route.timeTaken || 0}분 소요, 피로도 레벨${fatigueInfo.level} (${fatigueInfo.label})`,
+        isBookmarked: false,
+        fatigueLevel: route.fatigue,
+        price: 0, // API에서 가격 정보가 없으므로 0으로 설정
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        // routeKey 저장 (안내시작 시 사용)
+        routeKey: route.routeKey
+      };
+    });
+  }
+
+  /**
+   * 경로 이름에 따른 추천 타입 결정
+   */
+  private static getRecommendationType(routeName: string): 'minTime' | 'minTransfer' | 'minFatigue' {
+    if (routeName.includes('최소 시간') || routeName.includes('최단 시간')) {
+      return 'minTime';
+    } else if (routeName.includes('최소 환승') || routeName.includes('최소 환승')) {
+      return 'minTransfer';
+    } else if (routeName.includes('최소 피로도') || routeName.includes('피로도')) {
+      return 'minFatigue';
+    }
+    return 'minTime'; // 기본값
   }
 
   /**
@@ -304,6 +302,86 @@ export class RouteService {
     // - 즐겨찾기 추가/제거
     // - 공유하기
     // - 신고하기
+  }
+
+  /**
+   * 안내시작 처리 (2단계 API 호출)
+   * @param routeKey 경로 키
+   * @returns 상세 경로 정보
+   */
+  static async startNavigation(routeKey: string): Promise<RouteDetailResponse> {
+    try {
+      log.route('안내시작 처리 시작', { routeKey });
+
+      // 1단계: 안내시작 API 호출
+      const startResponse: RouteStartResponse = await startRouteGuidance(routeKey);
+      log.route('안내시작 API 응답', startResponse);
+
+      // 2단계: 상세 경로 조회 API 호출
+      const routeDetail: RouteDetailResponse = await getRouteDetail(startResponse.routeId);
+      log.route('상세 경로 조회 완료', routeDetail);
+
+      return routeDetail;
+    } catch (error) {
+      log.error('안내시작 처리 실패', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 상세 경로 데이터를 RouteStep 형식으로 변환
+   * @param detailData 상세 경로 데이터
+   * @returns RouteStep 배열
+   */
+  static convertDetailDataToSteps(detailData: RouteDetailResponse): any[] {
+    if (!detailData || !detailData.data) {
+      return [];
+    }
+
+    return detailData.data.map((step, index) => {
+      // 교통수단 타입 변환
+      let type: string;
+      switch (step.type) {
+        case 'SUBWAY':
+          type = 'subway';
+          break;
+        case 'BUS':
+          type = 'bus';
+          break;
+        case 'WALKING':
+          type = 'walk';
+          break;
+        default:
+          type = 'walk';
+      }
+
+      return {
+        id: `step-${index}`,
+        type,
+        description: `${step.startPoint} → ${step.endPoint}`,
+        duration: step.timeTaken,
+        distance: 0, // API에서 거리 정보가 없으므로 0으로 설정
+        lineInfo: step.lineName ? {
+          name: step.lineName,
+          direction: '',
+          stationCount: 0
+        } : undefined,
+        stations: [],
+        startName: step.startPoint,
+        endName: step.endPoint,
+        startLocation: {
+          latitude: step.startLat,
+          longitude: step.startLng
+        },
+        endLocation: {
+          latitude: step.endLat,
+          longitude: step.endLng
+        },
+        path: step.path || [],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    });
   }
 }
 

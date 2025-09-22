@@ -85,7 +85,9 @@ const FavoritePlacesList = memo<FavoritePlacesListProps>(({
             onTouchEnd={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              handleToggleFavorite(e, item.id);
+              // TouchEvent를 MouseEvent로 변환
+              const mouseEvent = e as unknown as React.MouseEvent<HTMLButtonElement>;
+              handleToggleFavorite(mouseEvent, item.id);
             }}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation"
             style={{ touchAction: 'manipulation' }}

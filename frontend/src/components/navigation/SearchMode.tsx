@@ -3,11 +3,11 @@ import { SearchBox } from '../search';
 import { RouteResultsContainer } from '../route';
 import { FavoriteRoutesBottomSheet } from '../route';
 import { MapControls } from '../map';
-import type { SimpleRoute } from '../../types/route-types';
+import type { SimpleRoute, PlaceInfo } from '../../types/route-types';
 
 interface SearchModeProps {
   // 검색 관련 props
-  onSearch: (origin: string, destination: string, waypoints?: string[]) => void;
+  onSearch: (origin: PlaceInfo, destination: PlaceInfo, waypoints?: PlaceInfo[]) => void;
   onDepartureOptionChange: (option: 'now' | 'schedule') => void;
   selectedDepartureOption: 'now' | 'schedule';
   showDepartureOptions: boolean;
@@ -16,7 +16,7 @@ interface SearchModeProps {
   // 경로 결과 관련 props
   routeResults: SimpleRoute[];
   actionLabel: string;
-  onSelectRoute: (route: SimpleRoute) => void;
+  onSelectRoute: (route: SimpleRoute) => Promise<void>;
   onCloseRouteResults: () => void;
   
   // 시간 선택 관련 props
@@ -24,6 +24,10 @@ interface SearchModeProps {
   
   // 지도 컨트롤 관련 props
   onLocationClick: () => void;
+  
+  // 현재 검색 중인 출발지/도착지
+  currentOrigin: PlaceInfo | null;
+  currentDestination: PlaceInfo | null;
 }
 
 /**
@@ -42,7 +46,9 @@ export const SearchMode = memo<SearchModeProps>(({
   onSelectRoute,
   onCloseRouteResults,
   showTimePicker,
-  onLocationClick
+  onLocationClick,
+  currentOrigin,
+  currentDestination
 }) => {
   return (
     <>
@@ -66,6 +72,8 @@ export const SearchMode = memo<SearchModeProps>(({
         onSelectRoute={onSelectRoute}
         onDepartureOptionChange={onDepartureOptionChange}
         onClose={onCloseRouteResults}
+        currentOrigin={currentOrigin?.name}
+        currentDestination={currentDestination?.name}
       />
 
       {/* 지도 컨트롤 버튼들 */}

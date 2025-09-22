@@ -46,5 +46,5 @@ public interface ReminderRepository extends JpaRepository<Reminder, Long> {
    order by r.scheduledAt asc
 """)
     List<Reminder> findDueReminders(@Param("now") java.time.LocalDateTime now);
-
+    List<Reminder> findByMemberId(Integer memberId);
 }

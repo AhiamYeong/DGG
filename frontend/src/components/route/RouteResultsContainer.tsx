@@ -9,9 +9,11 @@ interface RouteResultsContainerProps {
   routes: SimpleRoute[];
   actionLabel: string;
   selectedDepartureOption: 'now' | 'schedule';
-  onSelectRoute: (route: SimpleRoute) => void;
+  onSelectRoute: (route: SimpleRoute) => Promise<void>;
   onDepartureOptionChange?: (option: 'now' | 'schedule') => void;
   onClose?: () => void;
+  currentOrigin?: string;
+  currentDestination?: string;
 }
 
 /**
@@ -32,6 +34,8 @@ export const RouteResultsContainer: React.FC<RouteResultsContainerProps> = ({
 
   return (
     <div className="absolute top-24 bottom-0 left-0 right-0 pointer-events-auto z-[9999] bg-white">
+
+
       {/* 출발 옵션 탭 */}
       <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-white">
         <div className="flex items-center justify-center gap-4 flex-1">

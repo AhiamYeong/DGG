@@ -10,13 +10,17 @@ import com.samsung.android.sdk.health.data.data.AggregatedData
 import com.samsung.android.sdk.health.data.request.DataType
 import com.ssafy.dgg.model.repository.health.HealthDataRepository
 import com.ssafy.dgg.model.repository.health.HealthPermissionRepository
+import com.ssafy.dgg.model.repository.health.HealthRepository
 import com.ssafy.dgg.util.HealthStoreProvider
 import com.ssafy.dgg.util.formatDuration
 import kotlinx.coroutines.launch
 
+/* 데이터 1회 데이터 전송
+* TODO: 스케쥴링 처리 */
 class HealthViewModel(
     private val permissionRepo: HealthPermissionRepository,
-    private val dataRepo: HealthDataRepository
+    private val dataRepo: HealthDataRepository,
+    private val healthRepo: HealthRepository,
 ) : ViewModel() {
 
     private val _steps = MutableLiveData<List<AggregatedData<Long>>>()
@@ -25,6 +29,12 @@ class HealthViewModel(
     val steps: LiveData<List<AggregatedData<Long>>>
         get() = _steps
 
+    // 1회 앱 호출시 전송
+    private val _activityStatus = MutableLiveData<String>()
+    val activityStatus: LiveData<String> = _activityStatus
+
+    private val _sleepStatus = MutableLiveData<String>()
+    val sleepStatus: LiveData<String> = _sleepStatus
 
     fun loadHealthDatas(activity: Activity) {
         viewModelScope.launch {
@@ -34,15 +44,11 @@ class HealthViewModel(
             // 2. 권한이 없으면 요청 → 결과값 반영
             if (!hasPermission) {
                 val granted = permissionRepo.requestPermissions(activity)
-                hasPermission = granted
                 if (!granted) {
-                    Log.d("Health", "권한 거부됨")
-                    return@launch   // 아예 함수 종료
-                } else {
-                    Log.d("Health", "권한 허용됨")
+                    _activityStatus.value = "권한 거부됨"
+                    _sleepStatus.value = "권한 거부됨"
+                    return@launch
                 }
-            } else {
-                Log.d("Health", "이미 권한 있음")
             }
 
             val store = HealthStoreProvider.getStore(activity.applicationContext)
@@ -86,10 +92,19 @@ class HealthViewModel(
                 }
             }
 
-            val dto = dataRepo.getHealthDataResponse(store)
-            Log.d("dataToDTO", "DTO: $dto")
-            val dto2 = dataRepo.getSleepDataResponse(store)
-            Log.d("dataToDTO", "DTO: $dto2")
+            // 데이터 정제하기
+            val activityDTO = dataRepo.getHealthDataResponse(store)
+            val sleepDTO = dataRepo.getSleepDataResponse(store)
+
+            // 활동 데이터 전송
+            val activitySuccess = healthRepo.sendActivityData(activityDTO)
+            _activityStatus.value =
+                if (activitySuccess) "활동 데이터 전송 성공" else "활동 데이터 전송 실패"
+
+            // 수면 데이터 전송
+            val sleepSuccess = healthRepo.sendSleepData(sleepDTO)
+            _sleepStatus.value =
+                if (sleepSuccess) "수면 데이터 전송 성공" else "수면 데이터 전송 실패"
         }
     }
 

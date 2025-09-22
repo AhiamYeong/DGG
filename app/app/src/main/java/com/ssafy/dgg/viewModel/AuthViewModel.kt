@@ -1,5 +1,6 @@
 
 import android.util.Log
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,6 +9,7 @@ import com.ssafy.dgg.model.data.GoogleLoginRequest
 import com.ssafy.dgg.model.repository.RetrofitClient
 import com.ssafy.dgg.model.repository.auth.AuthRepository
 import com.ssafy.dgg.util.CookieSyncUtil
+import com.ssafy.dgg.util.LoginUtil
 import com.ssafy.dgg.viewModel.LoginState
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -24,10 +26,12 @@ class AuthViewModel(
     private val client = RetrofitClient
     private val cookieSyncUtil = CookieSyncUtil
 
-    // compose에서 관찰할 로그인 상태
-    private val _loginState = mutableStateOf<LoginState>(LoginState.LoggedOut)
-    var loginState = _loginState
-
+    // compose에서 관찰할 로그인 상태 -> 초기상태 확인
+    private val _loginState = mutableStateOf<LoginState>(
+        if (LoginUtil.isLoggedIn()) LoginState.LoggedIn else LoginState.LoggedOut
+    )
+    // 외부에 읽기 전용으로 공개
+    val loginState: State<LoginState> = _loginState
     // 구글 로그인 ID token 처리 함수
     fun loginWithGoogle(idToken: String) {
         // 로그인 시도중임을 UI에 알리기
@@ -42,12 +46,14 @@ class AuthViewModel(
                 // cookieJar로 변경 (accesstoken intercept)
                 if (success){
                     // cookie 받기: host 단위로 저장 (host만 꺼내기)
-                    val baseUrl = BuildConfig.WEB_URL
-                    val host = baseUrl.toHttpUrl().host
-                    val cookies = client.getCookies(host)
+                    val webHost = BuildConfig.WEB_URL.toHttpUrl().host
+                    val cookies = client.getCookies(webHost)
+                    val apiHost = BuildConfig.API_BASE_URL.toHttpUrl().host
 
                     // cookie 심기: domain 단위로 붙음 -> web에 붙여주기
-                    cookieSyncUtil.syncToWebView(BuildConfig.WEB_URL, cookies)
+                    cookieSyncUtil.syncToWebView(webHost, cookies)
+                    cookieSyncUtil.syncToWebView(apiHost, cookies)  // API 도메인
+
                     _loginState.value = LoginState.LoggedIn
                     Log.d("LoginFlow", "쿠키 동기화 완료: $cookies")
                     Log.d("LoginFlow", "로그인 상태 변경: ${_loginState.value}")
@@ -65,10 +71,21 @@ class AuthViewModel(
     fun logout() {
         // 기존처럼 tokenStorage 지울 필요 없음 (토큰 직접 안 씀) 대신 WebView 쿠키 삭제 처리
         val cookieManager = android.webkit.CookieManager.getInstance()
-        cookieManager.removeAllCookies(null)
+        cookieManager.removeAllCookies {
+            Log.d("LoginFlow", "WebView 쿠키 삭제 완료: $it")
+        }
         cookieManager.flush()
 
+        // RetrofitClient 쿠키 삭제
+        client.clearCookies()
+
+        // 상태 변경
         _loginState.value = LoginState.LoggedOut
-        Log.d("LoginFlow", "로그아웃: 쿠키 삭제 완료")
+        Log.d("LoginFlow", "로그아웃 완료 (WebView + RetrofitClient 쿠키 삭제)")
+    }
+
+    // 테스트용 - 열어두기
+    fun forceLogin() {
+        _loginState.value = LoginState.LoggedIn
     }
 }
