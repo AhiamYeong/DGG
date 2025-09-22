@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,13 +34,9 @@ public class BookmarkController {
 	@PostMapping
 	public ResponseEntity<Map<String, Long>> save(
 		@RequestBody BookmarkRouteSaveRequestDTO req,
-		@AuthenticationPrincipal CustomOAuth2User member,
-		@RequestHeader(name="X-DGG-MEMBER-ID", required=false) Integer memberIdHeader
+		@AuthenticationPrincipal CustomOAuth2User member
 	) {
-		Integer memberId = (member != null) ? member.getMemberId() : memberIdHeader;
-		if (memberId == null) return ResponseEntity.status(401).build();
-
-		Long bookmarkId = bookmarkService.saveRouteBookmark(memberId, req);
+		Long bookmarkId = bookmarkService.saveRouteBookmark(member.getMemberId(), req);
 
 		return ResponseEntity.ok(Map.of("bookmarkId", bookmarkId));
 	}
@@ -49,13 +44,9 @@ public class BookmarkController {
 	// 즐겨찾기 목록 조회
 	@GetMapping
 	public ResponseEntity<List<BookmarkRouteListDTO>> getList(
-		@AuthenticationPrincipal CustomOAuth2User member,
-		@RequestHeader(name = "X-DGG-MEMBER-ID", required = false) Integer memberIdHeader
+		@AuthenticationPrincipal CustomOAuth2User member
 	) {
-		Integer memberId = (member != null) ? member.getMemberId() : memberIdHeader;
-		if (memberId == null) return ResponseEntity.status(401).build();
-
-		return ResponseEntity.ok(bookmarkService.getBookmarkList(memberId));
+		return ResponseEntity.ok(bookmarkService.getBookmarkList(member.getMemberId()));
 	}
 
 	// 즐겨찾기에 등록된 경로에 대한 상세조회
@@ -64,11 +55,9 @@ public class BookmarkController {
 		@PathVariable Long bookmarkRouteId,
 		@RequestParam(name = "realtime", defaultValue = "false") boolean realtime,
 		@RequestParam(name = "departAt", required = false) String departAt,
-		@AuthenticationPrincipal CustomOAuth2User member,
-		@RequestHeader(name = "X-DGG-MEMBER-ID", required = false) Integer memberIdHeader
+		@AuthenticationPrincipal CustomOAuth2User member
 	) {
-		Integer memberId = (member != null) ? member.getMemberId() : memberIdHeader;
-		BookmarkRouteDetailDTO dto = bookmarkService.getBookmarkDetail(bookmarkRouteId, memberId, realtime, departAt);
+		BookmarkRouteDetailDTO dto = bookmarkService.getBookmarkDetail(bookmarkRouteId, member.getMemberId(), realtime, departAt);
 
 		return ResponseEntity.ok(dto);
 	}
@@ -78,13 +67,9 @@ public class BookmarkController {
 	public ResponseEntity<BookmarkRouteDetailDTO> rename(
 		@PathVariable Long bookmarkRouteId,
 		@RequestBody BookmarkRouteRenameRequestDTO req,
-		@AuthenticationPrincipal CustomOAuth2User member,
-		@RequestHeader(name = "X-DGG-MEMBER-ID", required = false) Integer memberIdHeader
+		@AuthenticationPrincipal CustomOAuth2User member
 	) {
-		Integer memberId = (member != null) ? member.getMemberId() : memberIdHeader;
-		if (memberId == null) return ResponseEntity.status(401).build();
-
-		bookmarkService.renameBookmark(bookmarkRouteId, memberId, req.getName());
+		bookmarkService.renameBookmark(bookmarkRouteId, member.getMemberId(), req.getName());
 
 		return ResponseEntity.noContent().build();
 	}
@@ -93,13 +78,9 @@ public class BookmarkController {
 	@DeleteMapping("/{bookmarkRouteId}")
 	public ResponseEntity<Void> delete(
 		@PathVariable Long bookmarkRouteId,
-		@AuthenticationPrincipal CustomOAuth2User member,
-		@RequestHeader(name = "X-DGG-MEMBER-ID", required = false) Integer memberIdHeader
+		@AuthenticationPrincipal CustomOAuth2User member
 	) {
-		Integer memberId = (member != null) ? member.getMemberId() : memberIdHeader;
-		if (memberId == null) return ResponseEntity.status(401).build();
-
-		bookmarkService.deleteBookmark(bookmarkRouteId, memberId);
+		bookmarkService.deleteBookmark(bookmarkRouteId, member.getMemberId());
 
 		return ResponseEntity.noContent().build();
 	}
