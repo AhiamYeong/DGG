@@ -6,7 +6,7 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
 import "./styles/index.css";
 
-// // Mocking Service Worker 추가
+// Mocking Service Worker 추가
 // async function enableMocking() {
 //   if (process.env.NODE_ENV === "development") {
 //     const { worker } = await import("./mocks/browsers");
@@ -36,7 +36,7 @@ export default function App() {
       <RouterProvider router={router} />
     </StrictMode>
   );
-}
+} //
 
 // mocking 추가 -> 네트워크 연결 되면 해당 주석처리 후, 아래 주석 해제
 // enableMocking().then(() => {

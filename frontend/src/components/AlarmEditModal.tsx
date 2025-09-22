@@ -1,30 +1,34 @@
 /** @format */
 import { useState } from "react";
-
-type Alarm = {
-  id: number;
-  title: string;
-  description?: string;
-  time: string;
-  route: string;
-  enabled: boolean;
-  notifyBefore: number[];
-};
+import { AlarmProps, AlarmUpdateProps, AllowedOffsets } from "@/api/alarmApi";
 
 type Props = {
-  alarm: Alarm;
+  alarm: AlarmProps;
   onClose: () => void;
-  onSave: (updated: Alarm) => void;
+  onSave: (updated: AlarmUpdateProps) => void;
 };
 
 export default function AlarmEditModal({ alarm, onClose, onSave }: Props) {
-  const [editedAlarm, setEditedAlarm] = useState<Alarm>(alarm);
+  const [editedAlarm, setEditedAlarm] = useState<AlarmProps>(alarm);
+  // 수정 모달 내부 상태용
+  const [selectedOffsets, setSelectedOffsets] = useState<AllowedOffsets[]>(
+    [editedAlarm.offsetMinutes as AllowedOffsets] // 기존 값 하나로 초기화
+  );
 
-  const handleCheckboxChange = (min: number, checked: boolean) => {
-    const updatedNotify = checked
-      ? [...editedAlarm.notifyBefore, min]
-      : editedAlarm.notifyBefore.filter((v) => v !== min);
-    setEditedAlarm({ ...editedAlarm, notifyBefore: updatedNotify });
+  const allowedOffsets = [10, 30, 60] as const;
+
+  const handleSave = () => {
+    onSave({
+      eventTitle: editedAlarm.eventTitle,
+      offsetMinutesList: selectedOffsets,
+    });
+    onClose();
+  };
+
+  const handleCheckboxChange = (min: AllowedOffsets, checked: boolean) => {
+    setSelectedOffsets((prev) =>
+      checked ? [...prev, min] : prev.filter((v) => v !== min)
+    );
   };
 
   return (
@@ -34,25 +38,39 @@ export default function AlarmEditModal({ alarm, onClose, onSave }: Props) {
         <p className="text-sm font-semibold mb-2">{editedAlarm.title}</p>
 
         {/* 현재 정보 (읽기 전용) */}
-        <p className="text-sm mb-1">출발 시간: {alarm.time}</p>
-        <p className="text-sm mb-1">출발지 → 도착지: {alarm.route}</p>
+        <p className="text-sm mb-1">출발 시간: {alarm.departureTime}</p>
+        <p className="text-sm mb-1">{`${alarm.departure}  → ${alarm.destination}`}</p>
+
+        {/* 알림 제목 수정 */}
+        <div className="mt-4">
+          <p className="text-sm font-medium mb-2">알림 이름 변경</p>
+          {/* eventTitle */}
+          <input
+            type="text"
+            defaultValue={alarm.eventTitle}
+            onChange={(e) =>
+              setEditedAlarm({ ...editedAlarm, eventTitle: e.target.value })
+            }
+            className="border p-2 rounded w-full"
+          />
+        </div>
 
         {/* 언제 알려드릴까요? */}
         <div className="mt-4">
           <p className="text-sm font-medium mb-2">언제 알려드릴까요?</p>
           <div className="flex gap-3">
-            {[10, 30, 60].map((min) => (
+            {allowedOffsets.map((min) => (
               <label
                 key={min}
                 className={`px-2 py-1 rounded-md text-sm cursor-pointer ${
-                  editedAlarm.notifyBefore.includes(min)
+                  selectedOffsets.includes(min)
                     ? "bg-purple-500 text-white"
                     : "bg-gray-200 text-gray-600"
                 }`}
               >
                 <input
                   type="checkbox"
-                  checked={editedAlarm.notifyBefore.includes(min)}
+                  checked={selectedOffsets.includes(min)}
                   onChange={(e) => handleCheckboxChange(min, e.target.checked)}
                   className="hidden"
                 />
@@ -60,21 +78,6 @@ export default function AlarmEditModal({ alarm, onClose, onSave }: Props) {
               </label>
             ))}
           </div>
-        </div>
-
-        {/* 출발 시간 수정 */}
-        <div className="mt-4">
-          <label className="block text-sm text-gray-700 mb-1">
-            출발 시간 변경
-          </label>
-          <input
-            type="time"
-            value={editedAlarm.time}
-            onChange={(e) =>
-              setEditedAlarm({ ...editedAlarm, time: e.target.value })
-            }
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-          />
         </div>
 
         {/* 버튼 */}
@@ -86,7 +89,7 @@ export default function AlarmEditModal({ alarm, onClose, onSave }: Props) {
             취소
           </button>
           <button
-            onClick={() => onSave(editedAlarm)}
+            onClick={handleSave} // 여기서 호출
             className="px-4 py-2 bg-green-400 text-white rounded hover:bg-green-500"
           >
             저장

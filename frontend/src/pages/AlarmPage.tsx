@@ -1,114 +1,153 @@
 /** @format */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AlarmEditModal from "../components/AlarmEditModal";
-
-type Alarm = {
-  id: number;
-  title: string;
-  description?: string;
-  time: string;
-  route: string;
-  enabled: boolean;
-  notifyBefore: number[];
-};
-
-const initialAlarms: Alarm[] = [
-  {
-    id: 1,
-    title: "10분 전",
-    description: "맥날 감튀털이",
-    time: "08:30",
-    route: "집 → 멀티캠퍼스",
-    enabled: true,
-    notifyBefore: [10, 30],
-  },
-  {
-    id: 2,
-    title: "30분 전",
-    description: "",
-    time: "09:00",
-    route: "집 → 학교",
-    enabled: false,
-    notifyBefore: [30],
-  },
-];
+import { AlarmProps, AlarmUpdateProps, alarmApi } from "@/api/alarmApi";
 
 export default function AlarmPage() {
-  const [alarms, setAlarms] = useState<Alarm[]>(initialAlarms);
-  const [editingAlarm, setEditingAlarm] = useState<Alarm | null>(null);
+  const [alarms, setAlarms] = useState<AlarmProps[]>([]);
+  // 수정하는 알람 객체 1개
+  const [editingAlarm, setEditingAlarm] = useState<AlarmProps | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const toggleAlarm = (id: number) => {
+  // 초기 렌더링
+  useEffect(() => {
+    const fetchAlarms = async () => {
+      try {
+        const res = await alarmApi.get<AlarmProps[]>("alarm");
+        setAlarms(res.data);
+      } catch (error) {
+        console.error("알람 불러오기 에러", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAlarms();
+  }, []);
+
+  const toggleAlarm = async (id: number, currentEnabled: boolean) => {
+    // 1. 프론트 상태 즉시 업데이트 (UI 반응 먼저)
     setAlarms((prev) =>
       prev.map((alarm) =>
-        alarm.id === id ? { ...alarm, enabled: !alarm.enabled } : alarm
+        alarm.alarmId === id ? { ...alarm, enabled: !alarm.enabled } : alarm
       )
     );
+
+    try {
+      // 2. 백엔드에 PATCH 요청 (enabled만 전달)
+      await alarmApi.patch(`/alarm/${id}`, {
+        enabled: !currentEnabled,
+      });
+      console.log(`알람 ${id} 상태 변경 성공`);
+    } catch (error) {
+      console.error("알람 상태 변경 실패", error);
+
+      // 3. 실패 시 UI 롤백
+      setAlarms((prev) =>
+        prev.map((alarm) =>
+          alarm.alarmId === id ? { ...alarm, enabled: currentEnabled } : alarm
+        )
+      );
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setAlarms((prev) => prev.filter((alarm) => alarm.id !== id));
+  const handleDelete = async (id: number) => {
+    setAlarms((prev) => prev.filter((alarm) => alarm.alarmId !== id));
+
+    // 백엔드에 요청
+    try {
+      await alarmApi.delete(`alarm/${id}`);
+    } catch (error) {
+      console.error("삭제 에러", error);
+    }
   };
 
-  const handleSaveEdit = (updated: Alarm) => {
-    setAlarms((prev) =>
-      prev.map((alarm) => (alarm.id === updated.id ? updated : alarm))
-    );
-    setEditingAlarm(null);
+  const handleSaveEdit = async (updated: AlarmUpdateProps) => {
+    if (!editingAlarm) return; // null이면 그냥 종료
+
+    // 1 API 호출
+    try {
+      await alarmApi.put(`/alarm/${editingAlarm.alarmId}`, updated);
+      setAlarms((prev) =>
+        prev.map((alarm) =>
+          alarm.alarmId === editingAlarm.alarmId
+            ? { ...alarm, ...updated }
+            : alarm
+        )
+      );
+      // 3 모달 닫기
+      setEditingAlarm(null);
+    } catch (error) {
+      console.error("알람 수정 실패", error);
+    }
   };
 
   return (
     <div className="flex flex-col items-center p-6">
       <h2 className="text-lg font-semibold mb-4">알림 모아보기</h2>
 
-      <div className="bg-white rounded-lg shadow-md w-full max-w-md p-4 space-y-3">
-        {alarms.map((alarm) => (
-          <div
-            key={alarm.id}
-            className="bg-gray-100 rounded-md px-4 py-3 flex flex-col gap-2"
-          >
-            {/* 상단 제목 + 버튼 */}
-            <div className="flex justify-between items-center">
-              <div className="flex flex-row gap-2">
-                <p className="font-semibold text-sm">{alarm.title}</p>
-                <p className="text-sm">{alarm.description}</p>
+      {isLoading ? (
+        // ⬇️ 로딩 중일 때
+        <div className="flex justify-center items-center h-40">
+          <p className="text-gray-500">불러오는 중...</p>
+          {/* 혹은 스피너 */}
+          {/* <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div> */}
+        </div>
+      ) : alarms.length === 0 ? (
+        // ⬇️ 알람이 없을 때
+        <p className="text-gray-500">알람이 없습니다.</p>
+      ) : (
+        // ⬇️ 알람 리스트
+        <div className="bg-white rounded-lg shadow-md w-full max-w-md p-4 space-y-3">
+          {alarms.map((alarm) => (
+            <div
+              key={alarm.alarmId}
+              className="bg-gray-100 rounded-md px-4 py-3 flex flex-col gap-2"
+            >
+              {/* 상단 제목 + 버튼 */}
+              <div className="flex justify-between items-center">
+                <div className="flex flex-row gap-2">
+                  <p className="font-semibold text-sm">{alarm.title}</p>
+                  <p className="text-sm">{alarm.eventTitle}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setEditingAlarm(alarm)}
+                    className="text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                  >
+                    수정
+                  </button>
+                  <button
+                    onClick={() => handleDelete(alarm.alarmId)}
+                    className="text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                  >
+                    삭제
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setEditingAlarm(alarm)}
-                  className="text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                >
-                  수정
-                </button>
-                <button
-                  onClick={() => handleDelete(alarm.id)}
-                  className="text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                >
-                  삭제
-                </button>
-              </div>
-            </div>
 
-            {/* 시간 & 경로 */}
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm">{alarm.time} 출발</p>
-                <p className="text-sm text-gray-600">{alarm.route}</p>
+              {/* 시간 & 경로 */}
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm">{alarm.departureTime} 출발</p>
+                  <p className="text-sm text-gray-600">{`${alarm.departure} -> ${alarm.destination}`}</p>
+                </div>
+                {/* 토글 */}
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={alarm.enabled}
+                    onChange={() => toggleAlarm(alarm.alarmId, alarm.enabled)}
+                  />
+                  <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-400 transition"></div>
+                  <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>
+                </label>
               </div>
-              {/* 토글 */}
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={alarm.enabled}
-                  onChange={() => toggleAlarm(alarm.id)}
-                />
-                <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-400 transition"></div>
-                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>
-              </label>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* 모달 */}
       {editingAlarm && (
