@@ -23,7 +23,7 @@ object RetrofitClient {
     private val logging = HttpLoggingInterceptor { message ->
         Log.d("OkHttp", message)
     }.apply {
-        level = HttpLoggingInterceptor.Level.HEADERS
+        level = HttpLoggingInterceptor.Level.BODY
     }
 
     private val cookieStore = mutableMapOf<String, List<Cookie>>()
