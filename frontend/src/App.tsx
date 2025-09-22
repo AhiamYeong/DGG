@@ -6,13 +6,13 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
 import "./styles/index.css";
 
-// Mocking Service Worker 추가
-async function enableMocking() {
-  if (process.env.NODE_ENV === "development") {
-    const { worker } = await import("./mocks/browsers");
-    await worker.start();
-  }
-}
+// // Mocking Service Worker 추가
+// async function enableMocking() {
+//   if (process.env.NODE_ENV === "development") {
+//     const { worker } = await import("./mocks/browsers");
+//     await worker.start();
+//   }
+// }
 
 export default function App() {
   // 공식 문서 권장: 전역 제스처 이벤트 방지
