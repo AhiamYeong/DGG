@@ -21,22 +21,35 @@ public class HealthServiceImpl implements HealthService {
     private final HealthInfoLogRepository logRepo;
 
     // === 수면 기반 일일 UPSERT ===
+    // service/HealthServiceImpl.java
+
     @Transactional
     @Override
-    public void upsertDailyBySleep(Long memberId, SleepUpdateRequest req) {
-        var dayKey = req.sleepDate().atStartOfDay(); // created_at(일자키)
+    public void upsertDailyBySleep(Integer memberId, SleepUpdateRequest req) {
+        ZonedDateTime baseZdt = req.sleepDate();
+        ZoneId zone = baseZdt.getZone();
 
-        // 실제 수면 분 계산
-        Integer actualMin = null;
-        if (req.sleepStartMs()!=null && req.sleepEndMs()!=null) {
-            long diffMs = Math.max(0, req.sleepEndMs() - req.sleepStartMs());
-            actualMin = (int)Math.round(diffMs / 1000.0 / 60.0);
+        ZonedDateTime sleepStart = (req.sleepStartMs() != null)
+                ? Instant.ofEpochMilli(req.sleepStartMs()).atZone(zone)
+                : baseZdt;
+
+        // 🕕 새벽 6시 이전이면 전날로
+        LocalDate targetDay = sleepStart.toLocalTime().isBefore(LocalTime.of(6, 0))
+                ? sleepStart.toLocalDate().minusDays(1)
+                : sleepStart.toLocalDate();
+
+        LocalDateTime dayKey = targetDay.atStartOfDay();
+
+        int actualMin = req.sleepDurationMin();
+        if (actualMin == 0 && req.sleepStartMs() != null && req.sleepEndMs() != null) {
+            long diffMs = Math.max(0L, req.sleepEndMs() - req.sleepStartMs());
+            actualMin = (int) Math.round(diffMs / 1000.0 / 60.0);
         }
 
         int stress = computeStress(
                 req.sleepScore(),
                 req.sleepGoalMin(),
-                actualMin==null ? 0 : actualMin,
+                actualMin,
                 req.activeCalories(),
                 req.activitySec()
         );
@@ -50,35 +63,37 @@ public class HealthServiceImpl implements HealthService {
                 });
 
         row.setStress(stress);
-        // footStep은 활동 로그 집계로 덮어질 수 있으니 여기서는 유지(선택)
-        dailyRepo.save(row); // ← **UPSERT** (존재하면 UPDATE, 없으면 INSERT)
+        dailyRepo.save(row);
     }
 
-    // === 활동 로그 INSERT ===
     @Transactional
     @Override
-    public void appendActivity(Long memberId, ActivityUpsertRequest req) {
+    public void appendActivity(Integer memberId, ActivityUpsertRequest req) {
+        // 1) 원본 10분 스냅샷 로그: windowEnd 그대로 저장 (절대 startAt로 바꾸지 않음)
         var log = new HealthInfoLog();
         log.setMemberId(memberId);
-        log.setFootStep((int)Math.min(Integer.MAX_VALUE, req.totalStep()));
+        log.setFootStep((int) req.totalStep());
         log.setCreatedAt(req.windowEnd().toLocalDateTime());
         logRepo.save(log);
 
-        // 옵션) 당일 집계 업데이트: 걸음 합산
-        var dayKey = req.windowEnd().toLocalDate().atStartOfDay();
+        // 2) 일별 집계: windowEnd의 "그 날" 자정으로 dayKey 설정
+        LocalDate day = req.windowEnd().toLocalDate();
+        LocalDateTime dayKey = day.atStartOfDay();
+
         var daily = dailyRepo.findByMemberIdAndCreatedAt(memberId, dayKey)
                 .orElseGet(() -> {
                     var d = new HealthInfoDaily();
                     d.setMemberId(memberId);
-                    d.setCreatedAt(dayKey);
+                    d.setCreatedAt(dayKey); // 자정 고정
                     d.setStress(null);
                     d.setFootStep(0);
                     return d;
                 });
-        int newSteps = (daily.getFootStep()==null?0:daily.getFootStep())
-                + (int)Math.min(Integer.MAX_VALUE, req.totalStep());
+
+        int newSteps = (daily.getFootStep() == null ? 0 : daily.getFootStep())
+                + (int) req.totalStep();
         daily.setFootStep(newSteps);
-        dailyRepo.save(daily); // ← **UPSERT**
+        dailyRepo.save(daily);
     }
 
     // --- 간단한 스트레스 지수 샘플(자리표시자) ---
