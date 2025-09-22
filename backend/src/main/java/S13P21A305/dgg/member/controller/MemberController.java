@@ -105,6 +105,9 @@ public class MemberController {
         return ResponseEntity.ok(memberService.getPermissions(memberId));
     }
 
+    /**
+     * member 알림 허용 수정
+     */
     @PatchMapping("/alarm/settings")
     public ResponseEntity<PermissionResponseDto> updatePermissions(@AuthenticationPrincipal CustomOAuth2User user,
                                                                    @RequestBody PermissionUpdateRequestDto request) {
@@ -112,4 +115,13 @@ public class MemberController {
         return ResponseEntity.ok(memberService.updatePermissions(memberId, request));
     }
 
+    /**
+     * 회원 탈퇴
+     */
+    @PatchMapping("/me")
+    public ResponseEntity<Void> withdraw(@AuthenticationPrincipal CustomOAuth2User user){
+        Integer memberId = user.getMemberId();
+        memberService.withdraw(memberId);
+        return ResponseEntity.noContent().build();
+    }
 }

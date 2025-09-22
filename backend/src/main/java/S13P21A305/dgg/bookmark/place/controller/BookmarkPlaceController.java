@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,19 +29,13 @@ public class BookmarkPlaceController {
 
 	record IdOnly(Long bookmarkPlaceId) {} // 단순 id 응답시 사용
 
-	private Integer resolveMemberId(CustomOAuth2User member, Integer header) {
-		return member != null ? member.getMemberId() : header;
-	}
-
 	// 장소 추가
 	@PostMapping
 	public ResponseEntity<IdOnly> save(
 		@AuthenticationPrincipal CustomOAuth2User member,
-		@RequestHeader(name = "X-DGG-MEMBER-ID", required = false) Integer memberIdHeader,
 		@RequestBody BookmarkPlaceSaveRequestDTO req
 	) {
-		Integer memberId = resolveMemberId(member, memberIdHeader);
-		Long id = service.savePlace(memberId, req);
+		Long id = service.savePlace(member.getMemberId(), req);
 
 		return ResponseEntity.ok(new IdOnly(id));
 	}
@@ -50,12 +43,9 @@ public class BookmarkPlaceController {
 	// 즐겨찾는 장소 목록 조회
 	@GetMapping
 	public ResponseEntity<List<BookmarkPlaceResponseDTO>> getList(
-		@AuthenticationPrincipal CustomOAuth2User member,
-		@RequestHeader(name = "X-DGG-MEMBER-ID", required = false) Integer memberIdHeader
+		@AuthenticationPrincipal CustomOAuth2User member
 	) {
-		Integer memberId = resolveMemberId(member, memberIdHeader);
-
-		return ResponseEntity.ok(service.getBookmarkList(memberId));
+		return ResponseEntity.ok(service.getBookmarkList(member.getMemberId()));
 	}
 
 	// 장소 이름 수정
@@ -63,12 +53,20 @@ public class BookmarkPlaceController {
 	public ResponseEntity<BookmarkPlaceResponseDTO> rename(
 		@PathVariable Long placeId,
 		@AuthenticationPrincipal CustomOAuth2User member,
-		@RequestHeader(name = "X-DGG-MEMBER-ID", required = false) Integer memberIdHeader,
 		@RequestBody BookmarkPlaceRenameRequestDTO req
 	) {
-		Integer memberId = resolveMemberId(member, memberIdHeader);
+		return ResponseEntity.ok(service.renamePlace(placeId, member.getMemberId(), req));
+	}
 
-		return ResponseEntity.ok(service.renamePlace(placeId, memberId, req));
+	// 장소 즐겨찾기 목록에서 특정 장소 삭제
+	@DeleteMapping("/{placeId}")
+	public ResponseEntity<Void> delete(
+		@PathVariable Long placeId,
+		@AuthenticationPrincipal CustomOAuth2User member
+	) {
+		service.deletePlace(placeId, member.getMemberId());
+
+		return  ResponseEntity.noContent().build();
 	}
 
 	// 장소 즐겨찾기 목록에서 특정 장소 삭제
