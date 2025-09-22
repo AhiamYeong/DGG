@@ -14,10 +14,11 @@ import com.ssafy.dgg.model.repository.health.HealthRepository
 import com.ssafy.dgg.util.HealthStoreProvider
 import com.ssafy.dgg.util.formatDuration
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-/* 데이터 1회 데이터 전송
-* TODO: 스케쥴링 처리 */
+/** 데이터 전송 함수 */
 class HealthViewModel(
     private val permissionRepo: HealthPermissionRepository,
     private val dataRepo: HealthDataRepository,
@@ -33,6 +34,23 @@ class HealthViewModel(
 
     // 함수 주기 실행
     private var periodicJob: Job? = null
+
+    // 10분마다 활동 데이터 전송
+    fun startPeriodicActivitySync(activity: Activity){
+        if (periodicJob?.isActive == true) return // 이미 실행중이면 무시
+
+        periodicJob = viewModelScope.launch {
+            while (isActive) {
+                sendActivityData(activity)
+                delay(10 * 60 * 1000L) // 10분
+            }
+        }
+    }
+
+    // 중단
+    fun stopPeriodicSync() {
+        periodicJob?.cancel()
+    }
 
     // 데이터 전송
     fun sendSleepData(activity: Activity) {
@@ -53,7 +71,7 @@ class HealthViewModel(
         }
     }
 
-    fun loadHealthDatas(activity: Activity) {
+    fun loadHealthData(activity: Activity) {
         viewModelScope.launch {
             // 1. 현재 권한 상태 확인
             var hasPermission = permissionRepo.hasPermissions()
@@ -68,7 +86,7 @@ class HealthViewModel(
                 }
             }
 
-            // 전송 함수 실행
+            // 최초 실행시: 수면 + 활동 전송
             sendSleepData(activity)
             sendActivityData(activity)
 
@@ -78,7 +96,7 @@ class HealthViewModel(
         }
     }
 
-    /** 헬스 데이터 프리뷰 로그 찍기 */
+    /** 헬스 데이터 프리뷰 로그 찍기 (디버그용) */
     private suspend fun printHealthPreview(store: HealthDataStore) {
         val TAG = "health data preview"
 
