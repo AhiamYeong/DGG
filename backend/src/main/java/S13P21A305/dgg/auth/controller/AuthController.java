@@ -1,13 +1,15 @@
 package S13P21A305.dgg.auth.controller;
 
+import S13P21A305.dgg.auth.dto.CustomOAuth2User;
 import S13P21A305.dgg.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -29,4 +31,21 @@ public class AuthController {
         return authService.loginWithGoogle(idToken.trim().startsWith("Bearer ")
                 ? idToken.trim().substring(7) : idToken.trim(), response);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal CustomOAuth2User user,
+                                       HttpServletResponse response) {
+        ResponseCookie accessExpired = ResponseCookie.from("ACCESS_TOKEN", "")
+                .path("/")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .maxAge(0)
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, accessExpired.toString());
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
 }
