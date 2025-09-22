@@ -1,20 +1,50 @@
 /** @format */
 
-import { useState } from "react";
+import { AlarmSettingsProps, mypageApi } from "@/api/mypageApi";
+import { useEffect, useState } from "react";
 
 export default function SettingsPage() {
-  const [alarm, setAlarm] = useState(true);
-  const [sleepAlarm, setSleepAlarm] = useState(false);
+  const [settings, setSettings] = useState<AlarmSettingsProps>({
+    generalEnabled: false,
+    sleepEnabled: false,
+  });
 
-  const handleSave = () => {
-    console.log("저장된 설정:", { alarm, sleepAlarm });
-    // TODO: API 연동
+  const [originalSettings, setOriginalSettings] = useState<AlarmSettingsProps>({
+    generalEnabled: false,
+    sleepEnabled: false,
+  });
+
+  // 기존 세팅 불러오기
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await mypageApi.get<AlarmSettingsProps>(
+          "mypage/alarm/settings"
+        );
+        setSettings(res.data);
+        console.log("기존 설정 불러오기 성공");
+      } catch (err) {
+        console.error("설정 조회 실패:", err);
+      }
+    })();
+  }, []);
+
+  const handleSave = async () => {
+    console.log("저장된 설정:", settings);
+    try {
+      await mypageApi.patch<AlarmSettingsProps>(
+        "mypage/alarm/settings",
+        settings
+      );
+      setOriginalSettings(settings); // 저장 성공 후 원본도 갱신
+      alert("저장 성공!");
+    } catch (err) {
+      console.error("저장 실패:", err);
+    }
   };
 
   const handleCancel = () => {
-    // 원래 상태로 복원하도록 구현 가능
-    setAlarm(true);
-    setSleepAlarm(false);
+    setSettings(originalSettings); // 원래 불러온 값으로 복원
   };
 
   return (
@@ -31,8 +61,13 @@ export default function SettingsPage() {
             <input
               type="checkbox"
               className="sr-only peer"
-              checked={alarm}
-              onChange={(e) => setAlarm(e.target.checked)}
+              checked={settings.generalEnabled}
+              onChange={(e) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  generalEnabled: e.target.checked,
+                }))
+              }
             />
             <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-400 transition"></div>
             <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>
@@ -46,8 +81,13 @@ export default function SettingsPage() {
             <input
               type="checkbox"
               className="sr-only peer"
-              checked={sleepAlarm}
-              onChange={(e) => setSleepAlarm(e.target.checked)}
+              checked={settings.sleepEnabled}
+              onChange={(e) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  sleepEnabled: e.target.checked,
+                }))
+              }
             />
             <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-400 transition"></div>
             <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>

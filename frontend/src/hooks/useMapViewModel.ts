@@ -14,7 +14,7 @@ export function useMapViewModel() {
   const { currentLocation, setCurrentLocation, getCurrentLocation, updateMapLocation, centerMapToRouteStart } = useMapLocation();
   
   // 폴리라인 관리
-  const { drawPolylines, drawGangnamToGongdeokRoute, drawSelectedRoute, drawDetailedRoute, clearPolylines } = usePolyline(map);
+  const { drawPolylines, drawGangnamToGongdeokRoute, drawSelectedRoute, clearPolylines } = usePolyline(map);
   
   // 마커 관리
   const { clearMarkers, createRouteMarkers, createCurrentLocationMarker, createGangnamToGongdeokStationMarkers, createSelectedRouteMarkers } = useMarker(map);
@@ -53,7 +53,6 @@ export function useMapViewModel() {
     drawPolylines,
     drawGangnamToGongdeokRoute,
     drawSelectedRoute,
-    drawDetailedRoute,
     clearPolylinesAndMarkers,
     
     // Marker Actions

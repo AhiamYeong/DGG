@@ -247,8 +247,8 @@ export class RouteService {
         price: 0, // API에서 가격 정보가 없으므로 0으로 설정
         createdAt: new Date(),
         updatedAt: new Date(),
-        // routeKey 저장 (안내시작 시 사용) - API에서는 routeId로 오므로 routeId를 routeKey로 사용
-        routeKey: route.routeId
+        // routeKey 저장 (안내시작 시 사용)
+        routeKey: route.routeKey
       };
     });
   }
@@ -311,41 +311,18 @@ export class RouteService {
    */
   static async startNavigation(routeKey: string): Promise<RouteDetailResponse> {
     try {
-      console.log('=== RouteService.startNavigation 시작 ===');
-      console.log('입력 routeKey:', routeKey);
-      console.log('routeKey 타입:', typeof routeKey);
-      
       log.route('안내시작 처리 시작', { routeKey });
 
-             // 1단계: 안내시작 API 호출
-             console.log('=== 1단계: 안내시작 API 호출 ===');
-             const startResponse = await startRouteGuidance(routeKey);
-             console.log('안내시작 API 응답:', startResponse);
-             console.log('응답 타입:', typeof startResponse);
-             
-             // 응답이 숫자인 경우와 객체인 경우 모두 처리
-             const routeId = typeof startResponse === 'number' ? startResponse.toString() : startResponse.routeId;
-             console.log('routeId:', routeId);
-             console.log('routeId 타입:', typeof routeId);
-      
+      // 1단계: 안내시작 API 호출
+      const startResponse: RouteStartResponse = await startRouteGuidance(routeKey);
       log.route('안내시작 API 응답', startResponse);
 
-             // 2단계: 상세 경로 조회 API 호출
-             console.log('=== 2단계: 상세 경로 조회 API 호출 ===');
-             const routeDetail: RouteDetailResponse = await getRouteDetail(routeId);
-      console.log('상세 경로 조회 완료:', routeDetail);
-      console.log('상세 경로 타입:', typeof routeDetail);
-      
+      // 2단계: 상세 경로 조회 API 호출
+      const routeDetail: RouteDetailResponse = await getRouteDetail(startResponse.routeId);
       log.route('상세 경로 조회 완료', routeDetail);
 
-      console.log('=== RouteService.startNavigation 성공 ===');
       return routeDetail;
-    } catch (error: any) {
-      console.log('=== RouteService.startNavigation 에러 ===');
-      console.log('에러 객체:', error);
-      console.log('에러 메시지:', error.message);
-      console.log('에러 스택:', error.stack);
-      
+    } catch (error) {
       log.error('안내시작 처리 실패', error);
       throw error;
     }
@@ -361,74 +338,50 @@ export class RouteService {
       return [];
     }
 
-    return detailData.data
-      .filter(step => step.timeTaken > 0) // 시간이 0인 단계는 제외
-      .map((step, index) => {
-        // 교통수단 타입 변환
-        let type: string;
-        let description: string;
-        
-        switch (step.type) {
-          case 'SUBWAY':
-            type = 'subway';
-            if (step.startPoint && step.endPoint) {
-              description = `${step.startPoint} → ${step.endPoint}`;
-            } else if (step.lineName) {
-              description = `${step.lineName} 이용`;
-            } else {
-              description = '지하철 이용';
-            }
-            break;
-          case 'BUS':
-            type = 'bus';
-            if (step.startPoint && step.endPoint) {
-              description = `${step.startPoint} → ${step.endPoint}`;
-            } else if (step.lineName) {
-              description = `${step.lineName} 이용`;
-            } else {
-              description = '버스 이용';
-            }
-            break;
-          case 'WALKING':
-            type = 'walk';
-            if (step.startPoint && step.endPoint) {
-              description = `${step.startPoint} → ${step.endPoint} 도보`;
-            } else {
-              description = '도보';
-            }
-            break;
-          default:
-            type = 'walk';
-            description = '도보';
-        }
+    return detailData.data.map((step, index) => {
+      // 교통수단 타입 변환
+      let type: string;
+      switch (step.type) {
+        case 'SUBWAY':
+          type = 'subway';
+          break;
+        case 'BUS':
+          type = 'bus';
+          break;
+        case 'WALKING':
+          type = 'walk';
+          break;
+        default:
+          type = 'walk';
+      }
 
-        return {
-          id: `step-${step.order || index}`,
-          type,
-          description,
-          duration: step.timeTaken,
-          distance: 0, // API에서 거리 정보가 없으므로 0으로 설정
-          lineInfo: step.lineName ? {
-            name: step.lineName,
-            direction: step.endPoint || '',
-            stationCount: 0
-          } : undefined,
-          stations: [],
-          startName: step.startPoint || '',
-          endName: step.endPoint || '',
-          startLocation: step.startLat && step.startLng ? {
-            latitude: step.startLat,
-            longitude: step.startLng
-          } : undefined,
-          endLocation: step.endLat && step.endLng ? {
-            latitude: step.endLat,
-            longitude: step.endLng
-          } : undefined,
-          path: step.path || [],
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-      });
+      return {
+        id: `step-${index}`,
+        type,
+        description: `${step.startPoint} → ${step.endPoint}`,
+        duration: step.timeTaken,
+        distance: 0, // API에서 거리 정보가 없으므로 0으로 설정
+        lineInfo: step.lineName ? {
+          name: step.lineName,
+          direction: '',
+          stationCount: 0
+        } : undefined,
+        stations: [],
+        startName: step.startPoint,
+        endName: step.endPoint,
+        startLocation: {
+          latitude: step.startLat,
+          longitude: step.startLng
+        },
+        endLocation: {
+          latitude: step.endLat,
+          longitude: step.endLng
+        },
+        path: step.path || [],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    });
   }
 }
 
