@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -199,6 +200,18 @@ public class MemberService {
         member.setSleepPermission(request.isSleepEnabled());
 
         return new PermissionResponseDto(member.isPushPermission(), member.isSleepPermission());
+    }
+
+    /**
+     * 회원 탈퇴
+     */
+    @Transactional
+    public void withdraw(Integer memberId) {
+        Member member = memberRepository.findByIdAndIsWithdrawFalse(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않거나 이미 탈퇴한 회원입니다."));
+
+        member.setIsWithdraw(true);
+        member.setUpdatedAt(LocalDateTime.now());
     }
 
 
