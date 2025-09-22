@@ -23,7 +23,7 @@ public class HealthController {
             @AuthenticationPrincipal(expression = "memberId") Integer memberId,
             @Valid @RequestBody SleepUpdateRequest req
     ) {
-        healthService.upsertDailyBySleep(memberId.longValue(), req);
+        healthService.upsertDailyBySleep(memberId, req);
         return ResponseEntity.ok(SimpleOkResponse.ok());
     }
 
@@ -32,7 +32,7 @@ public class HealthController {
             @AuthenticationPrincipal(expression = "memberId") Integer memberId,
             @Valid @RequestBody ActivityUpsertRequest req
     ) {
-        healthService.appendActivity(memberId.longValue(), req);
+        healthService.appendActivity(memberId, req);
         return ResponseEntity.ok(SimpleOkResponse.ok());
     }
 }
