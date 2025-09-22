@@ -130,29 +130,26 @@ class HealthDataRepository(private val store: HealthDataStore) {
         val sleepScore = (sleepData?.getValue(DataType.SleepType.SLEEP_SCORE) as? Int) ?: 0
 
         // 세션 목록
-        val sessions = (sleepData?.getValue(DataType.SleepType.SESSIONS) as? List<*>) ?: emptyList<Any>()
+        val sessions = (sleepData?.getValue(DataType.SleepType.SESSIONS) as? List<SleepSession>)
+            ?: emptyList()
 
-        // 총 수면 시간 (세션 duration 합산)
-        val totalSleepDuration = sessions.sumOf { (it as? SleepSession)?.duration?.seconds ?: 0L }
+        val duration = sessions.firstOrNull()?.duration?.toMillis() ?: 0L
+        Log.d("DTO", "수면 시간(ms): $duration")
 
-        // 수면 날짜 = 첫 세션 기준
+        // sleep session start & end
+        for (session in sessions) {
+            Log.d("DTO", "수면 시작: ${session.startTime}")
+            Log.d("DTO", "수면 끝: ${session.endTime}")
+        }
+        // 수면 날짜 = 첫 세션 기준 & 사용자 기준으로 열어두기
         val sleepDate = (sessions.firstOrNull() as? SleepSession)?.startTime
             ?.atZone(ZoneId.systemDefault())?.toLocalDate()?.toString()
             ?: LocalDate.now().toString()
 
-        // 목표 수면 (Instant → Long)
-        val goalTimes = sleepGoalData?.value as? Pair<LocalTime, LocalTime>
-        val startInstant = goalTimes?.first?.let { LocalDate.now().atTime(it).atZone(ZoneId.systemDefault()).toInstant() }
-            ?: Instant.now() // 기본값 fallback
-        val endInstant = goalTimes?.second?.let { LocalDate.now().atTime(it).atZone(ZoneId.systemDefault()).toInstant() }
-            ?: Instant.now()
-
         return SleepDataRequest(
             sleepDate = sleepDate,
             sleepScore = sleepScore,
-            sleepDuration = totalSleepDuration,
-            sleepGoalStart = startInstant.toEpochMilli(),
-            sleepGoalEnd = endInstant.toEpochMilli()
+            sleepDuration = duration,
         )
     }
 }

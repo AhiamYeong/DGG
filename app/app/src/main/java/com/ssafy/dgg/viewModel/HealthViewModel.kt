@@ -98,11 +98,13 @@ class HealthViewModel(
 
             // 활동 데이터 전송
             val activitySuccess = healthRepo.sendActivityData(activityDTO)
+            Log.d("DTO", "$activityDTO")
             _activityStatus.value =
                 if (activitySuccess) "활동 데이터 전송 성공" else "활동 데이터 전송 실패"
 
             // 수면 데이터 전송
             val sleepSuccess = healthRepo.sendSleepData(sleepDTO)
+            Log.d("DTO", "$sleepDTO")
             _sleepStatus.value =
                 if (sleepSuccess) "수면 데이터 전송 성공" else "수면 데이터 전송 실패"
         }
