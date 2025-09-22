@@ -18,6 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
 import com.ssafy.dgg.auth.GoogleSignInManager
@@ -151,14 +153,27 @@ class MainActivity : ComponentActivity() {
                         }
                         is LoginState.LoggedIn -> {
                             MainScreen(authViewModel)
-                            healthViewModel.loadHealthDatas(this)
+                            // 수면 데이터는 최초 실행
+                            healthViewModel.loadHealthData(this)
 
+                            // 활동 데이터는 10분마다 반복
+                            healthViewModel.startPeriodicActivitySync(this)
+
+                            // activity 중단시 반복 멈추기
+                            lifecycle.addObserver(object : DefaultLifecycleObserver {
+                                // 앱이 백그라운드 가면 반복 멈추기
+                                override fun onStop(owner: LifecycleOwner) {
+                                    healthViewModel.stopPeriodicSync()
+                                }
+                            })
+
+                            // 빌드시에만 toast 띄우기
                             healthViewModel.activityStatus.observe(this) { status ->
-                                Toast.makeText(this, status, Toast.LENGTH_SHORT).show()
+                                if (BuildConfig.DEBUG) Toast.makeText(this, status, Toast.LENGTH_SHORT).show()
                             }
 
                             healthViewModel.sleepStatus.observe(this) { status ->
-                                Toast.makeText(this, status, Toast.LENGTH_SHORT).show()
+                                if (BuildConfig.DEBUG) Toast.makeText(this, status, Toast.LENGTH_SHORT).show()
                             }
                         }
 
