@@ -5,6 +5,7 @@ import com.samsung.android.sdk.health.data.HealthDataStore
 import com.samsung.android.sdk.health.data.data.AggregatedData
 import com.samsung.android.sdk.health.data.data.HealthDataPoint
 import com.samsung.android.sdk.health.data.data.entries.SleepSession
+import com.samsung.android.sdk.health.data.device.DeviceGroup
 import com.samsung.android.sdk.health.data.request.DataType
 import com.samsung.android.sdk.health.data.request.DataTypes
 import com.samsung.android.sdk.health.data.request.LocalTimeFilter
@@ -27,7 +28,27 @@ class HealthDataRepository(private val store: HealthDataStore) {
 
     val localTimeFilter = LocalTimeFilter.of(startOfToday, endOfToday)
 
+    // device 확인
+    suspend fun getDevice() {
+        val healthDataStore = store
+        val deviceManager = healthDataStore.getDeviceManager()
+        val devices = deviceManager.getDevices(DeviceGroup.MOBILE)
+        devices.forEach { device ->
+            val deviceId = device.id
+            Log.d("deviceId", "{$deviceId}")
+            val deviceType = device.deviceType
+            Log.d("deviceId", "{$deviceType}")
+            val deviceManufacturer = device.manufacturer
+            Log.d("deviceId", "{$deviceManufacturer}")
+            val deviceModel = device.model
+            Log.d("deviceId", "{$deviceModel}")
+            val deviceName = device.name
+            Log.d("deviceId", "{$deviceName}")
+        }
+    }
+
     suspend fun getSteps(store: HealthDataStore): List<AggregatedData<Long>> {
+        getDevice()
         val request = DataType.StepsType.TOTAL.requestBuilder
             .setLocalTimeFilter(localTimeFilter)
             .build()
@@ -152,4 +173,5 @@ class HealthDataRepository(private val store: HealthDataStore) {
             sleepDuration = duration,
         )
     }
+
 }
