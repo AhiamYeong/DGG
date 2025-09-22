@@ -63,9 +63,9 @@ android {
             )
 
             // 웹뷰용 URL
-            buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io/\"")
+            buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io\"")
             // API 호출용 URL
-            buildConfigField("String", "API_BASE_URL", "\"https://j13a305.p.ssafy.io/api/v1/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://j13a305.p.ssafy.io/api/v1\"")
 
 
             buildConfigField("boolean", "IS_DEBUG", "false")
