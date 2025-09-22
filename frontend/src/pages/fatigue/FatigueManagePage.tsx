@@ -56,7 +56,6 @@ export default function FatigueManagePage() {
           </div>
 
           {/* 버튼 */}
-          {/* TODO: 아이콘 추가 */}
           <FatigueButtons></FatigueButtons>
         </div>
       </div>

@@ -1,6 +1,7 @@
 /** @format */
 
 import {
+  fatigueHistory,
   fatigueUpdateRequest,
   fatigueUpdateResponse,
   MainFatigueProps,
@@ -13,6 +14,44 @@ let fatigue: MainFatigueProps = {
   nickname: "MockNickname",
   currentFatigue: 30,
 };
+
+export const mockFatigueHistories: fatigueHistory[] = [
+  {
+    fatigueId: 1,
+    createdAt: "2025-09-20 09:15:00",
+    reason: "COFFEE",
+    fatigue: 35,
+    fatigueChange: -5,
+  },
+  {
+    fatigueId: 2,
+    createdAt: "2025-09-20 14:30:00",
+    reason: "WALK",
+    fatigue: 30,
+    fatigueChange: -5,
+  },
+  {
+    fatigueId: 3,
+    createdAt: "2025-09-21 22:10:00",
+    reason: "NAP",
+    fatigue: 40,
+    fatigueChange: +10,
+  },
+  {
+    fatigueId: 4,
+    createdAt: "2025-09-22 08:45:00",
+    reason: "COFFEE",
+    fatigue: 28,
+    fatigueChange: -7,
+  },
+  {
+    fatigueId: 5,
+    createdAt: "2025-09-22 18:00:00",
+    reason: "WALK",
+    fatigue: 32,
+    fatigueChange: -3,
+  },
+];
 
 export const fatigueHandler = [
   // 피로도 조회
@@ -35,5 +74,10 @@ export const fatigueHandler = [
       fatigueChange: body.fatigue_change,
     };
     return HttpResponse.json(resp, { status: 200 });
+  }),
+
+  // 피로도 하루 히스토리 조회
+  http.get(`${API_BASE_URL}/fatigues/daily`, async () => {
+    return HttpResponse.json(mockFatigueHistories);
   }),
 ];
