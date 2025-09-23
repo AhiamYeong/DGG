@@ -12,11 +12,13 @@ import com.samsung.android.sdk.health.data.request.LocalTimeFilter
 import com.samsung.android.sdk.health.data.response.DataResponse
 import com.ssafy.dgg.model.data.ActivityDataRequest
 import com.ssafy.dgg.model.data.SleepDataRequest
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.toKotlinInstant
 import java.time.Duration
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
+import java.time.ZoneOffset
 
 /* 서버에 보낼 헬스 데이터 DTO로 정제 */
 class HealthDataRepository(private val store: HealthDataStore) {
@@ -130,7 +132,8 @@ class HealthDataRepository(private val store: HealthDataStore) {
         val totalActiveCaloriesBurned = (activityData.getOrNull(3)?.value as? Float) ?: 0f
 
         return ActivityDataRequest(
-            windowEnd = Instant.now().atZone(ZoneId.systemDefault()).toString(),
+            // windowEnd = Instant.now().atZone(ZoneId.systemDefault()).toString(),
+            windowEnd = Clock.System.now(),
             totalStep = totalStep,
             totalActiveTimeSec = totalActiveTimeSec,
             totalActiveCaloriesBurned = totalActiveCaloriesBurned,
@@ -163,9 +166,11 @@ class HealthDataRepository(private val store: HealthDataStore) {
             Log.d("DTO", "수면 끝: ${session.endTime}")
         }
         // 수면 날짜 = 첫 세션 기준 & 사용자 기준으로 열어두기
-        val sleepDate = (sessions.firstOrNull() as? SleepSession)?.startTime
-            ?.atZone(ZoneId.systemDefault())?.toLocalDate()?.toString()
-            ?: LocalDate.now().toString()
+        val sleepDate: Instant = (sessions.firstOrNull() as? SleepSession)?.startTime
+            ?.atZone(ZoneOffset.UTC)   // ZonedDateTime
+            ?.toInstant()              // 그대로 Instant(UTC)
+            ?.toKotlinInstant()
+            ?: java.time.Instant.now().toKotlinInstant()
 
         return SleepDataRequest(
             sleepDate = sleepDate,
@@ -173,5 +178,4 @@ class HealthDataRepository(private val store: HealthDataStore) {
             sleepDuration = duration,
         )
     }
-
 }
