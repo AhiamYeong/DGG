@@ -69,16 +69,4 @@ public class BookmarkPlaceController {
 		return  ResponseEntity.noContent().build();
 	}
 
-	// 장소 즐겨찾기 목록에서 특정 장소 삭제
-	@DeleteMapping("/{placeId}")
-	public ResponseEntity<Void> delete(
-		@PathVariable Long placeId,
-		@AuthenticationPrincipal CustomOAuth2User member,
-		@RequestHeader(name = "X-DGG-MEMBER-ID", required = false) Integer memberIdHeader
-	) {
-		Integer memberId = resolveMemberId(member, memberIdHeader);
-		service.deletePlace(placeId, memberId);
-
-		return  ResponseEntity.noContent().build();
-	}
 }
