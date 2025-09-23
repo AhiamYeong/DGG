@@ -1,7 +1,9 @@
 package com.ssafy.dgg.viewModel
 
 import android.app.Activity
+import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -55,10 +57,26 @@ class HealthViewModel(
     // 데이터 전송
     fun sendSleepData(activity: Activity) {
         viewModelScope.launch {
+            val prefs = activity.getSharedPreferences("sleep_prefs", Context.MODE_PRIVATE)
+            val today = java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString()
+            val lastSent = prefs.getString("last_sent_date", null)
+
+            if (lastSent == today) {
+                Log.d("Sleep", "이미 오늘 전송됨 → skip")
+                _sleepStatus.value = "오늘은 이미 전송됨"
+                return@launch
+            }
+
+            // 실제 수면 데이터 가져오기
             val store = HealthStoreProvider.getStore(activity.applicationContext)
             val sleepDTO = dataRepo.getSleepDataResponse(store)
             Log.d("DTO", "$sleepDTO")
+            // 서버 전송
             val success = healthRepo.sendSleepData(sleepDTO)
+            if (success) {
+                // 성공하면 오늘 날짜 기록
+                prefs.edit { putString("last_sent_date", today) }
+            }
             _sleepStatus.value = if (success) "수면 데이터 전송 성공" else "수면 데이터 전송 실패"
         }
     }
