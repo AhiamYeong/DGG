@@ -57,6 +57,7 @@ class HealthViewModel(
         viewModelScope.launch {
             val store = HealthStoreProvider.getStore(activity.applicationContext)
             val sleepDTO = dataRepo.getSleepDataResponse(store)
+            Log.d("DTO", "$sleepDTO")
             val success = healthRepo.sendSleepData(sleepDTO)
             _sleepStatus.value = if (success) "수면 데이터 전송 성공" else "수면 데이터 전송 실패"
         }
@@ -66,6 +67,7 @@ class HealthViewModel(
         viewModelScope.launch {
             val store = HealthStoreProvider.getStore(activity.applicationContext)
             val activityDTO = dataRepo.getHealthDataResponse(store)
+            Log.d("DTO", "$activityDTO")
             val success = healthRepo.sendActivityData(activityDTO)
             _activityStatus.value = if (success) "활동 데이터 전송 성공" else "활동 데이터 전송 실패"
         }
@@ -86,19 +88,19 @@ class HealthViewModel(
                 }
             }
 
-            // 최초 실행시: 수면 + 활동 전송
+            // 최초 실행시: 수면 전송
             sendSleepData(activity)
-            sendActivityData(activity)
+            // sendActivityData(activity)
 
             // 원시 데이터 찍기
-            val store = HealthStoreProvider.getStore(activity.applicationContext)
-            printHealthPreview(store)
+            // val store = HealthStoreProvider.getStore(activity.applicationContext)
+            // printHealthPreview(store)
         }
     }
 
     /** 헬스 데이터 프리뷰 로그 찍기 (디버그용) */
     private suspend fun printHealthPreview(store: HealthDataStore) {
-        val TAG = "health data preview"
+        val TAG = "healthPreview"
 
         // 걸음 수
         dataRepo.getSteps(store).forEach { item ->
