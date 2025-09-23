@@ -19,7 +19,7 @@ public class S3Config {
     @Value("${MINIO_ENDPOINT}")
     private String endpoint;
 
-    @Value("${MINIO_REGION:ap-northeast-2}")
+    @Value("${MINIO_REGION:us-east-1}") // MinIO 기본 region
     private String region;
 
     @Value("${MINIO_ACCESS_KEY}")
@@ -38,7 +38,7 @@ public class S3Config {
 
     private S3Configuration s3cfg() {
         return S3Configuration.builder()
-                .pathStyleAccessEnabled(pathStyle)
+                .pathStyleAccessEnabled(pathStyle) // ★ MinIO 필수
                 .build();
     }
 
@@ -47,7 +47,7 @@ public class S3Config {
         return S3Client.builder()
                 .httpClientBuilder(UrlConnectionHttpClient.builder())
                 .credentialsProvider(creds())
-                .endpointOverride(URI.create(endpoint))
+                .endpointOverride(URI.create(endpoint)) // MinIO endpoint
                 .region(Region.of(region))
                 .serviceConfiguration(s3cfg())
                 .build();
