@@ -1,9 +1,9 @@
 package com.ssafy.dgg.model.repository.auth
 
 import com.ssafy.dgg.model.data.GoogleLoginRequest
-import com.ssafy.dgg.model.data.TokenResponse
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 
 /* Retrofit 인터페이스: 서버 엔드포인트 정의
@@ -18,9 +18,18 @@ interface AuthApi {
         @Body request: GoogleLoginRequest
     ): Response<Unit>
 
-    // 2️⃣ 토큰 갱신 (선택)
-    @POST("/auth/refresh")
+    /*
+    @POST("auth/refresh")
     suspend fun refreshToken(
         @Body request: Map<String, String> // {"refreshToken": "..."}
     ): Response<TokenResponse>
+    */
+
+    // 로그아웃
+    @POST("auth/logout")
+    suspend fun logout(): Response<Unit>
+
+    // 회원탈퇴
+    @PATCH("auth/withdraw")
+    suspend fun withdraw(): Response<Unit>
 }

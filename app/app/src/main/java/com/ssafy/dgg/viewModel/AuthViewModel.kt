@@ -88,4 +88,29 @@ class AuthViewModel(
     fun forceLogin() {
         _loginState.value = LoginState.LoggedIn
     }
+
+    fun withdraw() {
+        viewModelScope.launch {
+            try {
+                val success = authRepository.withdraw()
+                if (success) {
+                    // 1. 쿠키 정리
+                    val cookieManager = android.webkit.CookieManager.getInstance()
+                    Log.d("LoginFlow", "로그아웃 호출: ${cookieManager.getCookie(BuildConfig.WEB_URL)}")
+                    cookieManager.removeAllCookies { Log.d("Auth", "WebView 쿠키 삭제 완료") }
+                    cookieManager.flush()
+                    client.clearCookies()
+
+                    // 2. 상태 초기화
+                    _loginState.value = LoginState.LoggedOut
+                    Log.d("Auth", "회원탈퇴 성공 → 로그아웃 처리 완료")
+                } else {
+                    _loginState.value = LoginState.Error("회원탈퇴 실패")
+                }
+            } catch (e: Exception) {
+                _loginState.value = LoginState.Error("회원탈퇴 예외 발생: ${e.message}")
+            }
+        }
+    }
+
 }
