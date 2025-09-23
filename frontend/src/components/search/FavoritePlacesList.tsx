@@ -1,17 +1,15 @@
 import { memo } from 'react';
 
-interface FavoritePlace {
-  id: string;
-  name: string;
+interface FavoritePlaceItemDto {
+  bookmarkPlaceId: number;
+  placeName: string;
   address: string;
-  category?: string;
-  isFavorite: boolean;
 }
 
 interface FavoritePlacesListProps {
-  items: FavoritePlace[];
-  onSelect: (item: FavoritePlace) => void;
-  onToggleFavorite: (id: string) => void;
+  items: FavoritePlaceItemDto[];
+  onSelect: (item: FavoritePlaceItemDto) => void;
+  onDeleteFavorite?: (bookmarkPlaceId: number) => void;
   className?: string;
 }
 
@@ -21,16 +19,11 @@ interface FavoritePlacesListProps {
 const FavoritePlacesList = memo<FavoritePlacesListProps>(({
   items,
   onSelect,
-  onToggleFavorite,
+  onDeleteFavorite,
   className = ''
 }) => {
-  const handleSelect = (item: FavoritePlace) => {
+  const handleSelect = (item: FavoritePlaceItemDto) => {
     onSelect(item);
-  };
-
-  const handleToggleFavorite = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    onToggleFavorite(id);
   };
 
   if (items.length === 0) {
@@ -51,7 +44,7 @@ const FavoritePlacesList = memo<FavoritePlacesListProps>(({
     <div className={`${className}`}>
       {items.map((item) => (
         <div
-          key={item.id}
+          key={item.bookmarkPlaceId}
           onClick={() => handleSelect(item)}
           onTouchEnd={(e) => {
             e.preventDefault();
@@ -71,41 +64,23 @@ const FavoritePlacesList = memo<FavoritePlacesListProps>(({
 
             {/* 장소 정보 */}
             <div className="flex-1 min-w-0">
-              <h4 className="font-medium text-font text-sm truncate">{item.name}</h4>
+              <h4 className="font-medium text-font text-sm truncate">{item.placeName}</h4>
               <p className="text-xs text-gray-500 truncate">{item.address}</p>
-              {item.category && (
-                <p className="text-xs text-primary mt-1">{item.category}</p>
-              )}
             </div>
           </div>
 
-          {/* 즐겨찾기 토글 버튼 */}
-          <button
-            onClick={(e) => handleToggleFavorite(e, item.id)}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              // TouchEvent를 MouseEvent로 변환
-              const mouseEvent = e as unknown as React.MouseEvent<HTMLButtonElement>;
-              handleToggleFavorite(mouseEvent, item.id);
-            }}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation"
-            style={{ touchAction: 'manipulation' }}
-            aria-label={item.isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
-          >
-            <svg 
-              className={`w-5 h-5 transition-colors ${
-                item.isFavorite 
-                  ? 'text-accent fill-current' 
-                  : 'text-gray-400 hover:text-accent'
-              }`} 
-              fill={item.isFavorite ? 'currentColor' : 'none'} 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
+          {/* 삭제 버튼만 노출 */}
+          {onDeleteFavorite && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteFavorite(item.bookmarkPlaceId);
+              }}
+              className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </button>
+              삭제
+            </button>
+          )}
         </div>
       ))}
     </div>

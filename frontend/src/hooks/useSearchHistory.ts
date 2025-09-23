@@ -1,12 +1,13 @@
 import { useEffect, useCallback, useState } from 'react';
 import { 
   recentSearchApi, 
-  favoritePlacesApi, 
   type RecentSearch, 
-  type FavoritePlace,
-  type AddRecentSearchRequest,
-  type AddFavoritePlaceRequest
+  type AddRecentSearchRequest
 } from '../api/searchHistoryApi';
+import { 
+  favoritePlacesApi,
+  type FavoritePlace
+} from '../api/favoritePlacesApi';
 import { ERROR_MESSAGES } from '../constants';
 import { log } from '../utils/logger';
 
@@ -100,7 +101,7 @@ export function useSearchHistory() {
   }, []);
 
   // 즐겨찾기 장소 추가
-  const addFavoritePlace = useCallback(async (request: AddFavoritePlaceRequest) => {
+  const addFavoritePlace = useCallback(async (request: { placeName: string; address: string }) => {
     try {
       const response = await favoritePlacesApi.addFavoritePlace(request);
       if (response.success) {
@@ -146,13 +147,9 @@ export function useSearchHistory() {
     if (isCurrentlyFavorite) {
       return await removeFavoritePlace(place.id);
     } else {
-      const request: AddFavoritePlaceRequest = {
-        title: place.title,
-        category: place.category,
-        address: place.address,
-        roadAddress: place.roadAddress,
-        telephone: place.telephone,
-        coordinates: place.coordinates
+      const request = {
+        placeName: place.title,
+        address: place.roadAddress || place.address
       };
       return await addFavoritePlace(request);
     }
