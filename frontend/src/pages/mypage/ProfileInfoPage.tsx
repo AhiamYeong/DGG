@@ -47,6 +47,24 @@ export default function ProfileInfoPage() {
     setIsEditing(false);
   };
 
+  const handleLogout = async () => {
+    try {
+      await mypageApi.post(`auth/logout`);
+      alert("로그아웃 완료");
+    } catch (error) {
+      console.error("에러", error);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    try {
+      await mypageApi.patch(`mypage/me`);
+      alert("회원탈퇴 완료");
+    } catch (error) {
+      console.error("에러", error);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center p-6">
       <h2 className="text-lg font-semibold mb-4">개인정보 수정</h2>
@@ -107,9 +125,20 @@ export default function ProfileInfoPage() {
             </button>
           )}
         </div>
+        <div className="flex gap-2 mt-6">
+          <button
+            onClick={() => handleLogout()}
+            className="flex-1 bg-gray-400 text-white rounded-md py-2 text-sm font-medium hover:bg-blue-500 transition"
+          >
+            로그아웃
+          </button>
+        </div>
 
         <div className="text-right mt-3">
-          <button className="text-sm text-gray-500 hover:underline">
+          <button
+            onClick={() => handleWithdraw()}
+            className="text-sm text-gray-500 hover:underline"
+          >
             회원탈퇴
           </button>
         </div>

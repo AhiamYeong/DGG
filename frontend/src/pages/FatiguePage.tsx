@@ -2,9 +2,10 @@
 import { useState } from "react";
 import FatigueManagePage from "./fatigue/FatigueManagePage";
 import FatigueDashboardPage from "./fatigue/FatigueDashboardPage";
+import FatigueSurveyPage from "./fatigue/FatigueSurveyPage";
 
 export default function FatiguePage() {
-  const [view, setView] = useState<"manage" | "dashboard">("manage");
+  const [view, setView] = useState<"manage" | "dashboard" | "survey">("manage");
 
   return (
     <div>
@@ -26,11 +27,21 @@ export default function FatiguePage() {
         >
           대시보드
         </button>
+        <button
+          onClick={() => setView("survey")}
+          className={`flex-1 p-3 text-center ${
+            view === "survey" ? "font-bold border-b-2 border-black" : ""
+          }`}
+        >
+          설문조사
+        </button>
       </div>
 
       {/* 본문 */}
       <div className="p-4">
-        {view === "manage" ? <FatigueManagePage /> : <FatigueDashboardPage />}
+        {view === "manage" && <FatigueManagePage />}
+        {view === "dashboard" && <FatigueDashboardPage />}
+        {view === "survey" && <FatigueSurveyPage />}
       </div>
     </div>
   );
