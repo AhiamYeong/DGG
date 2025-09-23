@@ -4,29 +4,41 @@ import FatigueHistory from "../../components/fatigue/FatigueHistory";
 import FatigueProgressbar from "../../components/fatigue/FatigueProgressBar";
 import FatigueButtons from "../../components/fatigue/FatigueButtons";
 import { useEffect, useState } from "react";
-import { fatigueApi, MainFatigueProps } from "@/api/fatigueApi";
+import { fatigueApi, fatigueHistory, MainFatigueProps } from "@/api/fatigueApi";
 
 // 전부 하드코딩 된 페이지 -> 동적으로 연결 필요
 export default function FatigueManagePage() {
   const [fatigue, setFatigue] = useState<number>(0);
   const [nickname, setNickname] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  // 초기 렌더링시 데이터 불러오기
+  // const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [historyData, setHistoryData] = useState<fatigueHistory[]>([]);
+  // 초기 렌더링시 피로도 데이터 전부 불러오기
   useEffect(() => {
+    // 피로도 데이터 호출
     const fetchFatigue = async () => {
       try {
         const res = await fatigueApi.get("/fatigues");
         const data: MainFatigueProps = res.data;
-
         setFatigue(data.currentFatigue);
         setNickname(data.nickname);
       } catch (err) {
         console.error("에러 발생", err);
-      } finally {
-        setIsLoading(true);
       }
     };
+
+    // 피로도 히스토리 데이터 호출
+    const fetchFatigueHistory = async () => {
+      try {
+        const res = await fatigueApi.get("/fatigues/daily");
+        const data: fatigueHistory[] = res.data;
+        setHistoryData(data);
+      } catch (error) {
+        console.error("에러", error);
+      }
+    };
+
     fetchFatigue();
+    fetchFatigueHistory();
   }, []);
 
   return (
@@ -56,10 +68,13 @@ export default function FatigueManagePage() {
           </div>
 
           {/* 버튼 */}
-          <FatigueButtons></FatigueButtons>
+          <FatigueButtons
+            setFatigue={setFatigue}
+            setHistoryData={setHistoryData}
+          ></FatigueButtons>
         </div>
       </div>
-      <FatigueHistory></FatigueHistory>
+      <FatigueHistory data={historyData}></FatigueHistory>
     </div>
   );
 }

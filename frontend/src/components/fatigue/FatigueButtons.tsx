@@ -2,9 +2,17 @@
 import { LuCoffee } from "react-icons/lu";
 import { RiZzzFill } from "react-icons/ri";
 import { FaWalking } from "react-icons/fa";
-import { fatigueApi } from "@/api/fatigueApi";
+import { fatigueApi, fatigueHistory } from "@/api/fatigueApi";
 
-export default function FatigueButtons() {
+// useState의 setter: 상위에서 상태관리 & 하위에서 상태 바꾸기만 하기 위해 분리
+// 상태 단일 출처를 상위에만 두기!
+// 상태 끌어올리기 (Lifting State Up)
+interface Props {
+  setFatigue: React.Dispatch<React.SetStateAction<number>>;
+  setHistoryData: React.Dispatch<React.SetStateAction<fatigueHistory[]>>;
+}
+
+export default function FatigueButtons({ setFatigue, setHistoryData }: Props) {
   const handleClick = async (
     reason: "COFFEE" | "WALK" | "NAP",
     fatigueChange: number
@@ -14,9 +22,33 @@ export default function FatigueButtons() {
         reason,
         fatigueChange: fatigueChange,
       });
+      const updated = resp.data;
       console.log("응답", resp.data);
 
-      // TODO: 상태 갱신
+      // 1. optimistic update
+      setFatigue(updated.fatigue);
+      setHistoryData((prev) => [
+        {
+          fatigueId: Date.now(), // 임시 ID
+          createdAt: updated.createdAt,
+          reason: updated.reason,
+          fatigue: updated.fatigue,
+          fatigueChange: updated.fatigueChanfe,
+        },
+        ...prev,
+      ]);
+
+      // 2 최종 싱크 맞추기
+      try {
+        const resp = await fatigueApi.get<fatigueHistory[]>("/fatigues/daily");
+        const data = resp.data;
+        setHistoryData(data);
+      } catch (error) {
+        console.error("에러", error);
+      }
+
+      // 현재 피로도 갱신
+      setFatigue(updated.fatigue);
     } catch (error) {
       console.error("감소 실패", error);
     }

@@ -14,7 +14,7 @@ export interface MainFatigueProps {
 // 피로도 업데이트
 export interface fatigueUpdateRequest {
   reason: "COFFEE" | "WALK" | "NAP";
-  fatigue_change: number;
+  fatigueChange: number;
 }
 
 export interface fatigueUpdateResponse {

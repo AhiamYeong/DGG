@@ -65,13 +65,13 @@ export const fatigueHandler = [
 
     // 서버가 계산해줬다고 가정해서, 임의로 결과값 만들어줌
     const baseFatigue = 30; // 기준값 (mock 고정)
-    const newFatigue = baseFatigue + body.fatigue_change;
+    const newFatigue = baseFatigue + body.fatigueChange;
 
     const resp: fatigueUpdateResponse = {
       createdAt: new Date().toISOString().slice(0, 19).replace("T", " "),
       reason: body.reason,
       fatigue: newFatigue,
-      fatigueChange: body.fatigue_change,
+      fatigueChange: body.fatigueChange,
     };
     return HttpResponse.json(resp, { status: 200 });
   }),
