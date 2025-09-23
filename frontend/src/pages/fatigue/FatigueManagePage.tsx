@@ -3,9 +3,44 @@ import character from "../../assets/character.png";
 import FatigueHistory from "../../components/fatigue/FatigueHistory";
 import FatigueProgressbar from "../../components/fatigue/FatigueProgressBar";
 import FatigueButtons from "../../components/fatigue/FatigueButtons";
+import { useEffect, useState } from "react";
+import { fatigueApi, fatigueHistory, MainFatigueProps } from "@/api/fatigueApi";
 
 // 전부 하드코딩 된 페이지 -> 동적으로 연결 필요
 export default function FatigueManagePage() {
+  const [fatigue, setFatigue] = useState<number>(0);
+  const [nickname, setNickname] = useState<string>("");
+  // const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [historyData, setHistoryData] = useState<fatigueHistory[]>([]);
+  // 초기 렌더링시 피로도 데이터 전부 불러오기
+  useEffect(() => {
+    // 피로도 데이터 호출
+    const fetchFatigue = async () => {
+      try {
+        const res = await fatigueApi.get("/fatigues");
+        const data: MainFatigueProps = res.data;
+        setFatigue(data.currentFatigue);
+        setNickname(data.nickname);
+      } catch (err) {
+        console.error("에러 발생", err);
+      }
+    };
+
+    // 피로도 히스토리 데이터 호출
+    const fetchFatigueHistory = async () => {
+      try {
+        const res = await fatigueApi.get("/fatigues/daily");
+        const data: fatigueHistory[] = res.data;
+        setHistoryData(data);
+      } catch (error) {
+        console.error("에러", error);
+      }
+    };
+
+    fetchFatigue();
+    fetchFatigueHistory();
+  }, []);
+
   return (
     <div>
       <div className="bg-background p-4">
@@ -13,7 +48,8 @@ export default function FatigueManagePage() {
 
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-lg font-bold">
-            <span className="font-semibold">닉네임</span>님, <br />
+            {/* TOOD: "현재 피로도 관리" 내용 변경하기 */}
+            <span className="font-semibold">{nickname}</span>님, <br />
             현재 피로도 관리가 잘 되고 있어요
           </h2>
 
@@ -21,7 +57,7 @@ export default function FatigueManagePage() {
           <div className="mt-4">
             <FatigueProgressbar
               label="현재 피로도"
-              value={20}
+              value={fatigue}
             ></FatigueProgressbar>
           </div>
 
@@ -32,11 +68,13 @@ export default function FatigueManagePage() {
           </div>
 
           {/* 버튼 */}
-          {/* TODO: 아이콘 추가 */}
-          <FatigueButtons></FatigueButtons>
+          <FatigueButtons
+            setFatigue={setFatigue}
+            setHistoryData={setHistoryData}
+          ></FatigueButtons>
         </div>
       </div>
-      <FatigueHistory></FatigueHistory>
+      <FatigueHistory data={historyData}></FatigueHistory>
     </div>
   );
 }
