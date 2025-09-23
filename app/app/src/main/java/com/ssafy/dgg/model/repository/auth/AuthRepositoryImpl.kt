@@ -20,6 +20,18 @@ class AuthRepositoryImpl  (
         }
     }
 
+    override suspend fun logout(): Boolean {
+        val response = authApi.logout()
+        if (response.isSuccessful) return true;
+        else throw Exception("로그아웃 실패: ${response.code()} ${response.message()}")
+    }
+
+    override suspend fun withdraw(): Boolean {
+        val response = authApi.withdraw()
+        if (response.isSuccessful) return true;
+        else throw Exception("회원탈퇴 실패: ${response.code()} ${response.message()}")
+    }
+
     // TODO: refresh token 로직 추가
     /*override suspend fun refreshToken(refreshToken: String): TokenResponse {
         val response = authApi.refreshToken(mapOf("refreshToken" to refreshToken))

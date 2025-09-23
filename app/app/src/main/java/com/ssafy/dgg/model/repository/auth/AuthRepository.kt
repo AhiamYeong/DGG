@@ -1,7 +1,6 @@
 package com.ssafy.dgg.model.repository.auth
 
 import com.ssafy.dgg.model.data.GoogleLoginRequest
-import com.ssafy.dgg.model.data.TokenResponse
 
 /* Repository 인터페이스 */
 interface AuthRepository {
@@ -9,4 +8,7 @@ interface AuthRepository {
     suspend fun loginWithGoogle(request: GoogleLoginRequest): Boolean
     // TODO: refreshtoken 알아보기..ㅎ
     // suspend fun refreshToken(refreshToken: String): TokenResponse
+    suspend fun logout(): Boolean
+
+    suspend fun withdraw(): Boolean
 }

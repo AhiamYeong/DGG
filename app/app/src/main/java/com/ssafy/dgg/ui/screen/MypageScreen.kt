@@ -1,5 +1,6 @@
 package com.ssafy.dgg.ui.screen
 
+import AuthViewModel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +25,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun MyPageScreen(modifier: Modifier = Modifier) {
+fun MyPageScreen(
+    modifier: Modifier = Modifier,
+    viewModel: AuthViewModel
+) {
+//     val loginState by viewModel.loginState
     Column (
         modifier = modifier
             .fillMaxSize()
@@ -37,7 +42,8 @@ fun MyPageScreen(modifier: Modifier = Modifier) {
             onNicknameChange = {},
             onSave = {},
             onCancel = {},
-            onWithdraw = {},
+            onWithdraw = { viewModel.withdraw() },
+            onLogout = { viewModel.logout() }
         )
         AlarmSettingScreen(
             isAlarmEnabled = true,
@@ -55,7 +61,8 @@ fun ProfileEditScreen(
     onNicknameChange: (String) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
-    onWithdraw: () -> Unit
+    onWithdraw: () -> Unit,
+    onLogout: () -> Unit
 ){
     Column {
         Text("개인정보 수정", style = MaterialTheme.typography.titleMedium)
@@ -98,7 +105,7 @@ fun ProfileEditScreen(
         Spacer(Modifier.height(8.dp))
 
         Button(
-            onClick = { /* TODO */ },
+            onClick = onLogout,
             modifier = Modifier.fillMaxWidth() // 가로 최대
         ) {
             Text("로그아웃")
