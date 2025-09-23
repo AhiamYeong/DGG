@@ -135,6 +135,8 @@ export interface SimpleRoute extends BaseEntity {
   recommendationType: 'minFatigue' | 'minTime' | 'minTransfer';
   description: string;
   isBookmarked?: boolean;
+  // 서버 즐겨찾기 식별자 (있으면 해제시 사용)
+  bookmarkRouteId?: number;
   fatigueLevel?: number; // 피로도 수치 (0-100)
   // test.json 원본 데이터 (선택사항)
   rawData?: any;

@@ -33,7 +33,6 @@ export default defineConfig({
           ],
           'search-features': [
             './src/api/placeSearchApi.ts',
-            './src/hooks/useNaverSearch.ts',
             './src/hooks/usePlaceSearch.ts'
           ],
           'route-features': [

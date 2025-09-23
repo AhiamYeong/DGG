@@ -1,7 +1,7 @@
 import React from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { getMinTime, formatTime, getActionLabel } from '@/utils/timeUtils';
+import { getMinTime, formatTime } from '@/utils/timeUtils';
 import { Button } from './Button';
 
 interface TimePickerProps {
@@ -92,7 +92,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
               size="lg"
               className="flex-1 py-4"
             >
-              {getActionLabel(departureTime, 'schedule')}
+              저장
             </Button>
           </div>
         </div>

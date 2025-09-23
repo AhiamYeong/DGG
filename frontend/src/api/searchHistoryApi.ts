@@ -1,19 +1,15 @@
 import type { 
   ApiResponse,
   RecentSearchApiResponse,
-  FavoritePlaceApiResponse,
-  AddRecentSearchRequest,
-  AddFavoritePlaceRequest
+  AddRecentSearchRequest
 } from '../types/api-types';
 import { createApiClient, apiCall, testApiConnection } from '../utils/apiClient';
 import { API_CONSTANTS } from '../constants';
 
 // 타입 별칭으로 통합
 export type RecentSearch = RecentSearchApiResponse;
-export type FavoritePlace = FavoritePlaceApiResponse;
-
 // API 요청 타입 재export
-export type { AddRecentSearchRequest, AddFavoritePlaceRequest };
+export type { AddRecentSearchRequest };
 
 // API 설정 — 배포 서버로 연결
 const API_BASE_URL = import.meta.env.VITE_API_BASE || 'https://j13a305.p.ssafy.io/api/';
@@ -47,31 +43,7 @@ export const recentSearchApi = {
     )
 };
 
-/**
- * 즐겨찾기 장소 API
- */
-export const favoritePlacesApi = {
-  // 즐겨찾기 장소 목록 조회
-  getFavoritePlaces: (): Promise<ApiResponse<FavoritePlace[]>> =>
-    apiCall(
-      () => searchHistoryApi.get('/v1/favorites'),
-      '즐겨찾기 장소를 불러오는데 실패했습니다.'
-    ),
-
-  // 즐겨찾기 장소 추가
-  addFavoritePlace: (request: AddFavoritePlaceRequest): Promise<ApiResponse<FavoritePlace>> =>
-    apiCall(
-      () => searchHistoryApi.post('/v1/favorites', request),
-      '즐겨찾기 장소 추가에 실패했습니다.'
-    ),
-
-  // 즐겨찾기 장소 삭제
-  deleteFavoritePlace: (id: string): Promise<ApiResponse<void>> =>
-    apiCall(
-      () => searchHistoryApi.delete(`/v1/favorites/${id}`),
-      '즐겨찾기 장소 삭제에 실패했습니다.'
-    )
-};
+// 즐겨찾기 장소 API는 favoritePlacesApi.ts로 분리되었습니다.
 
 /**
  * API 연결 테스트 함수
