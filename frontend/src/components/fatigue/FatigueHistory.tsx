@@ -2,10 +2,6 @@
 import { fatigueHistory } from "@/api/fatigueApi";
 
 export default function FatigueHistory({ data }: { data: fatigueHistory[] }) {
-  // const [historyData, setHistoryData] = useState<fatigueHistory[]>([]);
-  //   TODO: 변경
-  // const [isLoading, setIsLoading] = useState<boolean>(false);
-
   return (
     <div className="bg-background p-4">
       <div className="bg-white rounded-lg shadow-md p-6">

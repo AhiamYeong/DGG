@@ -51,7 +51,7 @@ export interface footStepDataProps {
   footStep: number;
 }
 
-export interface walkDashboardProps {
+export interface footStepDashboardProps {
   nickname: string;
   data: footStepDataProps[];
 }

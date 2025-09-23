@@ -5,17 +5,22 @@ import {
   fatigueUpdateRequest,
   fatigueUpdateResponse,
   MainFatigueProps,
+  fatigueDashboardProps,
+  footStepDashboardProps,
+  footStepDataProps,
+  fatigueDataProps,
 } from "@/api/fatigueApi";
 import { http, HttpResponse } from "msw";
 
 const API_BASE_URL = "https://j13a305.p.ssafy.io/api/v1";
+const NICKNAME = "애옹";
 
 let fatigue: MainFatigueProps = {
-  nickname: "MockNickname",
+  nickname: NICKNAME,
   currentFatigue: 30,
 };
 
-export const mockFatigueHistories: fatigueHistory[] = [
+const mockFatigueHistories: fatigueHistory[] = [
   {
     fatigueId: 1,
     createdAt: "2025-09-20 09:15:00",
@@ -53,6 +58,37 @@ export const mockFatigueHistories: fatigueHistory[] = [
   },
 ];
 
+const fatigueData: fatigueDataProps[] = [
+  { day: "mon", fatigue: 20 },
+  { day: "tue", fatigue: 35 },
+  { day: "wed", fatigue: 25 },
+  { day: "thu", fatigue: 80 },
+  { day: "fri", fatigue: 90 },
+  { day: "sat", fatigue: 30 },
+  { day: "sun", fatigue: 45 },
+];
+
+const fatigueDashboardData: fatigueDashboardProps = {
+  nickname: NICKNAME,
+  fatigueRank: 4,
+  data: fatigueData,
+};
+
+const footStepData: footStepDataProps[] = [
+  { day: "mon", footStep: 2533 },
+  { day: "tue", footStep: 2500 },
+  { day: "wed", footStep: 1500 },
+  { day: "thu", footStep: 3000 },
+  { day: "fri", footStep: 1500 },
+  { day: "sat", footStep: 400 },
+  { day: "sun", footStep: 300 },
+];
+
+const footStepDashboardData: footStepDashboardProps = {
+  nickname: NICKNAME,
+  data: footStepData,
+};
+
 export const fatigueHandler = [
   // 피로도 조회
   http.get(`${API_BASE_URL}/fatigues`, () => {
@@ -79,5 +115,15 @@ export const fatigueHandler = [
   // 피로도 하루 히스토리 조회
   http.get(`${API_BASE_URL}/fatigues/daily`, async () => {
     return HttpResponse.json(mockFatigueHistories);
+  }),
+
+  // 피로도 일주일 통계 조회
+  http.get(`${API_BASE_URL}/info/fatigues`, async () => {
+    return HttpResponse.json(fatigueDashboardData);
+  }),
+
+  // 걸음수 일주일 통계 조회
+  http.get(`${API_BASE_URL}/info/foot-steps`, async () => {
+    return HttpResponse.json(footStepDashboardData);
   }),
 ];
