@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { searchPlaces } from '../api/placeSearchApi';
-import type { SearchResult } from './useNaverSearch';
+import type { SearchResult } from '../types/search-result';
 import { UI_CONSTANTS } from '../constants';
 
 interface UsePlaceSearchOptions {

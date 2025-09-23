@@ -8,7 +8,6 @@ export { useMarker } from './useMarker';
 export { useMapViewModel } from './useMapViewModel';
 
 // API 관련 훅
-export { useNaverSearch } from './useNaverSearch';
 export { usePlaceSearch } from './usePlaceSearch';
 export { useSearchHistory } from './useSearchHistory';
 
