@@ -142,4 +142,5 @@ dependencies {
     // MockWebServer
     testImplementation("org.mockito:mockito-core:5.6.0")
     // 필요하면 Mockito
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
 }

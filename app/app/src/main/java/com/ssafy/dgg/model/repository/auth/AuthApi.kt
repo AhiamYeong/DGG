@@ -31,5 +31,5 @@ interface AuthApi {
 
     // 회원탈퇴
     @PATCH("auth/withdraw")
-    suspend fun withdraw(): Response<Unit>
+    fun withdraw(): Response<Unit>
 }
