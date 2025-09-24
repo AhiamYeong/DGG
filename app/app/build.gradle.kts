@@ -63,9 +63,9 @@ android {
             )
 
             // 웹뷰용 URL
-            buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io/\"")
+            buildConfigField("String", "WEB_URL", "\"https://j13a305.p.ssafy.io\"")
             // API 호출용 URL
-            buildConfigField("String", "API_BASE_URL", "\"https://j13a305.p.ssafy.io/api/v1/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://j13a305.p.ssafy.io/api/v1\"")
 
 
             buildConfigField("boolean", "IS_DEBUG", "false")
@@ -142,5 +142,8 @@ dependencies {
     // MockWebServer
     testImplementation("org.mockito:mockito-core:5.6.0")
     // 필요하면 Mockito
+
+    // windowTime 맞추기
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
 }

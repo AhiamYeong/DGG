@@ -4,7 +4,11 @@ import FatigueHistory from "../../components/fatigue/FatigueHistory";
 import FatigueProgressbar from "../../components/fatigue/FatigueProgressBar";
 import FatigueButtons from "../../components/fatigue/FatigueButtons";
 import { useEffect, useState } from "react";
-import { fatigueApi, fatigueHistory, MainFatigueProps } from "@/api/fatigueApi";
+import {
+  fatigueApi,
+  fatigueHistory,
+  MainFatigueProps,
+} from "../../api/fatigueApi";
 
 // 전부 하드코딩 된 페이지 -> 동적으로 연결 필요
 export default function FatigueManagePage() {

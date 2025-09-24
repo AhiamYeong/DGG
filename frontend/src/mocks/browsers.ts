@@ -9,6 +9,7 @@ import { placeSearchHandlers } from "./placeSearchHandlers";
 import { favoritePlacesHandlers } from "./favoritePlacesHandlers";
 import { searchHistoryHandlers } from "./searchHistoryHandlers";
 import { bookmarkHandlers } from "./bookmarkHandlers";
+import { mainPageHandler } from "./mainPageHandlers";
 
 export const worker = setupWorker(
   ...mypageHandlers,
@@ -18,5 +19,6 @@ export const worker = setupWorker(
   ...placeSearchHandlers,
   ...favoritePlacesHandlers,
   ...searchHistoryHandlers,
-  ...bookmarkHandlers
+  ...bookmarkHandlers,
+  ...mainPageHandler
 );

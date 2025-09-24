@@ -4,11 +4,11 @@ import { createBrowserRouter } from "react-router-dom";
 import { lazy, Suspense } from "react";
 
 // Lazy load pages for code splitting
+const MainPage = lazy(() => import("./pages/MainPage"));
 const FatiguePage = lazy(() => import("./pages/FatiguePage"));
 const MainMapPage = lazy(() => import("./pages/MainMapPage"));
 const PlanPage = lazy(() => import("./pages/PlanPage"));
 const AlarmPage = lazy(() => import("./pages/AlarmPage"));
-// const MyPage = lazy(() => import("./pages/MyPage"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 
 // Loading component
@@ -20,8 +20,17 @@ const PageLoader = () => (
 
 // Create router with Suspense wrapper
 export const router = createBrowserRouter([
+  // mainPage 추가
   {
     path: "/",
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <MainPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: "/fatigue",
     element: (
       <Suspense fallback={<PageLoader />}>
         <FatiguePage />

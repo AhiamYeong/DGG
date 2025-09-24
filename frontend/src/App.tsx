@@ -45,3 +45,4 @@ export default function App() {
 
 // DOM에 렌더링
 createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(<App />);
