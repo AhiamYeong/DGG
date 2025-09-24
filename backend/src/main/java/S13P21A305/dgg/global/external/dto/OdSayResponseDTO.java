@@ -74,6 +74,7 @@ public class OdSayResponseDTO {
 	@Getter @Setter
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class Station {
+		private Integer stationID;
 		private String stationName;
 		private Double x; // lng
 		private Double y; // lat
@@ -87,5 +88,7 @@ public class OdSayResponseDTO {
 
 		// 버스일 때 노선 번호 (ex. 140)
 		private String busNo;
+
+		private Integer busID;
 	}
 }

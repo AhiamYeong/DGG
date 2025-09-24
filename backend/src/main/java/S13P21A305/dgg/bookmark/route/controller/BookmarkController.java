@@ -53,7 +53,7 @@ public class BookmarkController {
 	@GetMapping("/{bookmarkRouteId}")
 	public ResponseEntity<BookmarkRouteDetailDTO> getDetail(
 		@PathVariable Long bookmarkRouteId,
-		@RequestParam(name = "realtime", defaultValue = "false") boolean realtime,
+		@RequestParam(name = "realtime", defaultValue = "true") boolean realtime,
 		@RequestParam(name = "departAt", required = false) String departAt,
 		@AuthenticationPrincipal CustomOAuth2User member
 	) {
