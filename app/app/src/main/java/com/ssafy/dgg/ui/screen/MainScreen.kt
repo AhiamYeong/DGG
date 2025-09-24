@@ -50,7 +50,7 @@ fun MainScreen(
     ) { innerPadding ->
         when (selectedItem.route) {
             "fatigue" -> WebViewScreen(
-                url = BASE_URL,
+                url = "$BASE_URL/fatigue",
                 context = context,
                 modifier = Modifier.padding(innerPadding)
             )
