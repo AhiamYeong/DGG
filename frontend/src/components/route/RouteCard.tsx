@@ -120,7 +120,10 @@ const RouteCard = memo<RouteCardProps>(({
 
         {/* 선택 버튼 */}
         <Button
-          onClick={handleSelect}
+          onClick={(e) => {
+            e.stopPropagation(); // 이벤트 버블링 방지
+            handleSelect();
+          }}
           variant="primary"
           size="sm"
           className="px-4 py-2"
