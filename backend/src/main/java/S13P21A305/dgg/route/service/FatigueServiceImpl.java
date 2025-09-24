@@ -8,116 +8,13 @@ import S13P21A305.dgg.route.domain.TransportType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class FatigueServiceImpl implements FatigueService {
 
     private final SurveyAnswerRepository surveyAnswerRepository;
-
-    private final CongestionProvider congestionProvider;
-
-    // ===================== JSON "data" -> List<Route> 변환 =====================
-    @SuppressWarnings("unchecked")
-    private List<Route> toRoutesFromPayload(List<Map<String, Object>> data) {
-        if (data == null || data.isEmpty()) return List.of();
-
-        var sorted = data.stream()
-                .sorted(Comparator.comparingInt(m -> ((Number) m.getOrDefault("order", 0)).intValue()))
-                .collect(Collectors.toList());
-
-        List<Route> routes = new ArrayList<>(sorted.size());
-        for (Map<String, Object> seg : sorted) {
-            String typeStr = str(seg.get("type"));
-            TransportType type = parseType(typeStr);
-
-            String lineName   = str(seg.get("lineName"));
-            String startPoint = str(seg.get("startPoint"));
-            String endPoint   = str(seg.get("endPoint"));
-
-            double startLat = dbl(seg.get("startLat"));
-            double startLng = dbl(seg.get("startLng"));
-            double endLat   = dbl(seg.get("endLat"));
-            double endLng   = dbl(seg.get("endLng"));
-
-            // durationMin / timeTaken 둘 다 x지원
-            int durationMin = ((Number) seg.getOrDefault("durationMin",
-                    seg.getOrDefault("timeTaken", 0))).intValue();
-
-            // path가 있으면 경로 길이, 없으면 좌표, 그래도 없으면 payload의 distanceM 사용
-            List<Map<String, Object>> path = (List<Map<String, Object>>) seg.getOrDefault("path", null);
-            double distanceM = Double.NaN;
-            if (path != null && path.size() >= 2) {
-                distanceM = polylineDistanceM(path);
-            } else if (!Double.isNaN(startLat) && !Double.isNaN(startLng)
-                    && !Double.isNaN(endLat) && !Double.isNaN(endLng)) {
-                distanceM = haversineM(startLat, startLng, endLat, endLng);
-            } else {
-                // payload로 온 distanceM 최종 폴백
-                distanceM = dbl(seg.get("distanceM"));
-            }
-            if (Double.isNaN(distanceM)) distanceM = 0.0;
-
-            // WALKING은 null, 나머지는 0으로 시작(Provider가 덮어씀)
-            Double congestionRate = (type == TransportType.WALKING) ? null : 0.0;
-
-            routes.add(Route.builder()
-                    .type(type)
-                    .distanceM(distanceM)
-                    .durationMin(durationMin)
-                    .congestionRate(congestionRate)
-                    .startPoint(startPoint)
-                    .endPoint(endPoint)
-                    .lineName(lineName)
-                    .build());
-        }
-        return routes;
-    }
-
-
-    private static TransportType parseType(String s) {
-        if (s == null) return TransportType.WALKING;
-        return switch (s.toUpperCase(Locale.ROOT)) {
-            case "SUBWAY" -> TransportType.SUBWAY;
-            case "BUS"    -> TransportType.BUS;
-            case "WALKING", "WALK", "TRANSFER" -> TransportType.WALKING; // 환승 보행도 WALKING으로 통일
-            default -> TransportType.WALKING;
-        };
-    }
-
-    private static String str(Object o) { return o == null ? null : String.valueOf(o); }
-    private static double dbl(Object o) {
-        if (o == null) return Double.NaN;
-        if (o instanceof Number n) return n.doubleValue();
-        try { return Double.parseDouble(String.valueOf(o)); } catch (Exception e) { return Double.NaN; }
-    }
-
-    private static double polylineDistanceM(List<Map<String, Object>> path) {
-        double sum = 0.0;
-        for (int i = 1; i < path.size(); i++) {
-            double lat1 = dbl(path.get(i - 1).get("lat"));
-            double lon1 = dbl(path.get(i - 1).get("lng"));
-            double lat2 = dbl(path.get(i).get("lat"));
-            double lon2 = dbl(path.get(i).get("lng"));
-            if (!Double.isNaN(lat1) && !Double.isNaN(lon1) && !Double.isNaN(lat2) && !Double.isNaN(lon2)) {
-                sum += haversineM(lat1, lon1, lat2, lon2);
-            }
-        }
-        return sum;
-    }
-
-    private static double haversineM(double lat1, double lon1, double lat2, double lon2) {
-        final double R = 6371000.0; // meters
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(dLat/2) * Math.sin(dLat/2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(dLon/2) * Math.sin(dLon/2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    }
 
     // 가중치(3:4:3) 및 상수
     private static final double W_C = 0.4;   // 혼잡
@@ -129,12 +26,6 @@ public class FatigueServiceImpl implements FatigueService {
 
     @Override
     public double calculateFatigue(Integer memberId, List<Route> routeList) {
-
-        //CSV/Spark 기반 혼잡도 채우기 (Provider 사용 시)
-        if (congestionProvider != null) {
-            congestionProvider.enrich(routeList);
-        }
-
         // 1) 설문 조회
         List<SurveyAnswer> answers = surveyAnswerRepository.findByMemberId(memberId);
 
@@ -237,24 +128,13 @@ public class FatigueServiceImpl implements FatigueService {
     // ===== 환승 카운트: transit – WALKING – transit 패턴 =====
     private int countTransfers(List<Route> legs){
         int n = 0;
-        for (int i = 0; i < legs.size() - 1; i++){
-            var a = legs.get(i);
-            var b = legs.get(i+1);
-            if (isTransit(a) && isTransit(b)) {
-                boolean typeChange = a.getType() != b.getType();
-                boolean lineChange = a.getType() == b.getType()
-                        && (a.getLineName() != null || b.getLineName() != null)
-                        && !Objects.equals(a.getLineName(), b.getLineName());
-                if (typeChange || lineChange) n++;
-            }
-            // 기존 규칙(대중교통–걷기–대중교통)도 유지하려면 아래 추가:
-            if (i < legs.size()-2 && isTransit(a) && legs.get(i+1).getType()==TransportType.WALKING && isTransit(legs.get(i+2))) {
+        for (int i = 1; i < legs.size() - 1; i++){
+            if (isTransit(legs.get(i-1)) && legs.get(i).getType() == TransportType.WALKING && isTransit(legs.get(i+1))) {
                 n++;
             }
         }
         return n;
     }
-
     private boolean isTransit(Route r){ return r != null && r.getType() != TransportType.WALKING; }
 
     // ===== 혼잡/시간 계수 & 유틸 =====
@@ -271,16 +151,8 @@ public class FatigueServiceImpl implements FatigueService {
         if (t <= 90) return 1.9 + (t-60)*0.04;
         return 3.1 + (t-90)*0.02;
     }
-    private static double norm01(double val, double max){ return clamp01(val / max); }
+    private static double norm01(double val, double max){ return clamp01((val - 1.0) / (max - 1.0)); }
     private static double clamp01(double v){ return Math.max(0, Math.min(1, v)); }
     private static double clamp100(double v){ return Math.max(0, Math.min(100, v)); }
     private static double clamp(double v, double lo, double hi){ return Math.max(lo, Math.min(hi, v)); }
-
-    // FatigueServiceImpl에 구현 추가
-    @Override
-    public double calculateFatigueFromPayload(Integer memberId, List<Map<String, Object>> data) {
-        List<Route> routes = toRoutesFromPayload(data);
-        return calculateFatigue(memberId, routes);
-    }
-
 }
