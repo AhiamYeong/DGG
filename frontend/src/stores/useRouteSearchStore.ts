@@ -199,7 +199,8 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
             ...route,
             steps: steps,
             totalDuration: routeDetail.totalTime,
-            fatigueLevel: routeDetail.fatigue
+            fatigueLevel: routeDetail.fatigue,
+            polylineData: routeDetail // MSW에서 오는 폴리라인 데이터 저장
           };
 
           // 네비게이션 시작

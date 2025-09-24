@@ -83,9 +83,14 @@ export default function MainMapPage() {
 
   // 네비게이션 시작 시 선택된 경로의 폴리라인과 마커 그리기
   useEffect(() => {
-    console.log('네비게이션 useEffect 트리거:', { isNavigating, currentRoute: !!currentRoute, hasRawData: !!currentRoute?.rawData });
+    console.log('네비게이션 useEffect 트리거:', { 
+      isNavigating, 
+      currentRoute: !!currentRoute, 
+      hasRawData: !!currentRoute?.rawData,
+      hasPolylineData: !!currentRoute?.polylineData 
+    });
     
-    if (isNavigating && currentRoute && currentRoute.rawData) {
+    if (isNavigating && currentRoute && (currentRoute.rawData || currentRoute.polylineData)) {
       console.log('네비게이션 시작 - 경로 처리 시작');
       drawSelectedRoute(currentRoute);
       createSelectedRouteMarkers(currentRoute);

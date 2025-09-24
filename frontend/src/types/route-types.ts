@@ -140,6 +140,8 @@ export interface SimpleRoute extends BaseEntity {
   fatigueLevel?: number; // 피로도 수치 (0-100)
   // test.json 원본 데이터 (선택사항)
   rawData?: any;
+  // MSW 폴리라인 데이터 (선택사항)
+  polylineData?: any;
   // routeKey (안내시작 시 사용)
   routeKey?: string;
 }
