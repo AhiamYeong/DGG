@@ -150,7 +150,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         is LoginState.LoggedIn -> {
-                            MainScreen()
+                            MainScreen(authViewModel)
                             healthViewModel.loadHealthDatas(this)
 
                             healthViewModel.activityStatus.observe(this) { status ->

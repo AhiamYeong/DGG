@@ -1,6 +1,6 @@
 /** @format */
 
-import { mypageApi, SurveyAnswerProps } from "@/api/mypageApi";
+import { fatigueApi, SurveyAnswerProps } from "@/api/fatigueApi";
 import { useEffect, useState } from "react";
 
 // 질문 - fix
@@ -17,14 +17,14 @@ const questions: Question[] = [
   { id: 5, text: "평소에 운동을 하시나요?" },
 ];
 
-export default function ProfileEditPage() {
+export default function FatigueSurveyPage() {
   const [answers, setAnswers] = useState<{ [key: number]: number }>({});
 
   // 기존 설문 불러오기
   useEffect(() => {
     (async () => {
       try {
-        const res = await mypageApi.get<SurveyAnswerProps[]>("mypage/survey");
+        const res = await fatigueApi.get<SurveyAnswerProps[]>("mypage/survey");
 
         // 배열을 객체 {id: value}로 변환해서 상태에 저장
         const loadedAnswers: { [key: number]: number } = {};
@@ -57,11 +57,12 @@ export default function ProfileEditPage() {
     console.log("저장된 답변 (payload):", payload);
 
     try {
-      const res = await mypageApi.post<SurveyAnswerProps[]>(
+      const res = await fatigueApi.post<SurveyAnswerProps[]>(
         "mypage/survey",
         payload
       );
       console.log(res);
+      alert("저장 완료");
     } catch (err) {
       console.error("제출 실패:", err);
     }

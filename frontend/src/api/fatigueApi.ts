@@ -55,3 +55,10 @@ export interface footStepDashboardProps {
   nickname: string;
   data: footStepDataProps[];
 }
+
+/** 피로도 설문조사 */
+// 설문조사 응답 interface
+export interface SurveyAnswerProps {
+  surveyQuestionId: number;
+  answerValue: number;
+}
