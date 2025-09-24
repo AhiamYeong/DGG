@@ -73,6 +73,9 @@ public class BookmarkRouteInfo {
 	@Column(name = "bus_station_id")
 	private String busStationId;
 
+	@Column(name = "path_json", columnDefinition = "TEXT")
+	private String pathJson; // 경로에 있는 모든 정류장/역 정보(json)
+
 	@PrePersist
 	void onCreate(){ this.createdAt = LocalDateTime.now(); }
 
