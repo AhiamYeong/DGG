@@ -32,9 +32,9 @@ export const NavigationMode = memo<NavigationModeProps>(({
   return (
     <>
       {/* 통합된 네비게이션 컨테이너 */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-auto">
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         {/* 경로 정보 헤더 */}
-        <div className="absolute top-0 left-0 w-full z-30">
+        <div className="absolute top-0 left-0 w-full z-30 pointer-events-auto">
           <RouteInfo
             route={currentRoute}
             currentStepIndex={currentStepIndex}
@@ -42,7 +42,7 @@ export const NavigationMode = memo<NavigationModeProps>(({
         </div>
 
         {/* 사이드 시트 (헤더와 연결된 형태) */}
-        <div className="absolute top-0 left-0 w-full h-full">
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
           <Suspense fallback={<div className="w-full h-20 bg-gray-100 animate-pulse rounded-lg" />}>
             <SideSheet
               position={sideSheetPosition}
