@@ -289,14 +289,14 @@ export default function SearchPage() {
                   />
                 ) : (
                   <RecentSearchList
-                    items={items
+                    items={Array.isArray(items) ? items
                       .filter((item): item is import('@/types/api-types').RecentSearchApiResponse => 'query' in item)
                       .map(item => ({
                         id: item.id,
                         name: item.query,
                         address: '',
                         timestamp: new Date(item.timestamp)
-                      }))}
+                      })) : []}
                     onSelect={(item) => handleLocationSelect({
                       id: item.id,
                       name: item.name,
@@ -316,13 +316,13 @@ export default function SearchPage() {
                   />
                 ) : (
                   <FavoritePlacesList
-                    items={items
+                    items={Array.isArray(items) ? items
                       .filter((item): item is import('@/types/api-types').FavoritePlaceApiResponse => 'title' in item)
                       .map(item => ({
                         bookmarkPlaceId: parseInt(item.id),
                         placeName: item.title,
                         address: item.address
-                      }))}
+                      })) : []}
                     onSelect={(item) => handleLocationSelect({
                       id: String(item.bookmarkPlaceId),
                       name: item.placeName,
