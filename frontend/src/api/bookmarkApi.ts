@@ -1,11 +1,13 @@
-import { createApiClient } from '@/utils/apiClient';
-import { throwApiError } from '@/utils/apiError';
-import type { BookmarkRoute, AddRouteBookmarkRequest } from '@/types/bookmark';
+/** @format */
+
+import { createApiClient } from "@/utils/apiClient";
+import { throwApiError } from "@/utils/apiError";
+import type { BookmarkRoute, AddRouteBookmarkRequest } from "@/types/bookmark";
 
 // 다른 API 파일들과 동일한 베이스 URL 사용
-const API_BASE_URL = 'https://j13a305.p.ssafy.io/api/';
+const API_BASE_URL = "https://j13a305.p.ssafy.io/api/";
 const api = createApiClient(API_BASE_URL);
-const BASE = '/v1/bookmarks/routes';
+const BASE = "/v1/bookmarks/routes";
 
 export const bookmarkApi = {
   async getRouteBookmarks(): Promise<BookmarkRoute[]> {
@@ -17,7 +19,9 @@ export const bookmarkApi = {
     }
   },
 
-  async createRouteBookmark(payload: AddRouteBookmarkRequest): Promise<BookmarkRoute> {
+  async createRouteBookmark(
+    payload: AddRouteBookmarkRequest
+  ): Promise<BookmarkRoute> {
     try {
       const res = await api.post<BookmarkRoute>(BASE, payload);
       return res.data;
@@ -26,9 +30,14 @@ export const bookmarkApi = {
     }
   },
 
-  async updateRouteBookmarkName(bookmarkRouteId: number, name: string): Promise<BookmarkRoute> {
+  async updateRouteBookmarkName(
+    bookmarkRouteId: number,
+    name: string
+  ): Promise<BookmarkRoute> {
     try {
-      const res = await api.put<BookmarkRoute>(`${BASE}/${bookmarkRouteId}`, { name });
+      const res = await api.put<BookmarkRoute>(`${BASE}/${bookmarkRouteId}`, {
+        name,
+      });
       return res.data;
     } catch (e) {
       throwApiError(e);
@@ -41,7 +50,7 @@ export const bookmarkApi = {
     } catch (e) {
       throwApiError(e);
     }
-  }
+  },
 };
 
 export default bookmarkApi;
