@@ -35,6 +35,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 //	implementation 'org.springframework.cloud:spring-cloud-starter-zookeeper-config'
 	implementation 'org.springframework.kafka:spring-kafka'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
@@ -67,6 +68,30 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'com.h2database:h2'
 
+	// spark 의존성
+	implementation("org.apache.spark:spark-core_2.12:3.5.1") {
+		exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j2-impl'
+		exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+	}
+	implementation("org.apache.spark:spark-sql_2.12:3.5.1") {
+		exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j2-impl'
+		exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+	}
+	runtimeOnly 'javax.servlet:javax.servlet-api:3.1.0'
+
+
+	// Hive/Spark Thrift JDBC
+//	implementation 'org.apache.hive:hive-jdbc:3.1.3'
+//	implementation 'org.apache.hadoop:hadoop-common:3.3.6'
+
+	//redis 의존성
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis' // 필수
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation 'org.apache.commons:commons-pool2'
+
+	runtimeOnly "org.apache.logging.log4j:log4j-core:2.19.0"
+	runtimeOnly "org.apache.logging.log4j:log4j-api:2.19.0"
+
 }
 
 dependencyManagement {
@@ -83,5 +108,14 @@ tasks.named('test') {
 	}
 }
 
+configurations.all {
+	exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j2-impl'
+	exclude group: 'org.slf4j',                module: 'slf4j-reload4j'
+}
 
-
+tasks.named('bootRun') {
+	jvmArgs '--add-exports=java.base/sun.nio.ch=ALL-UNNAMED',
+			'--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
+			'--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED',
+			'--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED'
+}
