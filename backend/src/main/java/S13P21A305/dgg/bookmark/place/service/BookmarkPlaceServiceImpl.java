@@ -85,8 +85,6 @@ public class BookmarkPlaceServiceImpl implements BookmarkPlaceService {
 			.bookmarkPlaceId(p.getId())
 			.placeName(p.getPlaceName())
 			.address(p.getAddress())
-			.latitude(p.getLatitude())
-			.longitude(p.getLongitude())
 			.build();
 	}
 }

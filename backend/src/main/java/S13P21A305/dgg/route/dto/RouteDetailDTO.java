@@ -32,6 +32,8 @@ public class RouteDetailDTO {
 
 		// 경유 좌표 배열
 		private List<LatLngDTO> path;
+
+		private Integer etaMin;
 	}
 
 	// 경유 좌표용 DTO

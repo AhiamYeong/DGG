@@ -67,14 +67,16 @@ public class BookmarkRouteInfo {
 	@Column(name = "time_taken")
 	private Integer timeTaken; // 소요시간
 
+	@Column(name = "bus_route_id")
+	private String busRouteId;
+
+	@Column(name = "bus_station_id")
+	private String busStationId;
+
 	@PrePersist
 	void onCreate(){ this.createdAt = LocalDateTime.now(); }
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "bookmark_id", insertable = false, updatable = false)
 	private BookmarkRoute bookmark;
-
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "bookmark_id", insertable=false, updatable=false)
-	private BookmarkRoute bookmarkRoute;
 }
