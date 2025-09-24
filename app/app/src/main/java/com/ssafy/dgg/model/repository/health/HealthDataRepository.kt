@@ -5,17 +5,20 @@ import com.samsung.android.sdk.health.data.HealthDataStore
 import com.samsung.android.sdk.health.data.data.AggregatedData
 import com.samsung.android.sdk.health.data.data.HealthDataPoint
 import com.samsung.android.sdk.health.data.data.entries.SleepSession
+import com.samsung.android.sdk.health.data.device.DeviceGroup
 import com.samsung.android.sdk.health.data.request.DataType
 import com.samsung.android.sdk.health.data.request.DataTypes
 import com.samsung.android.sdk.health.data.request.LocalTimeFilter
 import com.samsung.android.sdk.health.data.response.DataResponse
 import com.ssafy.dgg.model.data.ActivityDataRequest
 import com.ssafy.dgg.model.data.SleepDataRequest
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.toKotlinInstant
 import java.time.Duration
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
+import java.time.ZoneOffset
 
 /* 서버에 보낼 헬스 데이터 DTO로 정제 */
 class HealthDataRepository(private val store: HealthDataStore) {
@@ -27,7 +30,27 @@ class HealthDataRepository(private val store: HealthDataStore) {
 
     val localTimeFilter = LocalTimeFilter.of(startOfToday, endOfToday)
 
+    // device 확인
+    suspend fun getDevice() {
+        val healthDataStore = store
+        val deviceManager = healthDataStore.getDeviceManager()
+        val devices = deviceManager.getDevices(DeviceGroup.MOBILE)
+        devices.forEach { device ->
+            val deviceId = device.id
+            Log.d("deviceId", "{$deviceId}")
+            val deviceType = device.deviceType
+            Log.d("deviceId", "{$deviceType}")
+            val deviceManufacturer = device.manufacturer
+            Log.d("deviceId", "{$deviceManufacturer}")
+            val deviceModel = device.model
+            Log.d("deviceId", "{$deviceModel}")
+            val deviceName = device.name
+            Log.d("deviceId", "{$deviceName}")
+        }
+    }
+
     suspend fun getSteps(store: HealthDataStore): List<AggregatedData<Long>> {
+        getDevice()
         val request = DataType.StepsType.TOTAL.requestBuilder
             .setLocalTimeFilter(localTimeFilter)
             .build()
@@ -109,7 +132,8 @@ class HealthDataRepository(private val store: HealthDataStore) {
         val totalActiveCaloriesBurned = (activityData.getOrNull(3)?.value as? Float) ?: 0f
 
         return ActivityDataRequest(
-            windowEnd = Instant.now().atZone(ZoneId.systemDefault()).toString(),
+            // windowEnd = Instant.now().atZone(ZoneId.systemDefault()).toString(),
+            windowEnd = Clock.System.now(),
             totalStep = totalStep,
             totalActiveTimeSec = totalActiveTimeSec,
             totalActiveCaloriesBurned = totalActiveCaloriesBurned,
@@ -130,29 +154,28 @@ class HealthDataRepository(private val store: HealthDataStore) {
         val sleepScore = (sleepData?.getValue(DataType.SleepType.SLEEP_SCORE) as? Int) ?: 0
 
         // 세션 목록
-        val sessions = (sleepData?.getValue(DataType.SleepType.SESSIONS) as? List<*>) ?: emptyList<Any>()
+        val sessions = (sleepData?.getValue(DataType.SleepType.SESSIONS) as? List<SleepSession>)
+            ?: emptyList()
 
-        // 총 수면 시간 (세션 duration 합산)
-        val totalSleepDuration = sessions.sumOf { (it as? SleepSession)?.duration?.seconds ?: 0L }
+        val duration = sessions.firstOrNull()?.duration?.toMillis() ?: 0L
+        Log.d("DTO", "수면 시간(ms): $duration")
 
-        // 수면 날짜 = 첫 세션 기준
-        val sleepDate = (sessions.firstOrNull() as? SleepSession)?.startTime
-            ?.atZone(ZoneId.systemDefault())?.toLocalDate()?.toString()
-            ?: LocalDate.now().toString()
-
-        // 목표 수면 (Instant → Long)
-        val goalTimes = sleepGoalData?.value as? Pair<LocalTime, LocalTime>
-        val startInstant = goalTimes?.first?.let { LocalDate.now().atTime(it).atZone(ZoneId.systemDefault()).toInstant() }
-            ?: Instant.now() // 기본값 fallback
-        val endInstant = goalTimes?.second?.let { LocalDate.now().atTime(it).atZone(ZoneId.systemDefault()).toInstant() }
-            ?: Instant.now()
+        // sleep session start & end
+        for (session in sessions) {
+            Log.d("DTO", "수면 시작: ${session.startTime}")
+            Log.d("DTO", "수면 끝: ${session.endTime}")
+        }
+        // 수면 날짜 = 첫 세션 기준 & 사용자 기준으로 열어두기
+        val sleepDate: Instant = (sessions.firstOrNull() as? SleepSession)?.startTime
+            ?.atZone(ZoneOffset.UTC)   // ZonedDateTime
+            ?.toInstant()              // 그대로 Instant(UTC)
+            ?.toKotlinInstant()
+            ?: java.time.Instant.now().toKotlinInstant()
 
         return SleepDataRequest(
             sleepDate = sleepDate,
             sleepScore = sleepScore,
-            sleepDuration = totalSleepDuration,
-            sleepGoalStart = startInstant.toEpochMilli(),
-            sleepGoalEnd = endInstant.toEpochMilli()
+            sleepDuration = duration,
         )
     }
 }

@@ -28,6 +28,9 @@ interface RouteSearchState {
     waypoints?: string[];
     timestamp: number;
   }>;
+  
+  // 즐겨찾기 목록
+  routeBookmarks?: import('../types/bookmark').BookmarkRoute[];
 }
 
 interface RouteSearchActions {
@@ -43,6 +46,10 @@ interface RouteSearchActions {
   
   // 경로 선택 (안내시작)
   selectRoute: (route: SimpleRoute) => Promise<void>;
+  toggleBookmark: (id: string) => void;
+  addBookmarkForRoute: (route: SimpleRoute) => Promise<void>;
+  removeBookmarkForRoute: (routeId: string) => Promise<void>;
+  fetchBookmarks: () => Promise<void>;
   
   // 검색 히스토리
   addSearchHistory: (origin: string, destination: string, waypoints?: string[]) => void;
@@ -63,6 +70,7 @@ const initialState: RouteSearchState = {
   departureTime: new Date(),
   selectedDepartureOption: 'now',
   searchHistory: [],
+  routeBookmarks: [],
 };
 
 export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>()(
@@ -191,7 +199,8 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
             ...route,
             steps: steps,
             totalDuration: routeDetail.totalTime,
-            fatigueLevel: routeDetail.fatigue
+            fatigueLevel: routeDetail.fatigue,
+            polylineData: routeDetail // MSW에서 오는 폴리라인 데이터 저장
           };
 
           // 네비게이션 시작
@@ -202,6 +211,71 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
           log.error('안내시작 실패', error);
           // 에러 처리 (사용자에게 알림)
           alert('안내시작에 실패했습니다. 다시 시도해주세요.');
+        }
+      },
+
+      // 즐겨찾기 토글
+      toggleBookmark: (id: string) => {
+        const { routeResults } = get();
+        const updated = routeResults.map(r => r.id === id ? { ...r, isBookmarked: !r.isBookmarked } : r);
+        set({ routeResults: updated });
+      },
+
+      // 즐겨찾기 추가 (API 연동)
+      addBookmarkForRoute: async (route: SimpleRoute) => {
+        try {
+          if (!route.routeKey) throw new Error('routeKey가 없습니다');
+          const name = route.name || '즐겨찾기 경로';
+          const departureName = route.from?.name || '출발지';
+          const destinationName = route.to?.name || '도착지';
+
+          const { bookmarkApi } = await import('../api/bookmarkApi');
+          const created = await bookmarkApi.createRouteBookmark({ name, departureName, destinationName, routeKey: route.routeKey });
+
+          // 상태 반영
+          const { routeResults, routeBookmarks } = get();
+          set({
+            routeResults: routeResults.map(r => r.id === route.id ? { ...r, isBookmarked: true, bookmarkRouteId: created.bookmarkRouteId } : r),
+            routeBookmarks: [...(routeBookmarks || []), created]
+          });
+        } catch (e) {
+          log.error('즐겨찾기 추가 실패', e);
+          alert('즐겨찾기 추가에 실패했습니다.');
+        }
+      },
+
+      // 즐겨찾기 제거 (API 연동) - bookmarkId 매핑 필요시 목록 갱신으로 대체
+      removeBookmarkForRoute: async (routeId: string) => {
+        try {
+          const { routeResults } = get();
+          const target = routeResults.find(r => r.id === routeId);
+          if (!target || !target.bookmarkRouteId) {
+            // 매핑이 없으면 목록을 갱신만
+            await get().fetchBookmarks();
+            return;
+          }
+          const { bookmarkApi } = await import('../api/bookmarkApi');
+          await bookmarkApi.deleteRouteBookmark(target.bookmarkRouteId);
+          // 성공 시 로컬 상태 반영
+          set({
+            routeResults: routeResults.map(r => r.id === routeId ? { ...r, isBookmarked: false, bookmarkRouteId: undefined } : r)
+          });
+          // 목록도 최신화
+          await get().fetchBookmarks();
+        } catch (e) {
+          log.error('즐겨찾기 제거 실패', e);
+          alert('즐겨찾기 해제에 실패했습니다.');
+        }
+      },
+
+      // 즐겨찾기 목록 조회
+      fetchBookmarks: async () => {
+        try {
+          const { bookmarkApi } = await import('../api/bookmarkApi');
+          const list = await bookmarkApi.getRouteBookmarks();
+          set({ routeBookmarks: list });
+        } catch (e) {
+          log.error('즐겨찾기 목록 조회 실패', e);
         }
       },
 

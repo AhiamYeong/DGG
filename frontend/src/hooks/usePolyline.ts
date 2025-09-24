@@ -178,8 +178,10 @@ export function usePolyline(map: NaverMapInstance | null) {
 
   // 선택된 경로의 폴리라인 그리기
   const drawSelectedRoute = useCallback((route: SimpleRoute): void => {
-    if (!route.rawData || !route.rawData.subPath) {
-      log.error('경로 데이터가 없습니다.');
+    // rawData 또는 polylineData 중 하나라도 있으면 처리
+    const routeData = route.rawData || route.polylineData;
+    if (!routeData) {
+      log.error('경로 데이터가 없습니다.', { hasRawData: !!route.rawData, hasPolylineData: !!route.polylineData });
       return;
     }
 
@@ -194,8 +196,70 @@ export function usePolyline(map: NaverMapInstance | null) {
     const naver = window.naver;
     const newPolylines: NaverPolylineInstance[] = [];
 
+    // MSW 데이터 형식 처리 (polyline.result.lane)
+    if (routeData.polyline?.result?.lane) {
+      console.log('MSW 폴리라인 데이터 처리:', routeData.polyline.result.lane);
+      
+      routeData.polyline.result.lane.forEach((lane: any) => {
+        if (!lane.section || lane.section.length === 0) return;
+        
+        // 각 section의 graphPos를 좌표로 변환
+        const coordinates: number[][] = [];
+        lane.section.forEach((section: any) => {
+          if (section.graphPos && section.graphPos.length > 0) {
+            section.graphPos.forEach((pos: any) => {
+              coordinates.push([pos.x, pos.y]); // [lng, lat]
+            });
+          }
+        });
+        
+        if (coordinates.length === 0) return;
+        
+        // [lng, lat] → new naver.maps.LatLng(lat, lng) 변환
+        const path = coordinates.map(coord => 
+          new naver.maps.LatLng(coord[1], coord[0]) // [lng, lat] → [lat, lng]
+        );
+        
+        // 호선별 색상 결정
+        let strokeColor = '#FF0000'; // 기본값
+        if (lane.type === 2 && lane.name) { // 지하철
+          strokeColor = SUBWAY_LINE_COLORS[lane.name as keyof typeof SUBWAY_LINE_COLORS] || SUBWAY_LINE_COLORS['기타'];
+        } else if (lane.type === 116 && lane.name) { // 분당선
+          strokeColor = SUBWAY_LINE_COLORS[lane.name as keyof typeof SUBWAY_LINE_COLORS] || SUBWAY_LINE_COLORS['기타'];
+        } else if (lane.type === 1) { // 버스
+          strokeColor = POLYLINE_STYLES.BUS.strokeColor;
+        }
+        
+        // 폴리라인 생성
+        const polyline = new naver.maps.Polyline({
+          map: map,
+          path: path,
+          strokeColor: strokeColor,
+          strokeWeight: (lane.type === 2 || lane.type === 116) ? 6 : lane.type === 1 ? 5 : 3, // 지하철/분당선: 6, 버스: 5, 기타: 3
+          strokeStyle: 'solid' // 모든 지하철/분당선은 실선
+        });
+        
+        newPolylines.push(polyline);
+      });
+      
+      // 참조 저장
+      polylinesRef.current = newPolylines;
+      
+      log.map('MSW 폴리라인 그리기 완료', {
+        polylines: newPolylines.length
+      });
+      
+      return;
+    }
+
+    // 기존 rawData 형식 처리
+    if (!routeData.subPath) {
+      log.error('subPath 데이터가 없습니다.');
+      return;
+    }
+
     // 각 subPath에 대해 폴리라인 생성
-    route.rawData.subPath.forEach((subPath: SubPath) => {
+    routeData.subPath.forEach((subPath: SubPath) => {
       // passShape이 있으면 사용, 없으면 passStopList.stations로 좌표 생성
       let coordinates: number[][] = [];
       

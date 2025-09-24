@@ -5,10 +5,16 @@ import { useNavigationStore } from '../stores/useNavigationStore';
 import { MapContainer } from '../components/map';
 import { NavigationMode, SearchMode } from '../components/navigation';
 import { TimePicker } from '../components/ui';
+import AlarmEditModal from '@/components/AlarmEditModal';
+import { useState } from 'react';
+import type { AlarmProps } from '@/api/alarmApi';
 import { MAP_DEFAULTS } from '../constants';
 import type { PlaceInfo } from '../types/route-types';
 
 export default function MainMapPage() {
+  // 예약하기(출발예약) 시 알람 모달 재사용
+  const [showReserveModal, setShowReserveModal] = useState(false);
+  const [tempAlarm, setTempAlarm] = useState<AlarmProps | null>(null);
   // 지도 관련 로직
   const {
     currentLocation,
@@ -77,9 +83,14 @@ export default function MainMapPage() {
 
   // 네비게이션 시작 시 선택된 경로의 폴리라인과 마커 그리기
   useEffect(() => {
-    console.log('네비게이션 useEffect 트리거:', { isNavigating, currentRoute: !!currentRoute, hasRawData: !!currentRoute?.rawData });
+    console.log('네비게이션 useEffect 트리거:', { 
+      isNavigating, 
+      currentRoute: !!currentRoute, 
+      hasRawData: !!currentRoute?.rawData,
+      hasPolylineData: !!currentRoute?.polylineData 
+    });
     
-    if (isNavigating && currentRoute && currentRoute.rawData) {
+    if (isNavigating && currentRoute && (currentRoute.rawData || currentRoute.polylineData)) {
       console.log('네비게이션 시작 - 경로 처리 시작');
       drawSelectedRoute(currentRoute);
       createSelectedRouteMarkers(currentRoute);
@@ -116,13 +127,35 @@ export default function MainMapPage() {
         ) : (
           <SearchMode
             onSearch={handleRouteSearch}
-            onDepartureOptionChange={setSelectedDepartureOption}
+            onDepartureOptionChange={(option) => {
+              // 시간 조정(타임픽커) 이후에만 모달을 띄우도록 변경
+              setSelectedDepartureOption(option);
+            }}
             selectedDepartureOption={selectedDepartureOption}
             showDepartureOptions={showDepartureOptions}
             onCloseDepartureOptions={handleCloseDepartureOptions}
             routeResults={routeResults}
             actionLabel={actionLabel}
-            onSelectRoute={selectRoute}
+            onSelectRoute={async (route) => {
+              // actionLabel은 스토어에서 시간/옵션에 따라 '안내 시작' 또는 '경로 예약'으로 내려줌
+              if (actionLabel === '경로 예약' && currentOrigin && currentDestination) {
+                const mockAlarm: AlarmProps = {
+                  alarmId: -1,
+                  eventId: -1,
+                  title: '경로 출발 예약',
+                  eventTitle: `${currentOrigin.name} → ${currentDestination.name}`,
+                  departure: currentOrigin.name,
+                  destination: currentDestination.name,
+                  departureTime: departureTime.toLocaleString('ko-KR', { hour12: false }),
+                  enabled: true,
+                  offsetMinutes: 10,
+                };
+                setTempAlarm(mockAlarm);
+                setShowReserveModal(true);
+                return;
+              }
+              await selectRoute(route);
+            }}
             onCloseRouteResults={closeRouteResults}
             showTimePicker={showTimePicker}
             onLocationClick={handleLocationClick}
@@ -137,9 +170,21 @@ export default function MainMapPage() {
         isOpen={showTimePicker}
         departureTime={departureTime}
         onTimeChange={setDepartureTime}
-        onConfirm={confirmTimeSelection}
+        onConfirm={async () => {
+          // 경로 검색 확정 먼저 처리
+          await confirmTimeSelection();
+        }}
         onCancel={cancelTimeSelection}
       />
+
+      {/* 예약하기 - AlarmPage와 동일 모달 재사용 */}
+      {showReserveModal && tempAlarm && (
+        <AlarmEditModal
+          alarm={tempAlarm}
+          onClose={() => setShowReserveModal(false)}
+          onSave={() => setShowReserveModal(false)}
+        />
+      )}
     </div>
   );
 }
