@@ -395,6 +395,7 @@ public class RouteServiceImpl implements RouteService {
 				leg.setStartLng(p.lon());
 			}
 		}
+
 		// 끝 좌표가 없을 때만 시도
 		if ((leg.getEndLat() == null || leg.getEndLng() == null)
 			&& leg.getEndPoint() != null && !leg.getEndPoint().isBlank()) {

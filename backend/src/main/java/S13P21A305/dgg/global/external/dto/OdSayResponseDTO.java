@@ -2,6 +2,8 @@ package S13P21A305.dgg.global.external.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -39,6 +41,10 @@ public class OdSayResponseDTO {
 		private int totalDistance;
 		private String firstStartStation;
 		private String lastEndStation;
+
+		@Getter
+		@JsonProperty("mapObj")
+		private String mapObj;
 	}
 
 	@Getter @Setter
