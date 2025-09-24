@@ -275,7 +275,12 @@ export class RouteService {
       log.route('안내시작 API 응답', startResponse);
 
       // 2단계: 상세 경로 조회 API 호출
-      const routeDetail: RouteDetailResponse = await getRouteDetail(startResponse.routeId);
+      // startRouteGuidance는 response.data를 반환하므로 직접 사용
+      const routeId = startResponse;
+      if (!routeId) {
+        throw new Error('routeId를 찾을 수 없습니다.');
+      }
+      const routeDetail: RouteDetailResponse = await getRouteDetail(routeId.toString());
       log.route('상세 경로 조회 완료', routeDetail);
 
       return routeDetail;
