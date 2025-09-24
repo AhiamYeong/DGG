@@ -69,15 +69,10 @@ dependencies {
 	testRuntimeOnly 'com.h2database:h2'
 
 	// spark 의존성
-	implementation("org.apache.spark:spark-core_2.12:3.5.1") {
-		exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j2-impl'
-		exclude group: 'org.slf4j', module: 'slf4j-reload4j'
-	}
-	implementation("org.apache.spark:spark-sql_2.12:3.5.1") {
-		exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j2-impl'
-		exclude group: 'org.slf4j', module: 'slf4j-reload4j'
-	}
-	runtimeOnly 'javax.servlet:javax.servlet-api:3.1.0'
+	implementation "org.apache.spark:spark-core_2.12:3.5.1"
+	implementation "org.apache.spark:spark-sql_2.12:3.5.1"
+	// javax.servlet
+	implementation "javax.servlet:javax.servlet-api:3.1.0"
 
 
 	// Hive/Spark Thrift JDBC

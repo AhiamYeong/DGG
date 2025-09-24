@@ -36,6 +36,9 @@ public class ODsayClient {
         this.apiKey = apiKey;
     }
 
+    /**
+     * odsay에서 가져오는 값
+     */
     // x, y 기반으로 r 떨어진 곳의 정류장들 리스트로 받아오기
     public Mono<ODsayPointStationResponse> getNearby(double lat, double lon, int radiusMeters) {
         return webClient.get()
@@ -72,6 +75,7 @@ public class ODsayClient {
                     }
                 });
     }
+
 
     //raw data
     public Mono<Map<String, Object>> getNearbyRaw(double lat, double lon, int radiusMeters) {

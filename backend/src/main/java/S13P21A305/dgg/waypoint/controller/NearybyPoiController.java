@@ -27,9 +27,10 @@ public class NearybyPoiController {
     public Mono<List<NearbyPoi>> nearby(
             @RequestParam double lat,
             @RequestParam double lon,
-            @RequestParam(defaultValue = "1000") int radius
+            @RequestParam(defaultValue = "1000") int radius,
+            @RequestParam Integer timeSlot
     ) {
-        return nearbyPoiService.find(lat, lon, radius);
+        return nearbyPoiService.find(lat, lon, radius, timeSlot);
     }
 
     @GetMapping("/raw")
