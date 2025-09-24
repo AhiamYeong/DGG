@@ -43,6 +43,7 @@ Desktop.ini
 # Build outputs
 build/
 out/
+dist/
 
 # Coverage directory used by tools like istanbul
 coverage/
