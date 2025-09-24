@@ -9,21 +9,8 @@ import "./styles/index.css";
 // Mocking Service Worker 추가
 async function enableMocking() {
   if (process.env.NODE_ENV === "development") {
-    console.log('🚀 MSW 시작 중...');
-    try {
-      const { worker } = await import("./mocks/browsers");
-      await worker.start({
-        onUnhandledRequest: 'bypass',
-        serviceWorker: {
-          url: '/mockServiceWorker.js'
-        }
-      });
-      console.log('✅ MSW가 성공적으로 시작되었습니다.');
-    } catch (error) {
-      console.error('❌ MSW 시작 실패:', error);
-    }
-  } else {
-    console.log('🔧 프로덕션 환경 - MSW 비활성화');
+    const { worker } = await import("./mocks/browsers");
+    await worker.start();
   }
 }
 
@@ -56,5 +43,5 @@ enableMocking().then(() => {
   createRoot(document.getElementById("root")!).render(<App />);
 });
 
-// // DOM에 렌더링
+// DOM에 렌더링
 // createRoot(document.getElementById("root")!).render(<App />);

@@ -8,7 +8,7 @@ const FatiguePage = lazy(() => import("./pages/FatiguePage"));
 const MainMapPage = lazy(() => import("./pages/MainMapPage"));
 const PlanPage = lazy(() => import("./pages/PlanPage"));
 const AlarmPage = lazy(() => import("./pages/AlarmPage"));
-const MyPage = lazy(() => import("./pages/MyPage"));
+// const MyPage = lazy(() => import("./pages/MyPage"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 
 // Loading component
@@ -49,14 +49,6 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={<PageLoader />}>
         <AlarmPage />
-      </Suspense>
-    ),
-  },
-  {
-    path: "/mypage/*",
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <MyPage />
       </Suspense>
     ),
   },

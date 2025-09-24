@@ -68,24 +68,60 @@ class AuthViewModel(
         }
     }
 
-    fun logout() {
-        // 기존처럼 tokenStorage 지울 필요 없음 (토큰 직접 안 씀) 대신 WebView 쿠키 삭제 처리
-        val cookieManager = android.webkit.CookieManager.getInstance()
-        cookieManager.removeAllCookies {
-            Log.d("LoginFlow", "WebView 쿠키 삭제 완료: $it")
+    suspend fun logout() {
+        try {
+            val success = authRepository.logout()
+            if (success) {
+                _loginState.value = LoginState.LoggedOut
+            } else {
+                _loginState.value = LoginState.Error("로그아웃 실패")
+            }
+            // 기존처럼 tokenStorage 지울 필요 없음 (토큰 직접 안 씀) 대신 WebView 쿠키 삭제 처리
+            val cookieManager = android.webkit.CookieManager.getInstance()
+            cookieManager.removeAllCookies {
+                Log.d("LoginFlow", "WebView 쿠키 삭제 완료: $it")
+            }
+            cookieManager.flush()
+
+            // RetrofitClient 쿠키 삭제
+            client.clearCookies()
+
+            // 상태 변경
+            _loginState.value = LoginState.LoggedOut
+            Log.d("LoginFlow", "로그아웃 완료 (WebView + RetrofitClient 쿠키 삭제)")
+
+        } catch (e: Exception) {
+            _loginState.value = LoginState.Error(e.message ?: "로그아웃 실패")
+            Log.e("LoginFlow", "로그아웃 실패", e)
         }
-        cookieManager.flush()
-
-        // RetrofitClient 쿠키 삭제
-        client.clearCookies()
-
-        // 상태 변경
-        _loginState.value = LoginState.LoggedOut
-        Log.d("LoginFlow", "로그아웃 완료 (WebView + RetrofitClient 쿠키 삭제)")
     }
 
     // 테스트용 - 열어두기
     fun forceLogin() {
         _loginState.value = LoginState.LoggedIn
     }
+
+    fun withdraw() {
+        try {
+            val success = authRepository.withdraw()
+            if (success) {
+                // 1. 쿠키 정리
+                val cookieManager = android.webkit.CookieManager.getInstance()
+                cookieManager.removeAllCookies {
+                    Log.d("Auth", "WebView 쿠키 삭제 완료")
+                }
+                cookieManager.flush()
+                client.clearCookies()
+
+                // 2. 상태 초기화
+                _loginState.value = LoginState.LoggedOut
+                Log.d("Auth", "회원탈퇴 성공 → 로그아웃 처리 완료")
+            } else {
+                _loginState.value = LoginState.Error("회원탈퇴 실패")
+            }
+        } catch (e: Exception) {
+            _loginState.value = LoginState.Error("회원탈퇴 예외 발생: ${e.message}")
+        }
+    }
+
 }
