@@ -191,7 +191,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
 
   // 전역 이벤트 리스너 등록/해제
   useEffect(() => {
-    if (isDragging) {
+    if (isDragging && position > 0) { // SideSheet가 접혀있을 때는 전역 이벤트 리스너 등록하지 않음
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -204,11 +204,11 @@ export const SideSheet: React.FC<SideSheetProps> = ({
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
+  }, [isDragging, position, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   // 스크롤 드래그 이벤트 리스너 등록/해제
   useEffect(() => {
-    if (gestureType !== 'none' || isScrollDragging || isDragging) {
+    if ((gestureType !== 'none' || isScrollDragging || isDragging) && position > 0) { // SideSheet가 접혀있을 때는 전역 이벤트 리스너 등록하지 않음
       document.addEventListener('touchmove', handleScrollTouchMove, { passive: false });
       document.addEventListener('touchend', handleScrollTouchEnd);
     }
@@ -217,7 +217,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
       document.removeEventListener('touchmove', handleScrollTouchMove);
       document.removeEventListener('touchend', handleScrollTouchEnd);
     };
-  }, [gestureType, isScrollDragging, isDragging, handleScrollTouchMove, handleScrollTouchEnd]);
+  }, [gestureType, isScrollDragging, isDragging, position, handleScrollTouchMove, handleScrollTouchEnd]);
 
 
   if (position === 0) return null;

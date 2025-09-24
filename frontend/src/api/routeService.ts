@@ -143,56 +143,13 @@ export class RouteService {
         actionLabel
       };
     } catch (error) {
-      log.error('백엔드 API 호출 실패, 더미 데이터 사용:', error);
+      log.error('경로 검색 API 호출 실패:', error);
       
-      // 개발 중에는 더미 데이터 사용 (백엔드 API 준비 완료 후 제거)
-      console.warn('⚠️ 백엔드 API 호출 실패 - 더미 데이터 사용 중');
-      
-      // 폴백: 새로운 API 형식의 더미 데이터 사용
-      const dummyApiResponse: NewBackendRouteApiResponse = {
-        departureAddress: "서울특별시 강남구 강남대로 396", // 도로명 주소 (API 응답 형식)
-        destinationAddress: "서울특별시 마포구 마포대로 100", // 도로명 주소 (API 응답 형식)
-        stopoverAddresses: waypoints && waypoints.length > 0 ? waypoints.slice(0, 2) : [],
-        departureTime: formatDateTimeForApi(departureTime),
-        destinationTime: formatDateTimeForApi(new Date(departureTime.getTime() + 50 * 60 * 1000)), // 50분 후
-        recommendedRoutes: [
-          {
-            routeKey: "dummy-route-key-1",
-            name: "최소 피로도",
-            timeTaken: 48,
-            arrivalTime: "2025-12-12 18:46:00",
-            fatigue: 40
-          },
-          {
-            routeKey: "dummy-route-key-2",
-            name: "최소 시간",
-            timeTaken: 38,
-            arrivalTime: "2025-12-12 18:36:00",
-            fatigue: 90
-          },
-          {
-            routeKey: "dummy-route-key-3",
-            name: "최소 환승",
-            timeTaken: 45,
-            arrivalTime: "2025-12-12 18:43:00",
-            fatigue: 60
-          }
-        ]
-      };
-
-      const routes = this.convertApiResponseToRoutes(dummyApiResponse, originName, destinationName);
-      const actionLabel = this.calculateActionLabel(departureTime, selectedOption);
-
-      return {
-        routes,
-        actionLabel
-      };
+      // MSW가 API 호출을 가로채서 더미 데이터를 반환하므로, 
+      // 여기서는 에러를 그대로 전파
+      throw error;
     }
   }
-
-  // convertTestDataToRoutes 메서드 제거됨 (주석화)
-
-  // convertSubPathsToSteps 메서드 제거됨 (주석화)
 
   /**
    * 새로운 백엔드 API 응답을 SimpleRoute 형식으로 변환
@@ -259,9 +216,9 @@ export class RouteService {
   private static getRecommendationType(routeName: string): 'minTime' | 'minTransfer' | 'minFatigue' {
     if (routeName.includes('최소 시간') || routeName.includes('최단 시간')) {
       return 'minTime';
-    } else if (routeName.includes('최소 환승') || routeName.includes('최소 환승')) {
+    } else if (routeName.includes('최소 환승'))  {
       return 'minTransfer';
-    } else if (routeName.includes('최소 피로도') || routeName.includes('피로도')) {
+    } else if (routeName.includes('최소 피로도')) {
       return 'minFatigue';
     }
     return 'minTime'; // 기본값
