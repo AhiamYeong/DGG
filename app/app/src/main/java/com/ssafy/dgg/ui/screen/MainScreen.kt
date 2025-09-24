@@ -1,5 +1,6 @@
 package com.ssafy.dgg.ui.screen
 
+import AuthViewModel
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -27,7 +28,9 @@ val items = listOf(
 val BASE_URL = BuildConfig.WEB_URL
 
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    authViewModel: AuthViewModel
+) {
     val context = LocalContext.current
     var selectedItem by remember { mutableStateOf(items.find { it.route == "route" } ?: items[0]) }
 
@@ -68,7 +71,8 @@ fun MainScreen() {
             )
             "mypage" -> {
                 MyPageScreen(
-                    modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier.padding(innerPadding),
+                    authViewModel = authViewModel
                 )
             }
         }

@@ -10,5 +10,5 @@ interface AuthRepository {
     // suspend fun refreshToken(refreshToken: String): TokenResponse
     suspend fun logout(): Boolean
 
-    suspend fun withdraw(): Boolean
+    fun withdraw(): Boolean
 }

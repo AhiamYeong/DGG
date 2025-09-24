@@ -26,7 +26,7 @@ class AuthRepositoryImpl  (
         else throw Exception("로그아웃 실패: ${response.code()} ${response.message()}")
     }
 
-    override suspend fun withdraw(): Boolean {
+    override fun withdraw(): Boolean {
         val response = authApi.withdraw()
         if (response.isSuccessful) return true;
         else throw Exception("회원탈퇴 실패: ${response.code()} ${response.message()}")
