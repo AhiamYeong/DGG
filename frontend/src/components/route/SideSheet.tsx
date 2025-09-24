@@ -208,7 +208,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
 
   // 스크롤 드래그 이벤트 리스너 등록/해제
   useEffect(() => {
-    if ((gestureType !== 'none' || isScrollDragging || isDragging) && position > 0) { // SideSheet가 접혀있을 때는 전역 이벤트 리스너 등록하지 않음
+    if (gestureType !== 'none' || isScrollDragging || isDragging) {
       document.addEventListener('touchmove', handleScrollTouchMove, { passive: false });
       document.addEventListener('touchend', handleScrollTouchEnd);
     }
@@ -217,7 +217,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
       document.removeEventListener('touchmove', handleScrollTouchMove);
       document.removeEventListener('touchend', handleScrollTouchEnd);
     };
-  }, [gestureType, isScrollDragging, isDragging, position, handleScrollTouchMove, handleScrollTouchEnd]);
+  }, [gestureType, isScrollDragging, isDragging, handleScrollTouchMove, handleScrollTouchEnd]);
 
 
   if (position === 0) return null;
@@ -496,7 +496,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
       
       {/* 사이드 시트 */}
       <div
-        className="absolute bg-white shadow-2xl transition-transform duration-200 ease-out"
+        className="absolute bg-white shadow-2xl transition-transform duration-200 ease-out pointer-events-auto"
         style={{
           zIndex: 20,
           left: 0,
