@@ -117,4 +117,6 @@ public class HealthServiceImpl implements HealthService {
 
         return (int)Math.max(0, Math.min(100, Math.round(stress)));
     }
+
+
 }

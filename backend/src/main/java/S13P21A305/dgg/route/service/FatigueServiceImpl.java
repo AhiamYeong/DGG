@@ -8,13 +8,115 @@ import S13P21A305.dgg.route.domain.TransportType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class FatigueServiceImpl implements FatigueService {
 
     private final SurveyAnswerRepository surveyAnswerRepository;
+
+    private final CongestionProvider congestionProvider;
+
+    // ===================== JSON "data" -> List<Route> 변환 =====================
+    @SuppressWarnings("unchecked")
+    private List<Route> toRoutesFromPayload(List<Map<String, Object>> data) {
+        if (data == null || data.isEmpty()) return List.of();
+
+        var sorted = data.stream()
+                .sorted(Comparator.comparingInt(m -> ((Number) m.getOrDefault("order", 0)).intValue()))
+                .collect(Collectors.toList());
+
+        List<Route> routes = new ArrayList<>(sorted.size());
+        for (Map<String, Object> seg : sorted) {
+            String typeStr = str(seg.get("type"));
+            TransportType type = parseType(typeStr);
+
+            String lineName   = str(seg.get("lineName"));
+            String startPoint = str(seg.get("startPoint"));
+            String endPoint   = str(seg.get("endPoint"));
+
+            double startLat = dbl(seg.get("startLat"));
+            double startLng = dbl(seg.get("startLng"));
+            double endLat   = dbl(seg.get("endLat"));
+            double endLng   = dbl(seg.get("endLng"));
+
+            int timeTakenMin = ((Number) seg.getOrDefault("timeTaken", 0)).intValue();
+
+            // path: [{lat: .., lng: ..}, ...]
+            List<Map<String, Object>> path =
+                    (List<Map<String, Object>>) seg.getOrDefault("path", null);
+
+            double distanceM = 0.0;
+            if (path != null && path.size() >= 2) {
+                distanceM = polylineDistanceM(path);
+            } else if (!Double.isNaN(startLat) && !Double.isNaN(startLng)
+                    && !Double.isNaN(endLat) && !Double.isNaN(endLng)) {
+                distanceM = haversineM(startLat, startLng, endLat, endLng);
+            }
+
+            // 혼잡도는 Provider에서 실제 값으로 덮어쓸 예정이므로 기본 0.0
+            Double congestionRate = 0.0;
+
+            routes.add(Route.builder()
+                    .type(type)
+                    .distanceM(distanceM)
+                    .durationMin(timeTakenMin)
+                    .congestionRate(congestionRate)
+                    .startPoint(startPoint)
+                    .endPoint(endPoint)
+                    .lineName(lineName)
+                    .build());
+        }
+        return routes;
+    }
+
+    private static TransportType parseType(String s) {
+        if (s == null) return TransportType.WALKING;
+        return switch (s.toUpperCase(Locale.ROOT)) {
+            case "SUBWAY" -> TransportType.SUBWAY;
+            case "BUS"    -> TransportType.BUS;
+            case "WALKING", "WALK", "TRANSFER" -> TransportType.WALKING; // 환승 보행도 WALKING으로 통일
+            default -> TransportType.WALKING;
+        };
+    }
+
+    private static String str(Object o) { return o == null ? null : String.valueOf(o); }
+    private static double dbl(Object o) {
+        if (o == null) return Double.NaN;
+        if (o instanceof Number n) return n.doubleValue();
+        try { return Double.parseDouble(String.valueOf(o)); } catch (Exception e) { return Double.NaN; }
+    }
+
+    private static double polylineDistanceM(List<Map<String, Object>> path) {
+        double sum = 0.0;
+        for (int i = 1; i < path.size(); i++) {
+            double lat1 = dbl(path.get(i - 1).get("lat"));
+            double lon1 = dbl(path.get(i - 1).get("lng"));
+            double lat2 = dbl(path.get(i).get("lat"));
+            double lon2 = dbl(path.get(i).get("lng"));
+            if (!Double.isNaN(lat1) && !Double.isNaN(lon1) && !Double.isNaN(lat2) && !Double.isNaN(lon2)) {
+                sum += haversineM(lat1, lon1, lat2, lon2);
+            }
+        }
+        return sum;
+    }
+
+    private static double haversineM(double lat1, double lon1, double lat2, double lon2) {
+        final double R = 6371000.0; // meters
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat/2) * Math.sin(dLat/2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon/2) * Math.sin(dLon/2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
 
     // 가중치(3:4:3) 및 상수
     private static final double W_C = 0.4;   // 혼잡
@@ -26,6 +128,12 @@ public class FatigueServiceImpl implements FatigueService {
 
     @Override
     public double calculateFatigue(Integer memberId, List<Route> routeList) {
+
+        //CSV/Spark 기반 혼잡도 채우기 (Provider 사용 시)
+        if (congestionProvider != null) {
+            congestionProvider.enrich(routeList);
+        }
+
         // 1) 설문 조회
         List<SurveyAnswer> answers = surveyAnswerRepository.findByMemberId(memberId);
 
