@@ -82,6 +82,16 @@ export const favoriteRoutesApi = {
     }
   },
 
+  // 경로 즐겨찾기 상세조회 (길안내 시작)
+  async getRouteBookmarkDetail(bookmarkRouteId: number): Promise<any> {
+    try {
+      const res = await api.get(`${BASE}/${bookmarkRouteId}`);
+      return res.data;
+    } catch (e) {
+      throwApiError(e);
+    }
+  },
+
   // 경로 즐겨찾기 삭제
   async deleteRouteBookmark(bookmarkRouteId: number): Promise<void> {
     try {
