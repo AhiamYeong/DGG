@@ -10,7 +10,9 @@ interface RouteCardProps {
   onSelect: (route: SimpleRoute) => Promise<void>;
   onToggleBookmark?: (id: string) => void;
   onShowOptions?: (id: string) => void;
+  onEdit?: (route: SimpleRoute) => void;
   actionLabel?: string;
+  showEditButton?: boolean;
   className?: string;
 }
 
@@ -24,7 +26,9 @@ interface RouteCardProps {
 const RouteCard = memo<RouteCardProps>(({
   route,
   onSelect,
+  onEdit,
   actionLabel = '선택',
+  showEditButton = false,
   className = ''
 }) => {
   const bookmark = useRouteBookmark(route);
@@ -33,6 +37,12 @@ const RouteCard = memo<RouteCardProps>(({
     console.log('[RouteCard] card select', route.id);
     await onSelect(route);
   }, [onSelect, route]);
+
+  const handleEdit = useCallback((e: React.MouseEvent) => {
+    console.log('RouteCard 편집 버튼 클릭됨:', route);
+    e.stopPropagation(); // 이벤트 버블링 방지
+    onEdit?.(route);
+  }, [onEdit, route]);
 
 
 
@@ -117,6 +127,22 @@ const RouteCard = memo<RouteCardProps>(({
       
       {/* 액션 버튼들 */}
       <div className="flex items-center gap-2">
+        {/* 편집 버튼 (즐겨찾기 경로인 경우에만 표시) */}
+        {showEditButton && onEdit && (
+          <Button
+            onClick={handleEdit}
+            variant="secondary"
+            size="sm"
+            className="px-3 py-2"
+            aria-label={`${route.name} 편집`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </Button>
+        )}
+        {/* 디버깅용 로그 */}
+        {console.log('RouteCard 편집 버튼 조건:', { showEditButton, hasOnEdit: !!onEdit, routeId: route.id })}
 
         {/* 선택 버튼 */}
         <Button

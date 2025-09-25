@@ -27,6 +27,46 @@ let mockRouteBookmarks = [
     destinationName: "여의도역",
     routeKey: "route_key_3",
     createdAt: "2024-01-17T12:00:00Z"
+  },
+  {
+    bookmarkRouteId: 4,
+    name: "이마트 가는길",
+    departureName: "역삼역",
+    destinationName: "이마트",
+    routeKey: "route_key_4",
+    createdAt: "2024-01-18T14:00:00Z"
+  },
+  {
+    bookmarkRouteId: 5,
+    name: "병원 가는길",
+    departureName: "강남역",
+    destinationName: "삼성서울병원",
+    routeKey: "route_key_5",
+    createdAt: "2024-01-19T10:00:00Z"
+  },
+  {
+    bookmarkRouteId: 6,
+    name: "공항 가는길",
+    departureName: "강남역",
+    destinationName: "인천공항",
+    routeKey: "route_key_6",
+    createdAt: "2024-01-20T06:00:00Z"
+  },
+  {
+    bookmarkRouteId: 7,
+    name: "학교 가는길",
+    departureName: "역삼역",
+    destinationName: "서울대학교",
+    routeKey: "route_key_7",
+    createdAt: "2024-01-21T08:00:00Z"
+  },
+  {
+    bookmarkRouteId: 8,
+    name: "쇼핑몰 가는길",
+    departureName: "강남역",
+    destinationName: "코엑스",
+    routeKey: "route_key_8",
+    createdAt: "2024-01-22T15:00:00Z"
   }
 ];
 
