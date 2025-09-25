@@ -129,107 +129,15 @@ export const bookmarkHandlers = [
       );
     }
 
-    // 즐겨찾기 경로 상세 데이터 반환 (사용자가 제공한 형식)
+    // 즐겨찾기 경로 상세 데이터 반환 (지하철/버스 노선)
     const bookmarkDetailData = {
       bookmarkRouteId: bookmark.bookmarkRouteId,
       name: bookmark.name,
-      totalTime: 92,
+      totalTime: 45,
       arrivalTime: "2025-09-24 23:17:22",
       data: [
         {
           order: 1,
-          type: "WALKING",
-          lineName: null,
-          timeTaken: 3,
-          startPoint: null,
-          endPoint: null,
-          startLat: null,
-          startLng: null,
-          endLat: null,
-          endLng: null,
-          path: [],
-          etaMin: null
-        },
-        {
-          order: 2,
-          type: "BUS",
-          lineName: "463",
-          timeTaken: 28,
-          startPoint: "역삼역7번출구.GS타워",
-          endPoint: "현대아파트",
-          startLat: 37.501584,
-          startLng: 127.036811,
-          endLat: 37.528325,
-          endLng: 127.031105,
-          path: [
-            {
-              seq: 1,
-              name: "역삼역7번출구.GS타워",
-              stationId: "106619",
-              lat: 37.501584,
-              lng: 127.036811
-            },
-            {
-              seq: 2,
-              name: "차병원",
-              stationId: "106516",
-              lat: 37.506628,
-              lng: 127.034394
-            },
-            {
-              seq: 3,
-              name: "언주역3번출구",
-              stationId: "111685",
-              lat: 37.508567,
-              lng: 127.033487
-            },
-            {
-              seq: 4,
-              name: "논현고개",
-              stationId: "106439",
-              lat: 37.511376,
-              lng: 127.032161
-            },
-            {
-              seq: 5,
-              name: "학동역",
-              stationId: "106356",
-              lat: 37.515084,
-              lng: 127.030473
-            },
-            {
-              seq: 6,
-              name: "강남을지병원",
-              stationId: "106297",
-              lat: 37.518593,
-              lng: 127.028799
-            },
-            {
-              seq: 7,
-              name: "국민은행압구정종합금융센터",
-              stationId: "106283",
-              lat: 37.523448,
-              lng: 127.02851
-            },
-            {
-              seq: 8,
-              name: "압구정역3번출구",
-              stationId: "106294",
-              lat: 37.526062,
-              lng: 127.028691
-            },
-            {
-              seq: 9,
-              name: "현대아파트",
-              stationId: "106377",
-              lat: 37.528325,
-              lng: 127.031105
-            }
-          ],
-          etaMin: 13
-        },
-        {
-          order: 3,
           type: "WALKING",
           lineName: null,
           timeTaken: 5,
@@ -243,95 +151,60 @@ export const bookmarkHandlers = [
           etaMin: null
         },
         {
-          order: 4,
-          type: "BUS",
-          lineName: "141",
-          timeTaken: 40,
-          startPoint: "성수대교남단.현대아파트",
-          endPoint: "홍파초등학교",
-          startLat: 37.529846,
-          startLng: 127.034118,
-          endLat: 37.585604,
-          endLng: 127.038675,
+          order: 2,
+          type: "SUBWAY",
+          lineName: "수도권 2호선",
+          timeTaken: 20,
+          startPoint: "강남역",
+          endPoint: "사당역",
+          startLat: 37.497952,
+          startLng: 127.027619,
+          endLat: 37.476575,
+          endLng: 126.981363,
           path: [
             {
               seq: 1,
-              name: "성수대교남단.현대아파트",
-              stationId: "106490",
-              lat: 37.529846,
-              lng: 127.034118
+              name: "강남역",
+              stationId: "222",
+              lat: 37.497952,
+              lng: 127.027619
             },
             {
               seq: 2,
-              name: "뚝섬서울숲",
-              stationId: "151511",
-              lat: 37.544562,
-              lng: 127.036588
+              name: "교대역",
+              stationId: "223",
+              lat: 37.493902,
+              lng: 127.014395
             },
             {
               seq: 3,
-              name: "응봉사거리",
-              stationId: "106502",
-              lat: 37.555339,
-              lng: 127.03448
+              name: "서초역",
+              stationId: "224",
+              lat: 37.491852,
+              lng: 127.007702
             },
             {
               seq: 4,
-              name: "무학여고앞",
-              stationId: "106494",
-              lat: 37.557878,
-              lng: 127.034221
+              name: "방배역",
+              stationId: "225",
+              lat: 37.481496,
+              lng: 126.997667
             },
             {
               seq: 5,
-              name: "성동구청",
-              stationId: "194264",
-              lat: 37.564114,
-              lng: 127.036427
-            },
-            {
-              seq: 6,
-              name: "도선사거리",
-              stationId: "106620",
-              lat: 37.566766,
-              lng: 127.036868
-            },
-            {
-              seq: 7,
-              name: "마장축산물시장",
-              stationId: "106671",
-              lat: 37.570984,
-              lng: 127.038048
-            },
-            {
-              seq: 8,
-              name: "동대문구청.용신동주민센터",
-              stationId: "106698",
-              lat: 37.576609,
-              lng: 127.038406
-            },
-            {
-              seq: 9,
-              name: "경동시장앞",
-              stationId: "193671",
-              lat: 37.580549,
-              lng: 127.03865
-            },
-            {
-              seq: 10,
-              name: "홍파초등학교",
-              stationId: "106707",
-              lat: 37.585604,
-              lng: 127.038675
+              name: "사당역",
+              stationId: "226",
+              lat: 37.476575,
+              lng: 126.981363
             }
           ],
-          etaMin: 18
+          etaMin: null
         },
         {
-          order: 5,
+          order: 3,
           type: "WALKING",
           lineName: null,
-          timeTaken: 6,
+          timeTaken: 3,
           startPoint: null,
           endPoint: null,
           startLat: null,
@@ -342,46 +215,109 @@ export const bookmarkHandlers = [
           etaMin: null
         },
         {
-          order: 6,
-          type: "BUS",
-          lineName: "동대문05",
-          timeTaken: 6,
-          startPoint: "영휘원사거리.(구)홍릉사거리",
-          endPoint: "청랑리한신아파트.청량사입구",
-          startLat: 37.586012,
-          startLng: 127.043471,
-          endLat: 37.586487,
-          endLng: 127.047552,
+          order: 4,
+          type: "SUBWAY",
+          lineName: "수도권 4호선",
+          timeTaken: 15,
+          startPoint: "사당역",
+          endPoint: "삼각지역",
+          startLat: 37.476575,
+          startLng: 126.981363,
+          endLat: 37.5347,
+          endLng: 126.9737,
           path: [
             {
               seq: 1,
-              name: "영휘원사거리.(구)홍릉사거리",
-              stationId: "106933",
-              lat: 37.586012,
-              lng: 127.043471
+              name: "사당역",
+              stationId: "433",
+              lat: 37.476575,
+              lng: 126.981363
             },
             {
               seq: 2,
-              name: "동부아파트",
-              stationId: "107039",
-              lat: 37.586702,
-              lng: 127.045228
+              name: "남태령역",
+              stationId: "434",
+              lat: 37.464247,
+              lng: 126.989114
             },
             {
               seq: 3,
-              name: "청랑리한신아파트.청량사입구",
-              stationId: "183841",
-              lat: 37.586487,
-              lng: 127.047552
+              name: "선바위역",
+              stationId: "435",
+              lat: 37.451785,
+              lng: 127.002108
+            },
+            {
+              seq: 4,
+              name: "경마공원역",
+              stationId: "436",
+              lat: 37.443959,
+              lng: 127.007767
+            },
+            {
+              seq: 5,
+              name: "대공원역",
+              stationId: "437",
+              lat: 37.435724,
+              lng: 127.006557
+            },
+            {
+              seq: 6,
+              name: "과천역",
+              stationId: "438",
+              lat: 37.432785,
+              lng: 126.996542
+            },
+            {
+              seq: 7,
+              name: "정부과천청사역",
+              stationId: "439",
+              lat: 37.426502,
+              lng: 126.989778
+            },
+            {
+              seq: 8,
+              name: "인덕원역",
+              stationId: "440",
+              lat: 37.401859,
+              lng: 126.97711
+            },
+            {
+              seq: 9,
+              name: "평촌역",
+              stationId: "441",
+              lat: 37.394346,
+              lng: 126.963898
+            },
+            {
+              seq: 10,
+              name: "범계역",
+              stationId: "442",
+              lat: 37.389794,
+              lng: 126.950766
+            },
+            {
+              seq: 11,
+              name: "금정역",
+              stationId: "443",
+              lat: 37.372351,
+              lng: 126.943512
+            },
+            {
+              seq: 12,
+              name: "삼각지역",
+              stationId: "444",
+              lat: 37.5347,
+              lng: 126.9737
             }
           ],
           etaMin: null
         },
         {
-          order: 7,
+          order: 5,
           type: "WALKING",
           lineName: null,
-          timeTaken: 4,
+          timeTaken: 2,
           startPoint: null,
           endPoint: null,
           startLat: null,

@@ -50,44 +50,203 @@ export const routeHandlers = [
   http.get(`${API_BASE_URL}/v1/maps/routes/:routeId`, ({ params }) => {
     const { routeId } = params;
     console.log('🎯 MSW: 상세 경로 조회 API 인터셉트됨, routeId:', routeId);
-    // 백엔드: RouteDetailDTO 반환
+    // 백엔드: RouteDetailDTO 반환 (지하철/버스 노선)
     const mockRouteDetail = {
-      totalTime: 48, // int totalTime
+      totalTime: 45, // int totalTime
       departureTime: "2025-12-12 18:00:00", // String departureTime
-      arrivalTime: "2025-12-12 18:48:00", // String arrivalTime
-      fatigue: 40, // int fatigue
+      arrivalTime: "2025-12-12 18:45:00", // String arrivalTime
+      fatigue: 35, // int fatigue
       data: [ // List<Leg> data
         {
           order: 1,
-          type: "subway", // String type
-          lineName: "분당선", // String lineName
-          timeTaken: 25, // int timeTaken
-          startPoint: "출발지",
-          endPoint: "환승역",
-          startLat: 37.56151,
-          startLng: 127.038713,
-          endLat: 37.504586,
-          endLng: 127.049282,
-          path: [ // List<LatLngDTO> path
-            { lat: 37.56151, lng: 127.038713 },
-            { lat: 37.504586, lng: 127.049282 }
-          ]
+          type: "WALKING", // String type
+          lineName: null, // String lineName
+          timeTaken: 5, // int timeTaken
+          startPoint: null,
+          endPoint: null,
+          startLat: null,
+          startLng: null,
+          endLat: null,
+          endLng: null,
+          path: [], // List<LatLngDTO> path
+          etaMin: null
         },
         {
           order: 2,
-          type: "subway",
-          lineName: "2호선",
-          timeTaken: 20,
-          startPoint: "환승역",
-          endPoint: "도착지",
-          startLat: 37.504586,
-          startLng: 127.049282,
-          endLat: 37.497949,
-          endLng: 127.027618,
-          path: [
-            { lat: 37.504586, lng: 127.049282 },
-            { lat: 37.497949, lng: 127.027618 }
-          ]
+          type: "SUBWAY", // String type
+          lineName: "수도권 2호선", // String lineName
+          timeTaken: 20, // int timeTaken
+          startPoint: "강남역",
+          endPoint: "사당역",
+          startLat: 37.497952,
+          startLng: 127.027619,
+          endLat: 37.476575,
+          endLng: 126.981363,
+          path: [ // List<LatLngDTO> path
+            {
+              seq: 1,
+              name: "강남역",
+              stationId: "222",
+              lat: 37.497952,
+              lng: 127.027619
+            },
+            {
+              seq: 2,
+              name: "교대역",
+              stationId: "223",
+              lat: 37.493902,
+              lng: 127.014395
+            },
+            {
+              seq: 3,
+              name: "서초역",
+              stationId: "224",
+              lat: 37.491852,
+              lng: 127.007702
+            },
+            {
+              seq: 4,
+              name: "방배역",
+              stationId: "225",
+              lat: 37.481496,
+              lng: 126.997667
+            },
+            {
+              seq: 5,
+              name: "사당역",
+              stationId: "226",
+              lat: 37.476575,
+              lng: 126.981363
+            }
+          ],
+          etaMin: null
+        },
+        {
+          order: 3,
+          type: "WALKING", // String type
+          lineName: null, // String lineName
+          timeTaken: 3, // int timeTaken
+          startPoint: null,
+          endPoint: null,
+          startLat: null,
+          startLng: null,
+          endLat: null,
+          endLng: null,
+          path: [], // List<LatLngDTO> path
+          etaMin: null
+        },
+        {
+          order: 4,
+          type: "SUBWAY", // String type
+          lineName: "수도권 4호선", // String lineName
+          timeTaken: 15, // int timeTaken
+          startPoint: "사당역",
+          endPoint: "삼각지역",
+          startLat: 37.476575,
+          startLng: 126.981363,
+          endLat: 37.5347,
+          endLng: 126.9737,
+          path: [ // List<LatLngDTO> path
+            {
+              seq: 1,
+              name: "사당역",
+              stationId: "433",
+              lat: 37.476575,
+              lng: 126.981363
+            },
+            {
+              seq: 2,
+              name: "남태령역",
+              stationId: "434",
+              lat: 37.464247,
+              lng: 126.989114
+            },
+            {
+              seq: 3,
+              name: "선바위역",
+              stationId: "435",
+              lat: 37.451785,
+              lng: 127.002108
+            },
+            {
+              seq: 4,
+              name: "경마공원역",
+              stationId: "436",
+              lat: 37.443959,
+              lng: 127.007767
+            },
+            {
+              seq: 5,
+              name: "대공원역",
+              stationId: "437",
+              lat: 37.435724,
+              lng: 127.006557
+            },
+            {
+              seq: 6,
+              name: "과천역",
+              stationId: "438",
+              lat: 37.432785,
+              lng: 126.996542
+            },
+            {
+              seq: 7,
+              name: "정부과천청사역",
+              stationId: "439",
+              lat: 37.426502,
+              lng: 126.989778
+            },
+            {
+              seq: 8,
+              name: "인덕원역",
+              stationId: "440",
+              lat: 37.401859,
+              lng: 126.97711
+            },
+            {
+              seq: 9,
+              name: "평촌역",
+              stationId: "441",
+              lat: 37.394346,
+              lng: 126.963898
+            },
+            {
+              seq: 10,
+              name: "범계역",
+              stationId: "442",
+              lat: 37.389794,
+              lng: 126.950766
+            },
+            {
+              seq: 11,
+              name: "금정역",
+              stationId: "443",
+              lat: 37.372351,
+              lng: 126.943512
+            },
+            {
+              seq: 12,
+              name: "삼각지역",
+              stationId: "444",
+              lat: 37.5347,
+              lng: 126.9737
+            }
+          ],
+          etaMin: null
+        },
+        {
+          order: 5,
+          type: "WALKING", // String type
+          lineName: null, // String lineName
+          timeTaken: 2, // int timeTaken
+          startPoint: null,
+          endPoint: null,
+          startLat: null,
+          startLng: null,
+          endLat: null,
+          endLng: null,
+          path: [], // List<LatLngDTO> path
+          etaMin: null
         }
       ],
       // 기존 polyline 데이터도 유지 (폴리라인 그리기용)
