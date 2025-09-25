@@ -141,8 +141,6 @@ const RouteCard = memo<RouteCardProps>(({
             </svg>
           </Button>
         )}
-        {/* 디버깅용 로그 */}
-        {console.log('RouteCard 편집 버튼 조건:', { showEditButton, hasOnEdit: !!onEdit, routeId: route.id })}
 
         {/* 선택 버튼 */}
         <Button
