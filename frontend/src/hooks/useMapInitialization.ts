@@ -45,26 +45,7 @@ export function useMapInitialization() {
             }
           });
 
-          // 마커 추가 (네이버 좌표계 사용)
-          const marker = new naver.maps.Marker({
-            position: new naver.maps.LatLng(center.lat, center.lng),
-            map: mapInstance,
-            title: '현재 위치'
-          });
-
-          // 정보창 추가
-          const infoWindow = new naver.maps.InfoWindow({
-            content: '<div style="padding:10px; font-size:14px;"><strong>현재 위치</strong><br/>네이버 지도 API</div>'
-          });
-
-          // 마커 클릭 시 정보창 표시
-          naver.maps.Event.addListener(marker, 'click', () => {
-            if (infoWindow.getMap()) {
-              infoWindow.close();
-            } else {
-              infoWindow.open(mapInstance, marker);
-            }
-          });
+          // 초기 마커는 제거 - 필요시 useMarker 훅에서 생성
 
           // 맵 클릭 이벤트 추가 - 좌표를 콘솔에 출력
           naver.maps.Event.addListener(mapInstance, 'click', (e: any) => {

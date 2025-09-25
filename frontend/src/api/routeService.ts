@@ -1,4 +1,22 @@
-// import { generateRouteRecommendations } from '../utils/routeDataGenerator'; // 주석화됨
+/**
+ * 경로 검색 비즈니스 로직 서비스
+ * 
+ * 기능:
+ * - 경로 검색 플로우 실행
+ * - API 응답 데이터 변환
+ * - 안내시작 처리 (2단계 API 호출)
+ * - 상세 경로 데이터 변환
+ * - 경로 추천 타입 결정
+ * 
+ * 사용 페이지:
+ * - SearchPage: 경로 검색 실행
+ * - RouteResultsContainer: 경로 결과 표시
+ * - NavigationMode: 안내시작 처리
+ * - useRouteSearchStore: 경로 검색 상태 관리
+ * 
+ * @format
+ */
+
 import { isCurrentTime, getActionLabel, formatDateTimeForApi } from '../utils/timeUtils';
 import { searchRoutesWithTime, startRouteGuidance, getRouteDetail } from './mapApi';
 import type { SimpleRoute } from '../types/route-types';
@@ -292,15 +310,15 @@ export class RouteService {
 
   /**
    * 상세 경로 데이터를 RouteStep 형식으로 변환
-   * @param detailData 상세 경로 데이터
+   * @param detailData 상세 경로 데이터 (일반 경로 또는 즐겨찾기 경로)
    * @returns RouteStep 배열
    */
-  static convertDetailDataToSteps(detailData: RouteDetailResponse): any[] {
+  static convertDetailDataToSteps(detailData: RouteDetailResponse | any): any[] {
     if (!detailData || !detailData.data) {
       return [];
     }
 
-    return detailData.data.map((step, index) => {
+    return detailData.data.map((step: any, index: number) => {
       // 교통수단 타입 변환
       let type: string;
       switch (step.type) {
@@ -317,20 +335,27 @@ export class RouteService {
           type = 'walk';
       }
 
+      // 즐겨찾기 경로의 경우 startPoint/endPoint가 null일 수 있음
+      const startPoint = step.startPoint || '';
+      const endPoint = step.endPoint || '';
+      const description = startPoint && endPoint ? `${startPoint} → ${endPoint}` : 
+                         step.lineName ? `${step.lineName} 이용` : 
+                         '도보';
+
       return {
         id: `step-${index}`,
         type,
-        description: `${step.startPoint} → ${step.endPoint}`,
+        description,
         duration: step.timeTaken,
         distance: 0, // API에서 거리 정보가 없으므로 0으로 설정
         lineInfo: step.lineName ? {
           name: step.lineName,
           direction: '',
-          stationCount: 0
+          stationCount: step.path ? step.path.length : 0
         } : undefined,
-        stations: [],
-        startName: step.startPoint,
-        endName: step.endPoint,
+        stations: step.path || [],
+        startName: startPoint,
+        endName: endPoint,
         startLocation: {
           latitude: step.startLat,
           longitude: step.startLng
@@ -340,6 +365,7 @@ export class RouteService {
           longitude: step.endLng
         },
         path: step.path || [],
+        etaMin: step.etaMin, // 버스 도착 예정 시간
         createdAt: new Date(),
         updatedAt: new Date()
       };
