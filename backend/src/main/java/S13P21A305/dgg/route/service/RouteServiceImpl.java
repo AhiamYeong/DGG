@@ -69,7 +69,7 @@ public class RouteServiceImpl implements RouteService {
 		);
 		RecommendedRouteDTO shortest = RecommendedRouteDTO.builder()
 			.routeKey(shortestId).name("최단 경로")
-			.timeTaken(shortestMinutes).arrivalTime(shortestArrival).fatigue(75) // 피로도는 임시로 적음
+			.timeTaken(shortestMinutes).arrivalTime(shortestArrival).fatigue(75) // 피로도는 임시
 			.build();
 
 		// 최소 환승
@@ -152,7 +152,7 @@ public class RouteServiceImpl implements RouteService {
 		return rebuilt;
 	}
 
-	/** DB에서 상세 조회 */
+	/** DB에서 상세 조회 (path_json이 없어도 ODsay를 재호출하여 path 복원) */
 	@Override
 	@Transactional(readOnly = true)
 	public RouteDetailDTO getDetail(Long routeId, Integer memberId) {
@@ -179,6 +179,11 @@ public class RouteServiceImpl implements RouteService {
 				.endLat(ri.getEndLat())
 				.endLng(ri.getEndLng())
 				.build();
+
+			// path_json이 스키마에 없더라도 ODsay로 구간 상세(passStopList) 다시 조회
+			List<RouteDetailDTO.PathNodeDTO> pathNodes = reconstructPathForLeg(leg);
+			leg.setPath(pathNodes);
+
 			legs.add(leg);
 		}
 
@@ -195,7 +200,8 @@ public class RouteServiceImpl implements RouteService {
 			.build();
 	}
 
-	private int calculateTotalMetric(List<String> waypoints, Function<List<OdSayResponseDTO.Path>, OdSayResponseDTO.Path> pathSelector,
+	private int calculateTotalMetric(List<String> waypoints,
+		Function<List<OdSayResponseDTO.Path>, OdSayResponseDTO.Path> pathSelector,
 		Function<OdSayResponseDTO.Path, Integer> metricExtractor) {
 		int total = 0;
 		for (int i = 0; i < waypoints.size() - 1; i++) {
@@ -203,7 +209,6 @@ public class RouteServiceImpl implements RouteService {
 			OdSayResponseDTO.Path selected = pathSelector.apply(paths);
 			total += metricExtractor.apply(selected);
 		}
-
 		return total;
 	}
 
@@ -214,19 +219,22 @@ public class RouteServiceImpl implements RouteService {
 		if (startPoint == null || endPoint == null) {
 			throw new IllegalStateException("지오코딩 실패 - 주소를 좌표로 변환하지 못했습니다.");
 		}
+		return findPathsBetweenCoords(startPoint.lon(), startPoint.lat(), endPoint.lon(), endPoint.lat());
+	}
 
+	/** 좌표 기반 길찾기 (주소 지오코딩 없이 바로 호출 가능) */
+	private List<OdSayResponseDTO.Path> findPathsBetweenCoords(Double sx, Double sy, Double ex, Double ey) {
 		final String url = "https://api.odsay.com/v1/api/searchPubTransPathT";
 		URI uri = UriComponentsBuilder.fromHttpUrl(url)
 			.queryParam("apiKey", odsayApiKey)
-			.queryParam("SX", startPoint.lon()).queryParam("SY", startPoint.lat())
-			.queryParam("EX", endPoint.lon()).queryParam("EY", endPoint.lat())
+			.queryParam("SX", sx).queryParam("SY", sy)
+			.queryParam("EX", ex).queryParam("EY", ey)
 			.encode(StandardCharsets.UTF_8).build().toUri();
 
 		OdSayResponseDTO res = restTemplate.getForObject(uri, OdSayResponseDTO.class);
 		if (res == null || res.getResult() == null || res.getResult().getPath() == null || res.getResult().getPath().isEmpty()) {
-			throw new IllegalStateException("길찾기 결과가 없습니다. [" + startAddress + " -> " + endAddress + "]");
+			throw new IllegalStateException("길찾기 결과가 없습니다. [%.6f,%.6f -> %.6f,%.6f]".formatted(sx, sy, ex, ey));
 		}
-
 		return res.getResult().getPath();
 	}
 
@@ -330,9 +338,8 @@ public class RouteServiceImpl implements RouteService {
 			if (selected.getSubPath() != null) {
 				for (OdSayResponseDTO.SubPath sp : selected.getSubPath()) {
 					RouteDetailDTO.Leg leg = toLeg(orderCounter++, sp);
-					// 좌표가 없을 수 있어서 보강
+					// 좌표 보강
 					leg = enrichLegWithGeocoding(leg);
-
 					legs.add(leg);
 				}
 			}
@@ -350,16 +357,21 @@ public class RouteServiceImpl implements RouteService {
 			.build();
 	}
 
+	/** SubPath -> Leg (정류장/역 전체 path를 seq/name/stationId/lat/lng로 채움) */
 	private RouteDetailDTO.Leg toLeg(int order, OdSayResponseDTO.SubPath sp) {
 		String type = (sp.getTrafficType() == 1) ? "SUBWAY"
 			: (sp.getTrafficType() == 2) ? "BUS" : "WALKING";
 		String lineName = pickLineName(sp, type);
 
-		// 경유 좌표
-		List<RouteDetailDTO.LatLngDTO> path = new ArrayList<>();
+		// 정류장/역 전체 path
+		List<RouteDetailDTO.PathNodeDTO> path = new ArrayList<>();
 		if (sp.getPassStopList() != null && sp.getPassStopList().getStations() != null) {
+			int seq = 1;
 			for (OdSayResponseDTO.Station st : sp.getPassStopList().getStations()) {
-				path.add(RouteDetailDTO.LatLngDTO.builder()
+				path.add(RouteDetailDTO.PathNodeDTO.builder()
+					.seq(seq++)
+					.name(st.getStationName())
+					.stationId(st.getStationID() == null ? null : String.valueOf(st.getStationID()))
 					.lat(st.getY())  // y=lat
 					.lng(st.getX())  // x=lng
 					.build());
@@ -386,6 +398,7 @@ public class RouteServiceImpl implements RouteService {
 			.build();
 	}
 
+	/** 저장된 이름/좌표가 비어있을 때만 지오코딩으로 보강 */
 	private RouteDetailDTO.Leg enrichLegWithGeocoding(RouteDetailDTO.Leg leg) {
 		if ((leg.getStartLat() == null || leg.getStartLng() == null)
 			&& leg.getStartPoint() != null && !leg.getStartPoint().isBlank()) {
@@ -396,7 +409,6 @@ public class RouteServiceImpl implements RouteService {
 			}
 		}
 
-		// 끝 좌표가 없을 때만 시도
 		if ((leg.getEndLat() == null || leg.getEndLng() == null)
 			&& leg.getEndPoint() != null && !leg.getEndPoint().isBlank()) {
 			Point p = geocodingService.getCoordinates(leg.getEndPoint());
@@ -428,5 +440,91 @@ public class RouteServiceImpl implements RouteService {
 			case "WALK", "WALKING" -> RouteType.WALKING;
 			default -> throw new IllegalArgumentException("Unknown type: " + type);
 		};
+	}
+
+	/**
+	 * route_info 레코드를 기반으로 leg의 전체 path를 재구성
+	 * - 1) 좌표가 있으면 좌표로, 2) 없으면 지명으로 ODsay 호출
+	 * - 3) 호출 결과의 subPath 중 type/lineName이 일치하는 것을 우선 사용
+	 * - 4) 없으면 첫 subPath의 passStopList로 폴백
+	 */
+	private List<RouteDetailDTO.PathNodeDTO> reconstructPathForLeg(RouteDetailDTO.Leg leg) {
+		try {
+			List<OdSayResponseDTO.Path> candidates;
+			if (leg.getStartLat() != null && leg.getStartLng() != null
+				&& leg.getEndLat() != null && leg.getEndLng() != null) {
+				candidates = findPathsBetweenCoords(
+					leg.getStartLng(), leg.getStartLat(), // SX, SY (lng, lat)
+					leg.getEndLng(), leg.getEndLat()      // EX, EY
+				);
+			} else if (leg.getStartPoint() != null && leg.getEndPoint() != null) {
+				candidates = findPathsBetween(leg.getStartPoint(), leg.getEndPoint());
+			} else {
+				return Collections.emptyList();
+			}
+
+			// 우선순위: type/lineName 매칭되는 subPath
+			for (OdSayResponseDTO.Path p : candidates) {
+				if (p.getSubPath() == null) continue;
+				for (OdSayResponseDTO.SubPath sp : p.getSubPath()) {
+					String t = (sp.getTrafficType() == 1) ? "SUBWAY" : (sp.getTrafficType() == 2) ? "BUS" : "WALKING";
+					String ln = pickLineName(sp, t);
+					if (Objects.equals(t, leg.getType())
+						&& (leg.getLineName() == null || Objects.equals(leg.getLineName(), ln))) {
+						return convertStations(sp);
+					}
+				}
+			}
+
+			// 폴백: 첫 경로의 첫 subPath
+			OdSayResponseDTO.Path first = candidates.get(0);
+			if (first.getSubPath() != null && !first.getSubPath().isEmpty()) {
+				return convertStations(first.getSubPath().get(0));
+			}
+		} catch (Exception e) {
+			// 무조건 최소 2개(출발/도착)라도 만들어 주는 폴백
+		}
+
+		List<RouteDetailDTO.PathNodeDTO> fallback = new ArrayList<>();
+		int seq = 1;
+
+		if (leg.getStartPoint() != null) {
+			fallback.add(RouteDetailDTO.PathNodeDTO.builder()
+				.seq(seq++)
+				.name(leg.getStartPoint())
+				.stationId(null)
+				.lat(leg.getStartLat())
+				.lng(leg.getStartLng())
+				.build());
+		}
+
+		if (leg.getEndPoint() != null) {
+			fallback.add(RouteDetailDTO.PathNodeDTO.builder()
+				.seq(seq)
+				.name(leg.getEndPoint())
+				.stationId(null)
+				.lat(leg.getEndLat())
+				.lng(leg.getEndLng())
+				.build());
+		}
+		return fallback;
+	}
+
+	/** ODsay SubPath -> PathNodeDTO 리스트 변환 */
+	private List<RouteDetailDTO.PathNodeDTO> convertStations(OdSayResponseDTO.SubPath sp) {
+		List<RouteDetailDTO.PathNodeDTO> list = new ArrayList<>();
+		if (sp.getPassStopList() != null && sp.getPassStopList().getStations() != null) {
+			int seq = 1;
+			for (OdSayResponseDTO.Station st : sp.getPassStopList().getStations()) {
+				list.add(RouteDetailDTO.PathNodeDTO.builder()
+					.seq(seq++)
+					.name(st.getStationName())
+					.stationId(st.getStationID() == null ? null : String.valueOf(st.getStationID()))
+					.lat(st.getY())
+					.lng(st.getX())
+					.build());
+			}
+		}
+		return list;
 	}
 }
