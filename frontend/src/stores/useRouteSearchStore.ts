@@ -46,6 +46,7 @@ interface RouteSearchActions {
   
   // 경로 선택 (안내시작)
   selectRoute: (route: SimpleRoute) => Promise<void>;
+  selectBookmarkRoute: (route: SimpleRoute) => Promise<void>;
   toggleBookmark: (id: string) => void;
   addBookmarkForRoute: (route: SimpleRoute) => Promise<void>;
   removeBookmarkForRoute: (routeId: string) => Promise<void>;
@@ -214,6 +215,19 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
         }
       },
 
+      // 즐겨찾기 경로 선택 (안내시작)
+      selectBookmarkRoute: async (route: SimpleRoute) => {
+        log.route('즐겨찾기 경로 선택 (안내시작)', route);
+        
+        try {
+          // 기존 selectRoute 함수 호출
+          await get().selectRoute(route);
+        } catch (error) {
+          log.error('즐겨찾기 경로 선택 실패', error);
+          alert('즐겨찾기 경로 선택에 실패했습니다. 다시 시도해주세요.');
+        }
+      },
+
       // 즐겨찾기 토글
       toggleBookmark: (id: string) => {
         const { routeResults } = get();
@@ -229,8 +243,8 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
           const departureName = route.from?.name || '출발지';
           const destinationName = route.to?.name || '도착지';
 
-          const { bookmarkApi } = await import('../api/bookmarkApi');
-          const created = await bookmarkApi.createRouteBookmark({ name, departureName, destinationName, routeKey: route.routeKey });
+          const { favoriteRoutesApi } = await import('../api/favoriteRoutes');
+          const created = await favoriteRoutesApi.createRouteBookmark({ name, departureName, destinationName, routeKey: route.routeKey });
 
           // 상태 반영
           const { routeResults, routeBookmarks } = get();
@@ -254,8 +268,8 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
             await get().fetchBookmarks();
             return;
           }
-          const { bookmarkApi } = await import('../api/bookmarkApi');
-          await bookmarkApi.deleteRouteBookmark(target.bookmarkRouteId);
+          const { favoriteRoutesApi } = await import('../api/favoriteRoutes');
+          await favoriteRoutesApi.deleteRouteBookmark(target.bookmarkRouteId);
           // 성공 시 로컬 상태 반영
           set({
             routeResults: routeResults.map(r => r.id === routeId ? { ...r, isBookmarked: false, bookmarkRouteId: undefined } : r)
@@ -271,10 +285,13 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
       // 즐겨찾기 목록 조회
       fetchBookmarks: async () => {
         try {
-          const { bookmarkApi } = await import('../api/bookmarkApi');
-          const list = await bookmarkApi.getRouteBookmarks();
+          console.log('useRouteSearchStore: fetchBookmarks 시작');
+          const { favoriteRoutesApi } = await import('../api/favoriteRoutes');
+          const list = await favoriteRoutesApi.getRouteBookmarks();
+          console.log('useRouteSearchStore: fetchBookmarks 성공', list);
           set({ routeBookmarks: list });
         } catch (e) {
+          console.error('useRouteSearchStore: fetchBookmarks 실패', e);
           log.error('즐겨찾기 목록 조회 실패', e);
         }
       },

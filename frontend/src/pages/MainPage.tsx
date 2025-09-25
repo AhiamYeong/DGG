@@ -4,7 +4,7 @@ import FatigueProgressbar from "@/components/fatigue/FatigueProgressBar";
 import { useEffect, useState } from "react";
 import character from "../assets/character.png";
 import { fatigueApi } from "@/api/fatigueApi";
-import bookmarkApi from "@/api/bookmarkApi";
+import favoriteRoutesApi from "@/api/favoriteRoutes";
 import { useNavigate } from "react-router-dom";
 
 export default function Mainpage() {
@@ -30,7 +30,7 @@ export default function Mainpage() {
 
     // 장소 별명 props로 떼오기
     const fetchFavoriteRoute = async () => {
-      const resp = await bookmarkApi.getRouteBookmarks();
+      const resp = await favoriteRoutesApi.getRouteBookmarks();
       const names = resp.map((item) => item.name);
       setRouteNames(names);
     };

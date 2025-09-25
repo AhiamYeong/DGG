@@ -1,4 +1,22 @@
-// import { generateRouteRecommendations } from '../utils/routeDataGenerator'; // 주석화됨
+/**
+ * 경로 검색 비즈니스 로직 서비스
+ * 
+ * 기능:
+ * - 경로 검색 플로우 실행
+ * - API 응답 데이터 변환
+ * - 안내시작 처리 (2단계 API 호출)
+ * - 상세 경로 데이터 변환
+ * - 경로 추천 타입 결정
+ * 
+ * 사용 페이지:
+ * - SearchPage: 경로 검색 실행
+ * - RouteResultsContainer: 경로 결과 표시
+ * - NavigationMode: 안내시작 처리
+ * - useRouteSearchStore: 경로 검색 상태 관리
+ * 
+ * @format
+ */
+
 import { isCurrentTime, getActionLabel, formatDateTimeForApi } from '../utils/timeUtils';
 import { searchRoutesWithTime, startRouteGuidance, getRouteDetail } from './mapApi';
 import type { SimpleRoute } from '../types/route-types';

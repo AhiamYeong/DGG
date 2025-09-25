@@ -1,4 +1,22 @@
-// 네이버 지도 API 및 서버 API 호출
+/**
+ * 네이버 지도 API 및 경로 검색 관련 API
+ * 
+ * 기능:
+ * - 네이버 지도 API 스크립트 로드
+ * - 장소 검색
+ * - 경로 검색 (시간 정보 포함)
+ * - 즐겨찾기 경로 관리
+ * - 안내시작 및 상세 경로 조회
+ * 
+ * 사용 페이지:
+ * - MainMapPage: 지도 표시 및 경로 검색
+ * - SearchPage: 장소 검색 및 경로 검색
+ * - NavigationMode: 안내시작 및 상세 경로 조회
+ * - MapContainer: 네이버 지도 API 로드
+ * 
+ * @format
+ */
+
 import { createApiClient } from '../utils/apiClient';
 import { log } from '../utils/logger';
 
