@@ -11,7 +11,7 @@ import com.samsung.android.sdk.health.data.request.DataTypes
 import com.samsung.android.sdk.health.data.request.LocalTimeFilter
 import com.samsung.android.sdk.health.data.response.DataResponse
 import com.ssafy.dgg.model.data.ActivityDataRequest
-import com.ssafy.dgg.model.data.SleepDataRequest
+import com.ssafy.dgg.model.data.SleepAndStepsDataRequest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toKotlinInstant
@@ -142,7 +142,7 @@ class HealthDataRepository(private val store: HealthDataStore) {
         )
     }
 
-    suspend fun getSleepDataResponse(store: HealthDataStore): SleepDataRequest {
+    suspend fun getSleepAndStepsDataResponse(store: HealthDataStore): SleepAndStepsDataRequest {
         Log.d("dataToDTO", "Aggregating sleep data for DTO...")
 
         val sleepDataList = getSleep(store)
@@ -151,10 +151,10 @@ class HealthDataRepository(private val store: HealthDataStore) {
         // 1. 집계된 수면 데이터 중 첫 번째 값 추출
         val sleepData = sleepDataList.firstOrNull()
         val sleepGoalData = sleepGoalList.firstOrNull()
-        val sleepScore = (sleepData?.getValue(DataType.SleepType.SLEEP_SCORE) as? Int) ?: 0
+        val sleepScore = sleepData?.getValue(DataType.SleepType.SLEEP_SCORE) ?: 0
 
         // 세션 목록
-        val sessions = (sleepData?.getValue(DataType.SleepType.SESSIONS) as? List<SleepSession>)
+        val sessions = sleepData?.getValue(DataType.SleepType.SESSIONS)
             ?: emptyList()
 
         val duration = sessions.firstOrNull()?.duration?.toMillis() ?: 0L
@@ -172,10 +172,31 @@ class HealthDataRepository(private val store: HealthDataStore) {
             ?.toKotlinInstant()
             ?: java.time.Instant.now().toKotlinInstant()
 
-        return SleepDataRequest(
+        // steps 추가
+        val beforeSteps = getBeforeSteps(store)
+        return SleepAndStepsDataRequest(
             sleepDate = sleepDate,
             sleepScore = sleepScore,
             sleepDuration = duration,
+            steps = beforeSteps
         )
+    }
+
+    suspend fun getBeforeSteps(store: HealthDataStore): Long {
+        // 전날 - 다음날 (UTC 기준 0시 ~ 다음날 0시)
+        val date: LocalDate = LocalDate.now().minusDays(1) // 예: 어제 날짜
+
+        val startDateTime = date.atStartOfDay()
+        val endDateTime = date.plusDays(1).atStartOfDay()
+        val filter: LocalTimeFilter = LocalTimeFilter.of(startDateTime, endDateTime)
+
+        val request = DataType.StepsType.TOTAL.requestBuilder
+            .setLocalTimeFilter(filter)
+            .build()
+
+        val response: DataResponse<AggregatedData<Long>> = store.aggregateData(request)
+        val totalSteps = response.dataList.sumOf { it.value ?: 0L }
+        Log.d("DTO", "[$date] totalSteps=$totalSteps")
+        return totalSteps
     }
 }

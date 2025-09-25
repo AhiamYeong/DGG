@@ -1,7 +1,7 @@
 package com.ssafy.dgg.model.repository.health
 
 import com.ssafy.dgg.model.data.ActivityDataRequest
-import com.ssafy.dgg.model.data.SleepDataRequest
+import com.ssafy.dgg.model.data.SleepAndStepsDataRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -10,7 +10,7 @@ import retrofit2.http.POST
 interface HealthApi {
     // 수면데이터 업데이트
     @POST("health/sleep")
-    suspend fun sendSleepData(@Body request: SleepDataRequest): Response<Unit>
+    suspend fun sendSleepAndStepsData(@Body request: SleepAndStepsDataRequest): Response<Unit>
 
     // 건강데이터 업데이트
     @POST("health/activity")
