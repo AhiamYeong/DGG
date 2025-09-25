@@ -82,8 +82,8 @@ public class NearbyPoiService {
     //타입 변환
     private String mapType(int stationClass) {
         return switch (stationClass) {
-            case 1 -> "subway";
-            case 2 -> "bus";
+            case 2 -> "subway";
+            case 1 -> "bus";
             default -> "unknown";
         };
     }
@@ -98,14 +98,14 @@ public class NearbyPoiService {
 
         // id -> 정규화된 역/정류장 이름
         Map<String, String> subway = list.stream()
-                .filter(p -> p.type() == 1) // subway
+                .filter(p -> p.type() == 2) // subway
                 .collect(Collectors.toMap(
                         p -> p.stationId().toString(),
                         p -> normalize(p.stationName()),
                         (a,b)->a, LinkedHashMap::new));
 
         Map<String, String> bus = list.stream()
-                .filter(p -> p.type() == 2) // bus
+                .filter(p -> p.type() == 1) // bus
                 .collect(Collectors.toMap(
                         p -> p.stationId().toString(),
                         p -> normalize(p.stationName()),
@@ -165,8 +165,8 @@ public class NearbyPoiService {
 
     private Map<String, Double> fetchBusCongestions(String table, Collection<String> normNames, Integer timeSlot) {
         if (normNames == null || normNames.isEmpty()) return Map.of();
-        String sql = "SELECT station, congestion FROM " + table +
-                " WHERE time_slot = :slot AND station IN (:names)";
+        String sql = "SELECT route_name, congestion_ratio FROM " + table +
+                " WHERE time_slot = :slot AND route_name IN (:names)";
         Map<String, Object> params = Map.of("slot", timeSlot, "names", normNames);
         Map<String, Double> out = new HashMap<>();
         jdbc.query(sql, params, rs -> {

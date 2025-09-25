@@ -56,7 +56,7 @@ public class WaypointService {
 
     // ===== 유틸 =====
 
-    // 경로 노드 다운샘플링: N개마다 1개 (간단/빠름). 필요하면 거리기반으로 바꿔도 됨.
+    // 경로 노드 다운샘플링: N개마다 1개
     private List<LatLon> samplePath(List<LatLon> full) {
         if (full.size() <= 30) return full;        // 짧은 경로는 전체 사용
         List<LatLon> out = new ArrayList<>();
@@ -89,13 +89,14 @@ public class WaypointService {
                     .getObjectRedisTemplate().opsForHash().entries(key);
 
             String name = sv(m.get("name"));
+            String type = sv(m.get("type"));
             double lat = dv(m.get("lat"));
             double lon = dv(m.get("lon"));
             double distanceM = dv(m.get("distance_m"));
             double congestion = dv(m.get("congestion"));
             Double score = fetchScoreFromZset(zKey, id);
 
-            out.add(new TopCandidateDto(id, name, lat, lon, distanceM, congestion, score));
+            out.add(new TopCandidateDto(id, type, name, lat, lon, distanceM, congestion, score));
         }
         return out;
     }

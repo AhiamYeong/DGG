@@ -52,16 +52,6 @@ public class StopRedisService {
                 "type", stop.type()
         );
         objectRedisTemplate.opsForHash().putAll(stopKey, stopInfo);
-
-        // Geo: 위치 인덱스 저장 (이미 존재하면 업데이트처럼 동작)
-        // geo:stop: 형식으로 저장
-        stringRedisTemplate.opsForGeo().add(
-                GEO_INDEX_KEY,
-                new RedisGeoCommands.GeoLocation<>(
-                        stopKey,
-                        new Point(stop.lon(), stop.lat())
-                )
-        );
     }
 
     /**
