@@ -7,8 +7,10 @@ interface RouteListProps {
   onSelectRoute: (route: SimpleRoute) => Promise<void>;
   onToggleBookmark?: (id: string) => void;
   onShowOptions?: (id: string) => void;
+  onEditRoute?: (route: SimpleRoute) => void;
   emptyMessage?: string;
   actionLabel?: string;
+  showEditButton?: boolean;
   className?: string;
 }
 
@@ -25,8 +27,10 @@ const RouteList = memo<RouteListProps>(({
   onSelectRoute,
   onToggleBookmark,
   onShowOptions,
+  onEditRoute,
   emptyMessage = '등록된 노선이 없습니다',
   actionLabel = '선택',
+  showEditButton = false,
   className = ''
 }) => {
   // 이벤트 핸들러들을 useCallback으로 최적화
@@ -41,6 +45,11 @@ const RouteList = memo<RouteListProps>(({
   const handleShowOptions = useCallback((id: string) => {
     onShowOptions?.(id);
   }, [onShowOptions]);
+
+  const handleEditRoute = useCallback((route: SimpleRoute) => {
+    console.log('RouteList handleEditRoute 호출됨:', route);
+    onEditRoute?.(route);
+  }, [onEditRoute]);
 
 
   // 빈 상태 메시지 렌더링을 useMemo로 최적화
@@ -66,16 +75,18 @@ const RouteList = memo<RouteListProps>(({
           onSelect={handleSelectRoute}
           onToggleBookmark={handleToggleBookmark}
           onShowOptions={handleShowOptions}
+          onEdit={handleEditRoute}
           actionLabel={actionLabel}
+          showEditButton={showEditButton}
         />
       ))}
     </div>
-  ), [routes, handleSelectRoute, handleToggleBookmark, handleShowOptions, actionLabel]);
+  ), [routes, handleSelectRoute, handleToggleBookmark, handleShowOptions, handleEditRoute, actionLabel, showEditButton]);
 
   // 새 경로 추가 버튼 제거됨
 
   return (
-    <div className={`p-8 ${className}`}>
+    <div className={`px-4 py-2 ${className}`}>
       {routes.length > 0 ? (
         routeItems
       ) : (
