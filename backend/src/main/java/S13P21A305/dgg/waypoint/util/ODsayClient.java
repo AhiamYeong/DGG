@@ -54,7 +54,7 @@ public class ODsayClient {
                     if (status.is2xxSuccessful()) {
                         // 2xx라도 파싱 전에 원문 바디를 찍어 확인
                         return res.bodyToMono(String.class)
-                                .doOnNext(body -> log.debug("[ODsay 2xx] body={}", body))
+//                                .doOnNext(body -> log.debug("[ODsay 2xx] body={}", body))
                                 .flatMap(body -> {
                                     try {
                                         var dto = om.readValue(body, ODsayPointStationResponse.class);

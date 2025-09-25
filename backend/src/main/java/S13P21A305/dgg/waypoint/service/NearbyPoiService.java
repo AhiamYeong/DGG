@@ -129,7 +129,7 @@ public class NearbyPoiService {
                 String table = "gold_bus_09"; // 예: "gold_bus_09"
                 Map<String, Double> busMap = fetchBusCongestions(table, bus.values(), timeSlot);
                 bus.forEach((stopId, norm) -> {
-                    double cong = busMap.getOrDefault(norm, 0.0);
+                    double cong = busMap.getOrDefault(norm, 0.5);
                     stopRedisService.updateStopCongestion(stopId, cong);
                 });
             }
@@ -170,10 +170,11 @@ public class NearbyPoiService {
     private Map<String, Double> fetchBusCongestions(String table, Collection<String> normNames, Integer timeSlot) {
         if (normNames == null || normNames.isEmpty()) return Map.of();
         String sql = """
-                    SELECT departure, congestion_ratio
+                    SELECT departure, AVG(congestion_ratio) AS congestion_ratio
                     FROM gold_bus_09
                     WHERE time_slot = :slot
                       AND departure IN (:names)
+                      GROUP BY departure
                     """;
         Map<String, Object> params = Map.of("slot", timeSlot, "names", normNames);
 

@@ -18,6 +18,8 @@ public class WaypointService {
     private final NearbyPoiService nearbyPoiService; // 내부에서 getNearby 호출 + 마스터/혼잡도 주입
     private final StopRedisService stopRedisService; // ZSET/Hash 조회용
 
+    final int CANDIDATE_CAP = 300;
+
     /**
      * 경로(노드 리스트)를 입력으로 받아 Top5 후보 정류장을 산출한다.
      *
@@ -45,6 +47,7 @@ public class WaypointService {
                 .concatMap(node -> nearbyPoiService.find(node.lat(), node.lon(), perNodeRadiusMeters, timeSlot))
                 .flatMapIterable(list -> list)
                 .distinct(NearbyPoi::stationId) // 3) 중복 제거
+                .take(CANDIDATE_CAP)
                 .collectList()
                 // 4) 경로-후보지 최소거리 Redis 저장
                 .flatMap(candidates -> nearbyPoiService.upsertDistanceToPath(candidates, path).thenReturn(candidates))
@@ -102,14 +105,19 @@ public class WaypointService {
     }
 
     private Double fetchScoreFromZset(String zKey, String stopId) {
-        Set<ZSetOperations.TypedTuple<String>> tuples =
-                stopRedisService.getStringRedisTemplate().opsForZSet()
-                        .rangeByScoreWithScores(zKey, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-        if (tuples == null) return null;
-        for (var t : tuples) {
-            if (("stop:" + stopId).equals(t.getValue())) return t.getScore();
-        }
-        return null;
+        String member = "stop:" + stopId;
+        return stopRedisService.getStringRedisTemplate()
+                .opsForZSet()
+                .score(zKey, member);
+
+//        Set<ZSetOperations.TypedTuple<String>> tuples =
+//                stopRedisService.getStringRedisTemplate().opsForZSet()
+//                        .rangeByScoreWithScores(zKey, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+//        if (tuples == null) return null;
+//        for (var t : tuples) {
+//            if (("stop:" + stopId).equals(t.getValue())) return t.getScore();
+//        }
+//        return null;
     }
 
     private static String sv(Object o) { return o == null ? null : o.toString(); }
