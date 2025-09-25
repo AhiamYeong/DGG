@@ -1,6 +1,11 @@
 package com.ssafy.dgg.ui.screen
 
 import AuthViewModel
+import android.content.Context
+import android.view.ViewGroup
+import android.webkit.WebView
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -13,14 +18,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import com.ssafy.dgg.BuildConfig
 
 data class Screen(val route: String, val title: String)
 
 val items = listOf(
+    Screen("main", "메인"),
     Screen("fatigue", "피로도"),
-    Screen("plan", "약속"),
-    Screen("route", "길찾기"),
+    Screen("map", "길찾기"),
     Screen("alarm", "알림"),
     Screen("mypage", "마이페이지"),
 )
@@ -28,11 +35,15 @@ val items = listOf(
 val BASE_URL = BuildConfig.WEB_URL
 
 @Composable
-fun MainScreen(
-    authViewModel: AuthViewModel
-) {
+fun MainScreen(authViewModel: AuthViewModel) {
     val context = LocalContext.current
-    var selectedItem by remember { mutableStateOf(items.find { it.route == "route" } ?: items[0]) }
+    var selectedItem by remember { mutableStateOf(items[0]) }
+
+    // WebView 인스턴스를 한 번만 생성
+    val mainWebView = remember { context.createConfiguredWebView("$BASE_URL/") }
+    val fatigueWebView = remember { context.createConfiguredWebView("$BASE_URL/fatigue") }
+    val mapWebView = remember { context.createConfiguredWebView("$BASE_URL/map") }
+    val alarmWebView = remember { context.createConfiguredWebView("$BASE_URL/alarm") }
 
     Scaffold(
         bottomBar = {
@@ -41,40 +52,54 @@ fun MainScreen(
                     NavigationBarItem(
                         selected = selectedItem == screen,
                         onClick = { selectedItem = screen },
-                        icon = { /* TODO: Add icons */ },
-                        label = { Text(screen.title) }
+                        label = { Text(screen.title) },
+                        icon = {}
                     )
                 }
             }
         }
     ) { innerPadding ->
-        when (selectedItem.route) {
-            "fatigue" -> WebViewScreen(
-                url = "$BASE_URL/fatigue",
-                context = context,
-                modifier = Modifier.padding(innerPadding)
-            )
-            "plan" -> WebViewScreen(
-                url = "$BASE_URL/plan",
-                context = context,
-                modifier = Modifier.padding(innerPadding)
-            )
-            "route" -> WebViewScreen(
-                url = "$BASE_URL/map",
-                context = context,
-                modifier = Modifier.padding(innerPadding)
-            )
-            "alarm" -> WebViewScreen(
-                url = "$BASE_URL/alarm",
-                context = context,
-                modifier = Modifier.padding(innerPadding)
-            )
-            "mypage" -> {
+        Box(Modifier.padding(innerPadding)) {
+
+            // ✅ 항상 트리에 남겨두고 alpha 로만 제어
+            AndroidView({ mainWebView },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(if (selectedItem.route == "main") 1f else 0f))
+
+            AndroidView({ fatigueWebView },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(if (selectedItem.route == "fatigue") 1f else 0f))
+
+            AndroidView({ mapWebView },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(if (selectedItem.route == "map") 1f else 0f))
+
+            AndroidView({ alarmWebView },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(if (selectedItem.route == "alarm") 1f else 0f))
+
+            if (selectedItem.route == "mypage") {
                 MyPageScreen(
-                    modifier = Modifier.padding(innerPadding),
+                    modifier = Modifier.fillMaxSize(),
                     authViewModel = authViewModel
                 )
             }
         }
     }
 }
+
+fun Context.createConfiguredWebView(url: String): WebView =
+    WebView(this).apply {
+        layoutParams = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        webViewClient = CustomWebViewClient()
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = true
+        loadUrl(url)
+    }

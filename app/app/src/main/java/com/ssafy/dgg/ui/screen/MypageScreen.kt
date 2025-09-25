@@ -2,6 +2,7 @@ package com.ssafy.dgg.ui.screen
 
 import AuthViewModel
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,7 +41,6 @@ fun MyPageScreen(
     authViewModel: AuthViewModel
 ) {
 //     val loginState by viewModel.loginState
-    // TODO: mock 데이터 백엔드로 실제 연결
     val myPageRepo = _root_ide_package_.com.ssafy.dgg.model.repository.mypage.MyPageRepositoryImpl(RetrofitClient.myPageApiService)
     // val myPageRepo = remember { MyPageRepositoryMock() }
     val myPageViewModel = remember { MyPageViewModel(myPageRepo) }
@@ -57,6 +57,7 @@ fun MyPageScreen(
     Column (
         modifier = modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(32.dp)
     ) {
