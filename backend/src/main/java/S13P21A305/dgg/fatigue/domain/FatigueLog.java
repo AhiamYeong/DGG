@@ -1,5 +1,5 @@
 // entity/FatigueLog.java
-package S13P21A305.dgg.health.domain;
+package S13P21A305.dgg.fatigue.domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -17,7 +17,7 @@ public class FatigueLog {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name="member_id", nullable=false) private Long memberId;
+    @Column(name="member_id", nullable=false) private Integer memberId;
     @Column(name="fatigue") private Integer fatigue; // 당시 피로도(0~100)
 
     public enum Reason { TRAFFIC, COFFEE, WALK, NAP }
