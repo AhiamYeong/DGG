@@ -6,14 +6,17 @@ import character from "../assets/character.png";
 import { fatigueApi } from "@/api/fatigueApi";
 import favoriteRoutesApi from "@/api/favoriteRoutes";
 import { useNavigate } from "react-router-dom";
+import { useNavigationStore } from "@/stores";
+import { SimpleRoute } from "@/types";
 
 export default function Mainpage() {
-  const [nickname, setNickname] = useState<String>("");
+  const [routes, setRoutes] = useState<{ id: number; name: string }[]>([]);
   const [fatigue, setFatigue] = useState<number>(0);
+  const [nickname, setNickname] = useState<string>("");
 
   // TODO: 가장 가까운 알람 추가
   // const [weather, setWeather] = useState<Weather>();
-  const [routes, setRoutes] = useState<{ id: number; name: string }[]>([]);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,12 +32,7 @@ export default function Mainpage() {
 
     // 장소 별명 props로 떼오기
     const fetchFavoriteRoute = async () => {
-<<<<<<< HEAD
       const resp = await favoriteRoutesApi.getRouteBookmarks();
-      const names = resp.map((item) => item.name);
-      setRouteNames(names);
-=======
-      const resp = await bookmarkApi.getRouteBookmarks();
 
       // id, name 묶어서 저장
       const mapped = resp.map((item) => ({
@@ -42,7 +40,6 @@ export default function Mainpage() {
         name: item.name,
       }));
       setRoutes(mapped);
->>>>>>> 824087a (feat: 메인페이지 경로 변경중)
     };
     fetchFatigue();
     fetchFavoriteRoute();
@@ -50,6 +47,21 @@ export default function Mainpage() {
 
   const handleClick = (path: string) => {
     navigate(`/${path}`);
+  };
+
+  const handleRouteClick = async (bookmarkRouteId: number) => {
+    try {
+      const route: SimpleRoute = await favoriteRoutesApi.getRouteBookmarkDetail(
+        bookmarkRouteId
+      );
+
+      useNavigationStore.getState().startNavigation(route);
+
+      // 네비게이션 시작
+    } catch (err) {
+      console.error("즐겨찾기 상세 조회 실패:", err);
+      alert("경로 상세 정보를 불러오지 못했습니다.");
+    }
   };
 
   return (
@@ -79,12 +91,12 @@ export default function Mainpage() {
 
           {/* TODO: 루트 누르면 경로 이동 */}
           {/* 루트 목록 */}
-          <div className="flex flex-row gap-5 overflow-x-auto">
+          <div className="flex flex-row gap-5 justify-center">
             {routes.map((route) => (
               <button
                 key={route.id}
-                className="rounded-lg bg-green-100 px-3 py-1 shrink-0"
-                onClick={() => handleClick(route.name)}
+                className="rounded-lg bg-green-100 px-3 py-1"
+                onClick={() => handleRouteClick(route.id)}
               >
                 {route.name}
               </button>

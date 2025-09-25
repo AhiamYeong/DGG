@@ -1,7 +1,9 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { Location } from '../types/common-types';
-import { ROUTE_CONSTANTS } from '../constants';
+/** @format */
+
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { Location } from "../types/common-types";
+import { ROUTE_CONSTANTS } from "../constants";
 
 // 경유지 타입 정의
 export interface Waypoint {
@@ -38,63 +40,67 @@ export const useSearchStore = create<SearchState & SearchActions>()(
   persist(
     (set, get) => ({
       // State
-      origin: '',
-      destination: '',
+      origin: "",
+      destination: "",
       waypoints: [],
       originRoadAddress: undefined,
       destinationRoadAddress: undefined,
 
-  // Actions
-  setOrigin: (origin, roadAddress) => set({ origin, originRoadAddress: roadAddress }),
-  setDestination: (destination, roadAddress) => set({ destination, destinationRoadAddress: roadAddress }),
-  
-  addWaypoint: () => {
-    const { waypoints } = get();
-    if (waypoints.length < ROUTE_CONSTANTS.MAX_WAYPOINTS) {
-      const newWaypoint: Waypoint = {
-        id: `waypoint-${Date.now()}`,
-        value: ''
-      };
-      set({ waypoints: [...waypoints, newWaypoint] });
-    }
-  },
+      // Actions
+      setOrigin: (origin, roadAddress) =>
+        set({ origin, originRoadAddress: roadAddress }),
+      setDestination: (destination, roadAddress) =>
+        set({ destination, destinationRoadAddress: roadAddress }),
 
-  removeWaypoint: (id) => {
-    const { waypoints } = get();
-    set({ waypoints: waypoints.filter(wp => wp.id !== id) });
-  },
+      addWaypoint: () => {
+        const { waypoints } = get();
+        if (waypoints.length < ROUTE_CONSTANTS.MAX_WAYPOINTS) {
+          const newWaypoint: Waypoint = {
+            id: `waypoint-${Date.now()}`,
+            value: "",
+          };
+          set({ waypoints: [...waypoints, newWaypoint] });
+        }
+      },
 
-  updateWaypoint: (id, value, roadAddress) => {
-    const { waypoints } = get();
-    set({
-      waypoints: waypoints.map(wp => 
-        wp.id === id ? { ...wp, value, roadAddress } : wp
-      )
-    });
-  },
+      removeWaypoint: (id) => {
+        const { waypoints } = get();
+        set({ waypoints: waypoints.filter((wp) => wp.id !== id) });
+      },
 
-  clearOrigin: () => set({ origin: '', originRoadAddress: undefined }),
-  clearDestination: () => set({ destination: '', destinationRoadAddress: undefined }),
-  
-  clearWaypoint: (id) => {
-    const { waypoints } = get();
-    set({
-      waypoints: waypoints.map(wp => 
-        wp.id === id ? { ...wp, value: '', roadAddress: undefined } : wp
-      )
-    });
-  },
+      updateWaypoint: (id, value, roadAddress) => {
+        const { waypoints } = get();
+        set({
+          waypoints: waypoints.map((wp) =>
+            wp.id === id ? { ...wp, value, roadAddress } : wp
+          ),
+        });
+      },
 
-      clearAll: () => set({ 
-        origin: '', 
-        destination: '', 
-        waypoints: [],
-        originRoadAddress: undefined,
-        destinationRoadAddress: undefined
-      }),
+      clearOrigin: () => set({ origin: "", originRoadAddress: undefined }),
+      clearDestination: () =>
+        set({ destination: "", destinationRoadAddress: undefined }),
+
+      clearWaypoint: (id) => {
+        const { waypoints } = get();
+        set({
+          waypoints: waypoints.map((wp) =>
+            wp.id === id ? { ...wp, value: "", roadAddress: undefined } : wp
+          ),
+        });
+      },
+
+      clearAll: () =>
+        set({
+          origin: "",
+          destination: "",
+          waypoints: [],
+          originRoadAddress: undefined,
+          destinationRoadAddress: undefined,
+        }),
     }),
     {
-      name: 'search-store',
+      name: "search-store",
       partialize: (state) => ({
         origin: state.origin,
         destination: state.destination,
