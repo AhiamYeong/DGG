@@ -1,6 +1,19 @@
-/** @format */
+/**
+ * 알림 관련 API
+ * 
+ * 기능:
+ * - 알림 생성, 수정, 조회
+ * - 다음 알림 정보 조회
+ * - 알림 활성화/비활성화
+ * 
+ * 사용 페이지:
+ * - AlarmPage: 알림 목록 및 관리
+ * - MainPage: 다음 알림 표시
+ * - PlanPage: 출발 예약 시 알림 생성
+ * 
+ * @format
+ */
 
-// src/api/alarmApi.ts
 import { createApiClient } from "../utils/apiClient";
 
 const API_BASE_URL = "https://j13a305.p.ssafy.io/api/v1/";

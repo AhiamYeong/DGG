@@ -1,3 +1,20 @@
+/**
+ * 장소 검색 관련 API
+ * 
+ * 기능:
+ * - 장소 검색 API 호출
+ * - 검색 옵션 설정 (표시 개수, 정렬 방법)
+ * - HTML 태그 제거 유틸리티
+ * 
+ * 사용 페이지:
+ * - SearchPage: 장소 검색 기능
+ * - SearchInput: 검색어 입력 및 자동완성
+ * - SearchResultsList: 검색 결과 표시
+ * - WaypointInput: 경유지 검색
+ * 
+ * @format
+ */
+
 import { createApiClient } from '../utils/apiClient';
 
 // API 설정

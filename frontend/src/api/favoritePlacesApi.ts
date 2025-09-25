@@ -1,3 +1,18 @@
+/**
+ * 장소 즐겨찾기 관련 API
+ * 
+ * 기능:
+ * - 즐겨찾기 장소 조회, 추가, 수정, 삭제
+ * - 장소 이름 변경
+ * 
+ * 사용 페이지:
+ * - SearchPage: 즐겨찾기 장소 목록 표시
+ * - FavoritePlacesList: 즐겨찾기 장소 관리
+ * - SearchBox: 즐겨찾기 장소에서 빠른 검색
+ * 
+ * @format
+ */
+
 import type { ApiResponse, FavoritePlaceApiResponse } from '@/types/api-types';
 import { createApiClient, apiCall } from '@/utils/apiClient';
 import { API_CONSTANTS } from '@/constants';

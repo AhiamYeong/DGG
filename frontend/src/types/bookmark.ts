@@ -3,6 +3,8 @@ export type BookmarkRoute = {
   name: string;
   departureName: string;
   destinationName: string;
+  routeKey?: string;
+  createdAt?: string;
 };
 
 export type AddRouteBookmarkRequest = {

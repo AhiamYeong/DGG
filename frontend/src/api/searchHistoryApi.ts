@@ -1,3 +1,18 @@
+/**
+ * 검색 기록 관리 관련 API
+ * 
+ * 기능:
+ * - 최근 검색 내역 조회, 추가, 삭제
+ * - API 연결 테스트
+ * 
+ * 사용 페이지:
+ * - SearchPage: 최근 검색 내역 표시
+ * - RecentSearchList: 최근 검색 목록 관리
+ * - SearchBox: 검색 기록에서 빠른 재검색
+ * 
+ * @format
+ */
+
 import type { 
   ApiResponse,
   RecentSearchApiResponse,
