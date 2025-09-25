@@ -65,6 +65,12 @@ public class BookmarkServiceImpl implements BookmarkService {
 
 	private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+	/**
+	 * 새 북마크 생성 후, 입력 케이스 분기
+	 * - routeId가 있으면 route_info 복사
+	 * - routeKey가 있으면 캐시에서 RouteMetaDTO를 꺼내 ODSay 다시 조회 -> bookmark_route_info 저장
+	 * - 둘 다 없으면 빈 북마크 저장
+	 * */
 	@Override
 	@Transactional
 	public Long saveRouteBookmark(Integer memberId, BookmarkRouteSaveRequestDTO req) {
@@ -82,13 +88,13 @@ public class BookmarkServiceImpl implements BookmarkService {
 		br.setDestinationName(req.getDestinationName());
 		bookmarkRouteRepository.save(br);
 
-		// routeId가 있으면 과거 route_info를 그대로 복사
+		// routeId가 있으면 과거 route_info를 복사
 		if (req.getRouteId() != null) {
 			copyFromRouteInfo(br.getId(), req.getRouteId());
 			return br.getId();
 		}
 
-		// routeKey가 있으면 meta로 ODsay 다시 조회 -> bookmark_route_info에 "시간/버스ID까지" 저장
+		// routeKey가 있으면 meta로 ODsay 다시 조회 -> bookmark_route_info에 저장
 		if (req.getRouteKey() != null && !req.getRouteKey().isBlank()) {
 			RouteMetaDTO meta = cache.getMeta(req.getRouteKey(), RouteMetaDTO.class);
 			if (meta == null) {
@@ -106,9 +112,10 @@ public class BookmarkServiceImpl implements BookmarkService {
 	 * ODsay의 서브패스를 보면서 바로 bookmark_route_info 저장
 	 * - time_taken: SubPath.sectionTime 그대로
 	 * - BUS: busRouteId / busStationId 같이 저장(실시간 ETA에 필요)
+	 * - path_json: loadLane → 클립 → (비면) passStopList → densify → JSON
 	 */
 	private void saveFromMetaWithOdsay(Long bookmarkId, RouteMetaDTO meta) {
-		List<String> waypoints = new ArrayList<String>();
+		List<String> waypoints = new ArrayList<>();
 		waypoints.add(meta.getDeparture());
 		if (meta.getStopovers() != null && !meta.getStopovers().isEmpty()) {
 			waypoints.addAll(meta.getStopovers());
@@ -148,7 +155,7 @@ public class BookmarkServiceImpl implements BookmarkService {
 				Double endLat = sp.getEndY();
 				Double endLng = sp.getEndX();
 
-				// 정류장 ID
+				// 정류장 ID (ETA 조회용)
 				if ("BUS".equals(type)
 					&& sp.getPassStopList() != null
 					&& sp.getPassStopList().getStations() != null
@@ -191,11 +198,10 @@ public class BookmarkServiceImpl implements BookmarkService {
 		}
 	}
 
-	/** route_info -> bookmark_route_info 복사 */
+	/** route_info를 동일한 순서/속성으로 bookmark_route_info로 복사 */
 	private void copyFromRouteInfo(Long bookmarkId, Long routeId) {
 		List<RouteInfo> infos = routeInfoRepository.findAllByRouteIdOrderByOrder(routeId);
-		for (int i = 0; i < infos.size(); i++) {
-			RouteInfo ri = infos.get(i);
+		for (RouteInfo ri : infos) {
 			BookmarkRouteInfo bri = new BookmarkRouteInfo();
 			bri.setBookmarkId(bookmarkId);
 			bri.setOrder(ri.getOrder());
@@ -209,6 +215,47 @@ public class BookmarkServiceImpl implements BookmarkService {
 			bri.setStartLng(ri.getStartLng());
 			bri.setEndLat(ri.getEndLat());
 			bri.setEndLng(ri.getEndLng());
+
+			// path_json 시도: 해당 레그에 가장 잘 맞는 SubPath를 찾아 폴리라인을 위한 좌표 생성
+			try {
+				List<OdSayResponseDTO.Path> cands = findPathsBetween(ri.getDeparture(), ri.getDestination());
+				OdSayResponseDTO.Path chosen = cands.get(0);
+				String mapObj = (chosen.getInfo()!=null) ? chosen.getInfo().getMapObj() : null;
+
+				if (chosen.getSubPath()!=null) {
+					for (OdSayResponseDTO.SubPath sp : chosen.getSubPath()) {
+						String t = (sp.getTrafficType()==1) ? "SUBWAY" : (sp.getTrafficType()==2) ? "BUS" : "WALKING";
+						String ln = null;
+						if (sp.getLane()!=null && !sp.getLane().isEmpty()) {
+							OdSayResponseDTO.Lane first = sp.getLane().get(0);
+							ln = "SUBWAY".equals(t) ? first.getName() : "BUS".equals(t) ? first.getBusNo() : null;
+						}
+						if (ri.getType()!=null
+							&& t.equals(ri.getType().name())
+							&& Objects.equals(ri.getLineName(), ln)) {
+							String pathJson = buildPathJsonFromSubPath(sp, mapObj);
+							bri.setPathJson(pathJson);
+							break;
+						}
+					}
+				}
+
+				// SubPath 매칭이 실패했다면 마지막 폴백: loadLane 전체를 출발/도착으로만 잘라 사용
+				if (bri.getPathJson()==null || bri.getPathJson().isBlank()) {
+					if (mapObj!=null && !mapObj.isBlank()) {
+						List<double[]> seg = loadLanePolyline(mapObj);
+						List<double[]> clipped = clipByEndpoints(seg, ri.getStartLat(), ri.getStartLng(), ri.getEndLat(), ri.getEndLng());
+						if (clipped.isEmpty()) clipped = seg;
+						if (clipped!=null && !clipped.isEmpty()) {
+							if (clipped.size()<30) clipped = densify(clipped, 30.0);
+							bri.setPathJson(toPathJson(clipped));
+						}
+					}
+				}
+			} catch (Exception e) {
+				log.info("[BKMRK] copy path_json build fail routeId={} order={} msg={}",
+					ri.getRouteId(), ri.getOrder(), e.getMessage());
+			}
 
 			bookmarkRouteInfoRepository.save(bri);
 		}
@@ -233,12 +280,11 @@ public class BookmarkServiceImpl implements BookmarkService {
 			? LocalDateTime.parse(departAt, FMT)
 			: LocalDateTime.now();
 
-		List<RouteDetailDTO.Leg> legs = new ArrayList<RouteDetailDTO.Leg>();
+		List<RouteDetailDTO.Leg> legs = new ArrayList<>();
 		int totalMinutes = 0;
 		LocalDateTime cursor = departTime;
 
-		for (int idx = 0; idx < infos.size(); idx++) {
-			BookmarkRouteInfo bi = infos.get(idx);
+		for (BookmarkRouteInfo bi : infos) {
 
 			RouteDetailDTO.Leg leg = RouteDetailDTO.Leg.builder()
 				.order(bi.getOrder())
@@ -264,7 +310,6 @@ public class BookmarkServiceImpl implements BookmarkService {
 				try {
 					Optional<BusEtaDTO> etaOpt = busRealtimeService.getEta(bi.getBusStationId(), bi.getBusRouteId());
 
-					// Optional -> NPE 방지
 					Integer etaMaybe = etaOpt.map(S13P21A305.dgg.route.dto.BusEtaDTO::getEtaMin).orElse(null);
 					if (etaMaybe != null) {
 						log.info("[BKMRK] ETA OK: stationId={} routeId={} etaMin={}",
@@ -288,7 +333,43 @@ public class BookmarkServiceImpl implements BookmarkService {
 			cursor = cursor.plusMinutes(legMinutes);
 			totalMinutes += legMinutes;
 
+			// path_json → leg.path
 			setLegPathFromStoredJsonOrFallback(leg, bi);
+
+			// path_json → leg.polyline (좌표만 추출)
+			try {
+				List<Map<String,Object>> pathMaps = null;
+				if (bi.getPathJson()!=null && !bi.getPathJson().isBlank()) {
+					pathMaps = objectMapper.readValue(bi.getPathJson(), new TypeReference<List<Map<String,Object>>>(){});
+				}
+				if (pathMaps == null || pathMaps.isEmpty()) {
+					pathMaps = new ArrayList<>();
+					addPoint(pathMaps, 1, bi.getDepartureName(), null, bi.getStartLat(), bi.getStartLng());
+					addPoint(pathMaps, 2, bi.getDestinationName(), null, bi.getEndLat(), bi.getEndLng());
+				}
+
+				List<RouteDetailDTO.PolylinePointDTO> poly = new ArrayList<>();
+				for (Map<String,Object> m : pathMaps) {
+					Object latO = m.get("lat");
+					Object lngO = m.get("lng");
+					Double lat = (latO instanceof Number) ? ((Number)latO).doubleValue() : null;
+					Double lng = (lngO instanceof Number) ? ((Number)lngO).doubleValue() : null;
+					if (lat!=null && lng!=null) {
+						poly.add(RouteDetailDTO.PolylinePointDTO.builder().lat(lat).lng(lng).build());
+					}
+				}
+
+				// 좌표 사이가 너무 멀면 보강
+				if (poly.size() < 30) {
+					List<double[]> raw = new ArrayList<>();
+					for (RouteDetailDTO.PolylinePointDTO p : poly) raw.add(new double[]{p.getLat(), p.getLng()});
+					raw = densify(raw, 30.0);
+					poly = new ArrayList<>();
+					for (double[] p : raw) poly.add(RouteDetailDTO.PolylinePointDTO.builder().lat(p[0]).lng(p[1]).build());
+				}
+				leg.setPolyline(poly);
+			} catch (Exception ignore) {
+			}
 
 			if (getLegPathOrNull(leg) == null) {
 				log.info("[BKMRK] path is NULL: order={} type={} lineName={}",
@@ -401,7 +482,7 @@ public class BookmarkServiceImpl implements BookmarkService {
 		return res.getResult().getPath();
 	}
 
-	// 옵션별 경로 선택 (최소 환승 vs 최단거리)
+	// 옵션별 경로 선택
 	private OdSayResponseDTO.Path selectByOption(String option, List<OdSayResponseDTO.Path> paths) {
 		if ("MIN_TRANSFER".equalsIgnoreCase(option)) {
 			return paths.stream()
@@ -417,61 +498,77 @@ public class BookmarkServiceImpl implements BookmarkService {
 	private String buildPathJsonFromSubPath(OdSayResponseDTO.SubPath sp, String mapObj) throws Exception {
 		if (sp == null) return "[]";
 
-		// passStopList 사용
-		List<OdSayResponseDTO.Station> pass = (sp.getPassStopList() != null) ? sp.getPassStopList().getStations() : null;
-
-		List<StationLite> src;
-		if (pass != null && pass.size() >= 3) {
-			src = convertPassStopStations(pass);
-		} else {
-			// loadLane 호출로 보강
-			List<StationLite> fromLoadLane = fetchStationsFromLoadLane(mapObj);
-			if (fromLoadLane != null && fromLoadLane.size() >= 3) {
-				src = fromLoadLane;
-			} else {
-				// 없으면 출발/도착점이라도 보강
-				List<Map<String,Object>> two = new ArrayList<Map<String,Object>>();
-				addPoint(two, 1, sp.getStartName(), null, sp.getStartY(), sp.getStartX());
-				addPoint(two, 2, sp.getEndName(), null, sp.getEndY(), sp.getEndX());
-				return objectMapper.writeValueAsString(two);
+		List<StationLite> anchors = new ArrayList<>();
+		if (sp.getPassStopList()!=null && sp.getPassStopList().getStations()!=null) {
+			for (OdSayResponseDTO.Station st : sp.getPassStopList().getStations()) {
+				if (st==null || st.getY()==null || st.getX()==null) continue;
+				StationLite a = new StationLite();
+				a.name = st.getStationName();
+				a.stationId = (st.getStationID()!=null ? String.valueOf(st.getStationID()) : null);
+				a.lat = st.getY();
+				a.lng = st.getX();
+				anchors.add(a);
 			}
 		}
 
-		// start~end 슬라이스
-		int startIdx = findBestIndexByNameOrCoordLite(src, sp.getStartName(), sp.getStartY(), sp.getStartX());
-		int endIdx   = findBestIndexByNameOrCoordLite(src, sp.getEndName(),   sp.getEndY(), sp.getEndX());
-
-		if (startIdx == -1 || endIdx == -1) {
-			startIdx = 0;
-			endIdx   = src.size() - 1;
+		// loadLane → 클립(레그 시작/끝 근접) 시도
+		List<double[]> clipped = Collections.emptyList();
+		if (mapObj != null && !mapObj.isBlank()) {
+			List<double[]> seg = loadLanePolyline(mapObj);               // 전체 라인
+			clipped = clipByEndpoints(seg, sp.getStartY(), sp.getStartX(), sp.getEndY(), sp.getEndX()); // 구간만
 		}
 
-		int from = Math.min(startIdx, endIdx);
-		int to   = Math.max(startIdx, endIdx);
-
-		List<Map<String,Object>> path = new ArrayList<Map<String,Object>>();
-		int seq = 1;
-		for (int i = from; i <= to; i++) {
-			StationLite st = src.get(i);
-			if (st.lat == null || st.lng == null) continue;
-			addPoint(path, seq++, st.name, st.stationId, st.lat, st.lng);
+		// 실패 시 passStopList 기반의 간이 라인
+		if (clipped == null || clipped.isEmpty()) {
+			List<double[]> approx = new ArrayList<>();
+			if (sp.getStartY()!=null && sp.getStartX()!=null) approx.add(new double[]{sp.getStartY(), sp.getStartX()});
+			for (StationLite a : anchors) approx.add(new double[]{a.lat, a.lng});
+			if (sp.getEndY()!=null && sp.getEndX()!=null) approx.add(new double[]{sp.getEndY(), sp.getEndX()});
+			clipped = approx;
 		}
 
-		// 역방향이면 뒤집고 seq 재부여
-		if (startIdx > endIdx) {
-			Collections.reverse(path);
-			for (int i = 0; i < path.size(); i++) path.get(i).put("seq", i + 1);
+		if (clipped.size() < 30) clipped = densify(clipped, 30.0);
+
+		// 4) 정류장/역을 polyline에 매칭해서 name/stationId 주입 (근접 임계값 50m)
+		return toPathJsonWithAnchors(clipped, anchors, 50.0);
+	}
+
+	/** 리스트 + 정류장/역 앵커 → path_json 직렬화 */
+	private String toPathJsonWithAnchors(List<double[]> line, List<StationLite> anchors, double tolMeters) throws Exception {
+		if (line == null) line = Collections.emptyList();
+		if (anchors == null) anchors = Collections.emptyList();
+
+		// polyline 포인트를 먼저 JSON으로 만든다.
+		List<Map<String,Object>> path = new ArrayList<>(line.size());
+		for (int i = 0; i < line.size(); i++) {
+			double[] p = line.get(i);
+			Map<String,Object> m = new LinkedHashMap<>();
+			m.put("seq", i+1);
+			m.put("lat", p[0]);
+			m.put("lng", p[1]);
+			path.add(m);
 		}
 
-		// 너무 길면 샘플링
-		path = downSample(path, 400);
+		// 각 anchor를 polyline에서 가장 가까운 인덱스에 맵핑
+		for (StationLite a : anchors) {
+			int idx = nearestIndex(line, a.lat, a.lng);
+			if (idx < 0) continue;
+			double d = haversine(a.lat, a.lng, line.get(idx)[0], line.get(idx)[1]);
+			if (d > tolMeters) continue; // 너무 멀면 스킵(경로가 다른 경우)
+			Map<String,Object> m = path.get(idx);
+			// 이미 이름이 있더라도 정류장 정보가 우선
+			if (a.name != null && !a.name.isBlank()) m.put("name", a.name);
+			if (a.stationId != null && !a.stationId.isBlank()) m.put("stationId", a.stationId);
+		}
+
+		path = downSample(path, 800);
 
 		return objectMapper.writeValueAsString(path);
 	}
 
 	private static void addPoint(List<Map<String,Object>> list, int seq, String name, String stationId, Double lat, Double lng) {
 		if (lat == null || lng == null) return;
-		Map<String,Object> m = new LinkedHashMap<String,Object>();
+		Map<String,Object> m = new LinkedHashMap<>();
 		m.put("seq", seq);
 		m.put("name", name);
 		if (stationId != null) m.put("stationId", stationId);
@@ -482,59 +579,109 @@ public class BookmarkServiceImpl implements BookmarkService {
 
 	/** passStopList -> StationLite 변환 */
 	private List<StationLite> convertPassStopStations(List<OdSayResponseDTO.Station> raw) {
-		List<StationLite> out = new ArrayList<StationLite>(raw.size());
-		for (int i = 0; i < raw.size(); i++) {
-			OdSayResponseDTO.Station st = raw.get(i);
-
+		List<StationLite> out = new ArrayList<>(raw.size());
+		for (OdSayResponseDTO.Station st : raw) {
 			if (st == null) continue;
-
 			Double lat = st.getY();
 			Double lng = st.getX();
-
 			if (lat == null || lng == null) continue;
-
 			StationLite s = new StationLite();
 			s.name = st.getStationName();
 			s.stationId = (st.getStationID() != null ? String.valueOf(st.getStationID()) : null);
 			s.lat = lat;
 			s.lng = lng;
-
 			out.add(s);
 		}
-
 		return out;
 	}
 
-	/** path_json -> leg.path 세팅(리플렉션으로 setPath(List) 호출) */
+	/** path_json -> leg.path, leg.polyline 세팅 */
 	private void setLegPathFromStoredJsonOrFallback(RouteDetailDTO.Leg leg, BookmarkRouteInfo bi) {
-		List<Map<String,Object>> path = null;
+		List<Map<String,Object>> raw = null;
 
-		// 저장된 path_json 있으면 사용
+		// 저장된 path_json 읽기
 		if (bi.getPathJson() != null && !bi.getPathJson().isBlank()) {
 			try {
-				path = objectMapper.readValue(bi.getPathJson(), new TypeReference<List<Map<String,Object>>>(){});
+				raw = objectMapper.readValue(
+					bi.getPathJson(),
+					new com.fasterxml.jackson.core.type.TypeReference<List<Map<String,Object>>>(){}
+				);
 			} catch (Exception e) {
 				log.info("[BKMRK] read path_json failed: id={} msg={}", bi.getBookmarkId(), e.getMessage());
 			}
 		}
 
 		// 폴백: 최소 두 점(출발/도착)
-		if (path == null || path.isEmpty()) {
-			path = new ArrayList<Map<String,Object>>();
-			addPoint(path, 1, bi.getDepartureName(), null, bi.getStartLat(), bi.getStartLng());
-			addPoint(path, 2, bi.getDestinationName(), null, bi.getEndLat(), bi.getEndLng());
+		if (raw == null || raw.isEmpty()) {
+			raw = new ArrayList<>();
+			addPoint(raw, 1, bi.getDepartureName(), null, bi.getStartLat(), bi.getStartLng());
+			addPoint(raw, 2, bi.getDestinationName(), null, bi.getEndLat(), bi.getEndLng());
 		}
 
-		// leg.setPath(...) (리플렉션 사용: 제네릭 타입 상관없이 List를 주입)
+		// polyline = raw 전체
+		List<RouteDetailDTO.PolylinePointDTO> poly = new ArrayList<>(raw.size());
+		for (Map<String,Object> m : raw) {
+			Double lat = toDouble(m.get("lat"));
+			Double lng = toDouble(m.get("lng"));
+			if (lat == null || lng == null) continue;
+			poly.add(RouteDetailDTO.PolylinePointDTO.builder().lat(lat).lng(lng).build());
+		}
+		// 세팅
+		try {
+			Method setPolyline = leg.getClass().getMethod("setPolyline", java.util.List.class);
+			setPolyline.invoke(leg, poly);
+		} catch (NoSuchMethodException nsme) {
+			log.info("[BKMRK] Leg has no setPolyline(List) method; skip setting polyline");
+		} catch (Exception e) {
+			log.info("[BKMRK] setPolyline via reflection failed: {}", e.getMessage());
+		}
+
+		// path = 앵커만(name 또는 stationId가 있는 포인트만)
+		List<Map<String,Object>> anchorsOnly = new ArrayList<>();
+		for (Map<String,Object> m : raw) {
+			boolean hasName = hasText(m.get("name"));
+			boolean hasId   = hasText(m.get("stationId"));
+			if (hasName || hasId) {
+				anchorsOnly.add(m);
+			}
+		}
+
+		// 앵커가 하나도 없으면: 출발/도착이라도 앵커로 구성(이름/ID는 없을 수 있음)
+		if (anchorsOnly.isEmpty()) {
+			anchorsOnly = new ArrayList<>();
+			addPoint(anchorsOnly, 1, bi.getDepartureName(), null, bi.getStartLat(), bi.getStartLng());
+			addPoint(anchorsOnly, 2, bi.getDestinationName(), null, bi.getEndLat(), bi.getEndLng());
+		}
+
+		// seq 재부여(1부터)
+		for (int i = 0; i < anchorsOnly.size(); i++) {
+			anchorsOnly.get(i).put("seq", i + 1);
+		}
+
+		// 세팅
 		try {
 			Method setter = leg.getClass().getMethod("setPath", java.util.List.class);
-			setter.invoke(leg, path);
+			setter.invoke(leg, anchorsOnly);
 		} catch (NoSuchMethodException nsme) {
-			// DTO에 setPath가 없다면 스킵
 			log.info("[BKMRK] Leg has no setPath(List) method; skip setting path");
 		} catch (Exception e) {
 			log.info("[BKMRK] setPath via reflection failed: {}", e.getMessage());
 		}
+	}
+
+	/** Object -> Double 안전 변환 */
+	private static Double toDouble(Object v) {
+		if (v == null) return null;
+		if (v instanceof Double d) return d;
+		if (v instanceof Number n) return n.doubleValue();
+		try { return Double.parseDouble(String.valueOf(v)); } catch (Exception ignore) { return null; }
+	}
+
+	/** 비어있지 않은 텍스트인지 */
+	private static boolean hasText(Object v) {
+		if (v == null) return false;
+		String s = String.valueOf(v).trim();
+		return !s.isEmpty() && !"null".equalsIgnoreCase(s);
 	}
 
 	/** DTO에 path가 이미 들어갔는지 확인(리플렉션) */
@@ -582,8 +729,8 @@ public class BookmarkServiceImpl implements BookmarkService {
 				return null;
 			}
 
-			// 다양한 응답 포맷을 커버하기 위해 "좌표/이름이 있는 객체"를 깊이 있게 모아 리스트로 만든다.
-			List<StationLite> out = new ArrayList<StationLite>();
+			// 다양한 응답 포맷을 커버하기 위해 "좌표/이름이 있는 객체"를 리스트로 만든다.
+			List<StationLite> out = new ArrayList<>();
 			collectStationsDeep(result, out, 3); // 깊이 3까지 스캔
 
 			if (out.isEmpty()) {
@@ -592,19 +739,18 @@ public class BookmarkServiceImpl implements BookmarkService {
 			}
 
 			// 연속 중복 제거
-			List<StationLite> dedup = new ArrayList<StationLite>();
+			List<StationLite> dedup = new ArrayList<>();
 			StationLite prev = null;
-			for (int i = 0; i < out.size(); i++) {
-				StationLite s = out.get(i);
+			for (StationLite s : out) {
 				if (prev != null && equalsLite(prev, s)) continue;
 				dedup.add(s);
 				prev = s;
 			}
 
 			log.info("[PATH] loadLane stations={}", dedup.size());
-			// 너무 많은 경우 간단 샘플링(응답 크기 방지)
+			// 너무 많은 경우 간단 샘플링
 			if (dedup.size() > 1200) {
-				List<StationLite> small = new ArrayList<StationLite>();
+				List<StationLite> small = new ArrayList<>();
 				double step = (double)(dedup.size() - 1) / 799.0;
 				for (int i = 0; i < 800; i++) {
 					int idx = (int)Math.round(i * step);
@@ -709,8 +855,7 @@ public class BookmarkServiceImpl implements BookmarkService {
 
 	/** 숫자 파서 보조 */
 	private static Double firstDouble(JsonNode n, String... keys) {
-		for (int i = 0; i < keys.length; i++) {
-			String k = keys[i];
+		for (String k : keys) {
 			JsonNode v = n.path(k);
 			if (v.isNumber()) return v.asDouble();
 			if (v.isTextual()) {
@@ -721,8 +866,7 @@ public class BookmarkServiceImpl implements BookmarkService {
 	}
 
 	private static String firstText(JsonNode n, String... keys) {
-		for (int i = 0; i < keys.length; i++) {
-			String k = keys[i];
+		for (String k : keys) {
 			JsonNode v = n.path(k);
 			if (v.isTextual()) return v.asText();
 			if (v.isNumber()) return String.valueOf(v.asLong());
@@ -743,7 +887,7 @@ public class BookmarkServiceImpl implements BookmarkService {
 
 	private static List<Map<String,Object>> downSample(List<Map<String,Object>> src, int max) {
 		if (src == null || src.size() <= max) return src;
-		List<Map<String,Object>> out = new ArrayList<Map<String,Object>>(max);
+		List<Map<String,Object>> out = new ArrayList<>(max);
 		double step = (double)(src.size() - 1) / (double)(max - 1);
 		for (int i = 0; i < max; i++) {
 			int idx = (int)Math.round(i * step);
@@ -752,6 +896,99 @@ public class BookmarkServiceImpl implements BookmarkService {
 		// seq 재부여
 		for (int i = 0; i < out.size(); i++) out.get(i).put("seq", i + 1);
 		return out;
+	}
+
+	/** loadLane(mapObj) → 좌표만 뽑아 (lat,lng) 리스트로 변환 */
+	private List<double[]> loadLanePolyline(String mapObj) {
+		try {
+			// 기존 범용 파서 재사용: StationLite → (lat,lng)
+			List<StationLite> sts = fetchStationsFromLoadLane(mapObj);
+			if (sts == null || sts.isEmpty()) return Collections.emptyList();
+			List<double[]> out = new ArrayList<>(sts.size());
+			for (StationLite s : sts) {
+				if (s.lat != null && s.lng != null) out.add(new double[]{s.lat, s.lng});
+			}
+			return out;
+		} catch (Exception e) {
+			log.info("[BKMRK] loadLanePolyline fail: {}", e.getMessage());
+			return Collections.emptyList();
+		}
+	}
+
+	/** 전체 곡선에서 레그 시작/끝 근접 인덱스로 잘라내기 */
+	private List<double[]> clipByEndpoints(List<double[]> segment, Double sLat, Double sLng, Double eLat, Double eLng) {
+		if (segment == null || segment.isEmpty()
+			|| sLat == null || sLng == null || eLat == null || eLng == null) {
+			return Collections.emptyList();
+		}
+		int sIdx = nearestIndex(segment, sLat, sLng);
+		int eIdx = nearestIndex(segment, eLat, eLng);
+		if (sIdx == -1 || eIdx == -1) return Collections.emptyList();
+
+		if (sIdx <= eIdx) return new ArrayList<>(segment.subList(sIdx, eIdx + 1));
+		List<double[]> rev = new ArrayList<>(segment.subList(eIdx, sIdx + 1));
+		Collections.reverse(rev);
+		return rev;
+	}
+
+	/** 하버사인 거리 기반 가장 가까운 점 인덱스 */
+	private int nearestIndex(List<double[]> pts, double lat, double lng) {
+		double best = Double.MAX_VALUE;
+		int idx = -1;
+		for (int i = 0; i < pts.size(); i++) {
+			double[] p = pts.get(i);
+			double d = haversine(lat, lng, p[0], p[1]);
+			if (d < best) { best = d; idx = i; }
+		}
+		return idx;
+	}
+
+	/** 두 점 거리가 maxStepMeters보다 크면 그 사이에 균등 분할 점을 삽입(직선보간) */
+	private List<double[]> densify(List<double[]> line, double maxStepMeters) {
+		if (line == null || line.size() < 2) return line;
+		List<double[]> out = new ArrayList<>();
+		out.add(line.get(0));
+		for (int i = 0; i < line.size() - 1; i++) {
+			double[] a = line.get(i);
+			double[] b = line.get(i+1);
+			double dist = haversine(a[0], a[1], b[0], b[1]);
+			int steps = (int)Math.floor(dist / maxStepMeters);
+			for (int s = 1; s <= steps; s++) {
+				double t = (double)s / (steps + 1);
+				out.add(new double[]{
+					a[0] + (b[0] - a[0]) * t,
+					a[1] + (b[1] - a[1]) * t
+				});
+			}
+			out.add(b);
+		}
+		return out;
+	}
+
+	private double haversine(double lat1, double lon1, double lat2, double lon2) {
+		double R = 6371000.0;
+		double dLat = Math.toRadians(lat2 - lat1);
+		double dLon = Math.toRadians(lon2 - lon1);
+		double a = Math.sin(dLat/2)*Math.sin(dLat/2)
+			+ Math.cos(Math.toRadians(lat1))*Math.cos(Math.toRadians(lat2))
+			* Math.sin(dLon/2)*Math.sin(dLon/2);
+		return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+	}
+
+	/** (lat,lng) 리스트 → path_json 직렬화 */
+	private String toPathJson(List<double[]> line) throws Exception {
+		List<Map<String,Object>> path = new ArrayList<>(line.size());
+		for (int i = 0; i < line.size(); i++) {
+			double[] p = line.get(i);
+			Map<String,Object> m = new LinkedHashMap<>();
+			m.put("seq", i+1);
+			m.put("lat", p[0]);
+			m.put("lng", p[1]);
+			path.add(m);
+		}
+		// 너무 길면 샘플링(전송량 방지)
+		path = downSample(path, 800);
+		return objectMapper.writeValueAsString(path);
 	}
 
 	/** 경량 내부 모델 */
