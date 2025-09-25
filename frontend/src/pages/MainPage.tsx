@@ -13,8 +13,7 @@ export default function Mainpage() {
 
   // TODO: 가장 가까운 알람 추가
   // const [weather, setWeather] = useState<Weather>();
-  const [routeNames, setRouteNames] = useState<string[]>([]);
-
+  const [routes, setRoutes] = useState<{ id: number; name: string }[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,9 +29,20 @@ export default function Mainpage() {
 
     // 장소 별명 props로 떼오기
     const fetchFavoriteRoute = async () => {
+<<<<<<< HEAD
       const resp = await favoriteRoutesApi.getRouteBookmarks();
       const names = resp.map((item) => item.name);
       setRouteNames(names);
+=======
+      const resp = await bookmarkApi.getRouteBookmarks();
+
+      // id, name 묶어서 저장
+      const mapped = resp.map((item) => ({
+        id: item.bookmarkRouteId,
+        name: item.name,
+      }));
+      setRoutes(mapped);
+>>>>>>> 824087a (feat: 메인페이지 경로 변경중)
     };
     fetchFatigue();
     fetchFavoriteRoute();
@@ -69,14 +79,14 @@ export default function Mainpage() {
 
           {/* TODO: 루트 누르면 경로 이동 */}
           {/* 루트 목록 */}
-          <div className="flex flex-row gap-5 justify-center">
-            {routeNames.map((item, idx) => (
+          <div className="flex flex-row gap-5 overflow-x-auto">
+            {routes.map((route) => (
               <button
-                key={idx}
-                className="rounded-lg bg-green-100 px-1 py-1"
-                onClick={() => handleClick("")}
+                key={route.id}
+                className="rounded-lg bg-green-100 px-3 py-1 shrink-0"
+                onClick={() => handleClick(route.name)}
               >
-                {item}
+                {route.name}
               </button>
             ))}
           </div>
