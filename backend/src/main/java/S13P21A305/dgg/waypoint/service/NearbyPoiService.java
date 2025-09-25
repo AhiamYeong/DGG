@@ -8,6 +8,7 @@ import S13P21A305.dgg.waypoint.util.GeoUtil;
 import S13P21A305.dgg.waypoint.util.ODsayClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -15,6 +16,7 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -124,7 +126,7 @@ public class NearbyPoiService {
             }
             // 2) 버스
             if (!bus.isEmpty()) {
-                String table = resolveBusTable(); // 예: "gold_bus_09"
+                String table = "gold_bus_09"; // 예: "gold_bus_09"
                 Map<String, Double> busMap = fetchBusCongestions(table, bus.values(), timeSlot);
                 bus.forEach((stopId, norm) -> {
                     double cong = busMap.getOrDefault(norm, 0.0);
@@ -162,16 +164,23 @@ public class NearbyPoiService {
         return out;
     }
 
-
+    /**
+     * 버스
+     */
     private Map<String, Double> fetchBusCongestions(String table, Collection<String> normNames, Integer timeSlot) {
         if (normNames == null || normNames.isEmpty()) return Map.of();
-        String sql = "SELECT route_name, congestion_ratio FROM " + table +
-                " WHERE time_slot = :slot AND route_name IN (:names)";
+        String sql = """
+                    SELECT departure, congestion_ratio
+                    FROM gold_bus_09
+                    WHERE time_slot = :slot
+                      AND departure IN (:names)
+                    """;
         Map<String, Object> params = Map.of("slot", timeSlot, "names", normNames);
+
         Map<String, Double> out = new HashMap<>();
         jdbc.query(sql, params, rs -> {
-            String st = normalize(rs.getString("station"));
-            out.put(st, rs.getDouble("congestion"));
+            String st = normalize(rs.getString("departure"));
+            out.put(st, rs.getDouble("congestion_ratio"));
         });
         return out;
     }
@@ -184,7 +193,7 @@ public class NearbyPoiService {
         String s = raw.trim();
         s = s.replaceAll("\\s+","")
                 .replaceAll("\\(.*?\\)","")
-                .replaceAll("역$","")
+//                .replaceAll("역$","")
                 .replaceAll("[/_-]","");
         return s;
     }

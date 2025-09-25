@@ -65,36 +65,6 @@ public class StopRedisService {
     }
 
     /**
-     * 특정 경로/컨텍스트 내 정류장 점수 데이터 Upsert
-     * - ZSET: 정류장 적합도 점수 저장
-     * - Hash: 상세 정보 저장
-     * - TTL: 컨텍스트별 데이터 만료 설정
-     */
-//    public void saveOrUpdateContextStop(String contextId, StopScore score, Duration ttl) {
-//        String rankKey = "ctx:" + contextId + ":rank";               // ZSET: 적합도 랭킹
-//        String detailKey = "ctx:" + contextId + ":stop:" + score.stopId(); // Hash: 정류장 상세
-//
-//        // ZSET: 정류장 ID를 member, 적합도 점수를 score로 저장
-//        stringRedisTemplate.opsForZSet().add(rankKey, "stop:" + score.stopId(), score.suitability());
-//
-//        // Hash: 상세 데이터 저장
-//        Map<String, Object> detailInfo = new LinkedHashMap<>();
-//        detailInfo.put("stopId", score.stopId());
-//        detailInfo.put("name", score.name());
-//        detailInfo.put("lat", score.lat());
-//        detailInfo.put("lon", score.lon());
-//        detailInfo.put("distance", score.dist());
-//        detailInfo.put("congestion", score.congestion());
-//        detailInfo.put("suitability", score.suitability());
-//        detailInfo.put("timestamp", OffsetDateTime.now().toString());
-//        objectRedisTemplate.opsForHash().putAll(detailKey, detailInfo);
-//
-//        // TTL: 랭킹과 상세 데이터 만료 시간 지정
-//        stringRedisTemplate.expire(rankKey, ttl);
-//        stringRedisTemplate.expire(detailKey, ttl);
-//    }
-
-    /**
      * stop:{id}
      * 혼잡도 추가
      */
@@ -117,7 +87,6 @@ public class StopRedisService {
             return 100.0;
         }
     }
-
 
     /**
      * 거리 추가
