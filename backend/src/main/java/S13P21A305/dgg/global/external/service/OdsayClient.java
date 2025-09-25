@@ -3,7 +3,10 @@ package S13P21A305.dgg.global.external.service;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -22,6 +25,27 @@ public class OdsayClient {
 
 	@Value("${odsay.api.key}")
 	private String apiKey;
+
+	public LoadLaneResponse loadLane(String mapObject) {
+		final String url = "https://api.odsay.com/v1/api/loadLane";
+		URI uri = UriComponentsBuilder.fromHttpUrl(url)
+			.queryParam("apiKey", apiKey)
+			.queryParam("mapObject", mapObject)
+			.encode(StandardCharsets.UTF_8)
+			.build()
+			.toUri();
+
+		return restTemplate.getForObject(uri, LoadLaneResponse.class);
+	}
+
+	@Getter @Setter
+	public static class LoadLaneResponse {
+		private Result result;
+		@Getter @Setter public static class Result { private List<Lane> lane; }
+		@Getter @Setter public static class Lane   { private List<Section> section; }
+		@Getter @Setter public static class Section{ private List<GraphPos> graphPos; }
+		@Getter @Setter public static class GraphPos{ private Double x; /*lng*/ private Double y; /*lat*/ }
+	}
 
 	/** 버스노선 조회(노선번호 -> laneId, busID 등) */
 	public SearchBusLaneResult searchBusLane(String busNo, int cityId) {

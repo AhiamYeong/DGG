@@ -91,10 +91,10 @@ public class OdSayResponseDTO {
 	public static class Lane {
 		// 지하철일 때 노선 이름 (ex. 2호선)
 		private String name;
-
-		// 버스일 때 노선 번호 (ex. 140)
 		private String busNo;
-
 		private Integer busID;
+
+		@JsonProperty("mapObj")
+		private String mapObj; // 각 서브경로 lane에 대한 mapObj 받는 케이스가 있어서 기입
 	}
 }
