@@ -55,11 +55,16 @@ class HealthViewModel(
     }
 
     // 데이터 전송
-    fun sendSleepData(activity: Activity) {
+    fun sendSleepAndStepsData(activity: Activity) {
         viewModelScope.launch {
             val prefs = activity.getSharedPreferences("sleep_prefs", Context.MODE_PRIVATE)
             val today = java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString()
             val lastSent = prefs.getString("last_sent_date", null)
+
+            // 실제 수면 데이터 가져오기
+            val store = HealthStoreProvider.getStore(activity.applicationContext)
+            val sleepAndStepsDTO = dataRepo.getSleepAndStepsDataResponse(store)
+            Log.d("DTO", "$sleepAndStepsDTO")
 
             if (lastSent == today) {
                 Log.d("Sleep", "이미 오늘 전송됨 → skip")
@@ -67,12 +72,8 @@ class HealthViewModel(
                 return@launch
             }
 
-            // 실제 수면 데이터 가져오기
-            val store = HealthStoreProvider.getStore(activity.applicationContext)
-            val sleepDTO = dataRepo.getSleepDataResponse(store)
-            Log.d("DTO", "$sleepDTO")
             // 서버 전송
-            val success = healthRepo.sendSleepData(sleepDTO)
+            val success = healthRepo.sendSleepAndStepsData(sleepAndStepsDTO)
             if (success) {
                 // 성공하면 오늘 날짜 기록
                 prefs.edit { putString("last_sent_date", today) }
@@ -107,7 +108,7 @@ class HealthViewModel(
             }
 
             // 최초 실행시: 수면 전송
-            sendSleepData(activity)
+            sendSleepAndStepsData(activity)
             // sendActivityData(activity)
 
             // 원시 데이터 찍기

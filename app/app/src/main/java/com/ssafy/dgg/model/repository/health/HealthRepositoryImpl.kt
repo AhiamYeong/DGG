@@ -1,14 +1,14 @@
 package com.ssafy.dgg.model.repository.health
 
 import com.ssafy.dgg.model.data.ActivityDataRequest
-import com.ssafy.dgg.model.data.SleepDataRequest
+import com.ssafy.dgg.model.data.SleepAndStepsDataRequest
 
 class HealthRepositoryImpl  (
     private val healthApi: HealthApi
 ) : HealthRepository {
-    override suspend fun sendSleepData(request: SleepDataRequest): Boolean {
+    override suspend fun sendSleepAndStepsData(request: SleepAndStepsDataRequest): Boolean {
         return try {
-            val response = healthApi.sendSleepData(request)
+            val response = healthApi.sendSleepAndStepsData(request)
             // 서버 내 http 예외 처리
             if (response.isSuccessful) true   // 200 OK
             else false  // 400, 401, 403, 500 등 서버 에러 응답
