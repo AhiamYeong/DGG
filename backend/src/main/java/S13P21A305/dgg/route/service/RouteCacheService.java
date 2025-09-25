@@ -14,6 +14,14 @@ public class RouteCacheService { // redis cache I/O
 	private final StringRedisTemplate redis;
 	private final ObjectMapper objectMapper;
 
+	public <T> void save(String key, T dto, long ttlSeconds) {
+		set(key, toJson(dto), Duration.ofSeconds(ttlSeconds));
+	}
+	public <T> T get(String key, Class<T> type) {
+		String v = get(key);
+		return v == null ? null : fromJson(v, type);
+	}
+
 	public <T> void saveSummary(String routeId, T dto) {
 		set(summaryKey(routeId), toJson(dto), TTL_24H);
 	}

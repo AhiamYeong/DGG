@@ -30,10 +30,11 @@ public class RouteDetailDTO {
 		private Double endLat;
 		private Double endLng;
 
-		// 경유 좌표 배열
-		private List<PathNodeDTO> path;
+		private List<PathNodeDTO> path; // 경유 좌표 배열
+		private Integer etaMin; // 실시간 (분)
 
-		private Integer etaMin;
+		// loadLane
+		private List<PolylinePointDTO> polyline;
 	}
 
 	// 경유 좌표용 DTO
@@ -48,5 +49,15 @@ public class RouteDetailDTO {
 		private String  stationId;
 		private Double  lat;
 		private Double  lng;
+	}
+
+	@Getter
+	@Setter
+	@NoArgsConstructor
+	@AllArgsConstructor
+	@Builder
+	public static class PolylinePointDTO {
+		private Double lat;
+		private Double lng;
 	}
 }
