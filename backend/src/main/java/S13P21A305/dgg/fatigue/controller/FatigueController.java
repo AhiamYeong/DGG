@@ -26,7 +26,7 @@ public class FatigueController {
     @GetMapping
     public Map<String, Object> current(@AuthenticationPrincipal(expression = "memberId") Integer memberId) {
         int cur = service.currentFatigue(memberId);
-        String nickname = memberRepository.findById(memberId)
+        String nickname = memberRepository.findByIdAndIsWithdrawFalse(memberId)
                 .map(Member::getNickname)
                 .filter(n -> n != null && !n.isBlank())
                 .orElse("뚜벅초님");
