@@ -30,7 +30,7 @@ export default function FatigueButtons({ setFatigue, setHistoryData }: Props) {
       setHistoryData((prev) => [
         {
           fatigueId: Date.now(), // 임시 ID
-          createdAt: updated.createdAt,
+          created_at: updated.created_at,
           reason: updated.reason,
           fatigue: updated.fatigue,
           fatigueChange: updated.fatigueChanfe,
