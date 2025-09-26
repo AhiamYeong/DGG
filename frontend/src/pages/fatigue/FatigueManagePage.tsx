@@ -23,7 +23,8 @@ export default function FatigueManagePage() {
       try {
         const res = await fatigueApi.get("/fatigues");
         const data: MainFatigueProps = res.data;
-        setFatigue(data.currentFatigue);
+
+        setFatigue(data.current_fatigue);
         setNickname(data.nickname);
       } catch (err) {
         console.error("에러 발생", err);

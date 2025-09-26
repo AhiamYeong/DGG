@@ -18,7 +18,7 @@ const NICKNAME = "애옹";
 
 let fatigue: MainFatigueProps = {
   nickname: NICKNAME,
-  currentFatigue: 30,
+  current_fatigue: 30,
 };
 
 const mockFatigueHistories: fatigueHistory[] = [

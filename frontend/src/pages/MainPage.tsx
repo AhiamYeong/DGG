@@ -21,25 +21,33 @@ export default function Mainpage() {
 
   useEffect(() => {
     const fetchFatigue = async () => {
-      const resp = await fatigueApi.get(`/fatigues`);
-      const data = resp.data;
+      try {
+        const resp = await fatigueApi.get(`/fatigues`);
+        const data = resp.data;
 
-      setNickname(data.nickname);
-      setFatigue(data.currentFatigue);
+        setNickname(data.nickname);
+        setFatigue(data.current_fatigue);
+      } catch (err) {
+        console.error("에러 발생", err);
+      }
     };
 
     // TODO: 날씨 API
 
     // 장소 별명 props로 떼오기
     const fetchFavoriteRoute = async () => {
-      const resp = await favoriteRoutesApi.getRouteBookmarks();
+      try {
+        const resp = await favoriteRoutesApi.getRouteBookmarks();
 
-      // id, name 묶어서 저장
-      const mapped = resp.map((item) => ({
-        id: item.bookmarkRouteId,
-        name: item.name,
-      }));
-      setRoutes(mapped);
+        // id, name 묶어서 저장
+        const mapped = resp.map((item) => ({
+          id: item.bookmarkRouteId,
+          name: item.name,
+        }));
+        setRoutes(mapped);
+      } catch (error) {
+        console.error("에러 발생", error);
+      }
     };
     fetchFatigue();
     fetchFavoriteRoute();
@@ -55,6 +63,14 @@ export default function Mainpage() {
         bookmarkRouteId
       );
 
+      // map으로 이동
+      if (!route.rawData) {
+        console.log("route.rawData 존재:", route.rawData);
+        route.rawData = {};
+      } else {
+        console.log("rawData 없음, steps만 사용");
+      }
+      navigate("/map", { state: route });
       useNavigationStore.getState().startNavigation(route);
 
       // 네비게이션 시작
@@ -91,16 +107,21 @@ export default function Mainpage() {
 
           {/* TODO: 루트 누르면 경로 이동 */}
           {/* 루트 목록 */}
-          <div className="flex flex-row gap-5 justify-center">
-            {routes.map((route) => (
-              <button
-                key={route.id}
-                className="rounded-lg bg-green-100 px-3 py-1"
-                onClick={() => handleRouteClick(route.id)}
-              >
-                {route.name}
-              </button>
-            ))}
+          <div className="relative">
+            <div className="flex flex-row gap-5 overflow-x-auto scrollbar-hide pr-6">
+              {routes.map((route) => (
+                <button
+                  key={route.id}
+                  onClick={() => handleRouteClick(route.id)}
+                  className="rounded-lg bg-green-100 px-3 py-1 flex-shrink-0"
+                >
+                  {route.name}
+                </button>
+              ))}
+            </div>
+
+            {/* 오른쪽 힌트 (그라데이션) */}
+            <div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-gradient-to-l from-white"></div>
           </div>
 
           {/* 버튼 */}
