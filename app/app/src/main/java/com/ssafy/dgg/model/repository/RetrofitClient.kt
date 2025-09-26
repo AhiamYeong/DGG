@@ -5,6 +5,7 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import com.ssafy.dgg.BuildConfig
 import com.ssafy.dgg.model.repository.auth.AuthApi
 import com.ssafy.dgg.model.repository.health.HealthApi
+import com.ssafy.dgg.model.repository.mypage.MyPageApi
 import kotlinx.serialization.json.Json
 import okhttp3.Cookie
 import okhttp3.CookieJar
@@ -22,7 +23,7 @@ object RetrofitClient {
     private val logging = HttpLoggingInterceptor { message ->
         Log.d("OkHttp", message)
     }.apply {
-        level = HttpLoggingInterceptor.Level.HEADERS
+        level = HttpLoggingInterceptor.Level.BODY
     }
 
     private val cookieStore = mutableMapOf<String, List<Cookie>>()
@@ -98,5 +99,9 @@ object RetrofitClient {
 
     val healthApiService: HealthApi by lazy {
         retrofit.create(HealthApi::class.java)
+    }
+
+    val myPageApiService: MyPageApi by lazy {
+        retrofit.create(MyPageApi::class.java)
     }
 }

@@ -1,4 +1,22 @@
-// 네이버 지도 API 및 서버 API 호출
+/**
+ * 네이버 지도 API 및 경로 검색 관련 API
+ * 
+ * 기능:
+ * - 네이버 지도 API 스크립트 로드
+ * - 장소 검색
+ * - 경로 검색 (시간 정보 포함)
+ * - 즐겨찾기 경로 관리
+ * - 안내시작 및 상세 경로 조회
+ * 
+ * 사용 페이지:
+ * - MainMapPage: 지도 표시 및 경로 검색
+ * - SearchPage: 장소 검색 및 경로 검색
+ * - NavigationMode: 안내시작 및 상세 경로 조회
+ * - MapContainer: 네이버 지도 API 로드
+ * 
+ * @format
+ */
+
 import { createApiClient } from '../utils/apiClient';
 import { log } from '../utils/logger';
 
@@ -48,25 +66,9 @@ export const loadNaverMapScript = (): Promise<void> => {
   });
 };
 
-interface SearchPlaceResponse {
-  id: string;
-  name: string;
-  address: string;
-  lat: number;
-  lng: number;
-}
-
-interface RouteResponse {
-  id: string;
-  name: string;
-  from: string;
-  to: string;
-  time: string;
-  isBookmarked: boolean;
-}
 
 // 장소 검색 API
-export const searchPlaces = async (query: string): Promise<SearchPlaceResponse[]> => {
+export const searchPlaces = async (query: string): Promise<any[]> => {
   try {
     const response = await mapApi.get(`/v1/search/places?query=${encodeURIComponent(query)}`);
     return response.data;
@@ -120,42 +122,18 @@ export const searchRoutesWithTime = async (
     log.route('경로 검색 API 요청', requestBody);
     console.log('API 요청 형식:', JSON.stringify(requestBody, null, 2));
 
-    // 백엔드 서버 상태 확인을 위한 헬스체크 먼저 시도
-    try {
-      console.log('백엔드 서버 헬스체크 시도...');
-      await mapApi.get('/health');
-      console.log('백엔드 서버 정상');
-    } catch (healthError) {
-      console.warn('백엔드 서버 헬스체크 실패:', healthError);
-    }
-
     const response = await mapApi.post('/v1/maps/routes', requestBody);
     
     log.route('경로 검색 API 응답', response.data);
     return response.data;
   } catch (error: any) {
     log.error('경로 검색 오류', error);
-    
-    // 더 자세한 에러 정보 로깅
-    console.error('=== API 에러 상세 정보 ===');
-    console.error('요청 URL:', '/v1/maps/routes');
-    console.error('요청 데이터:', JSON.stringify({
-      departureAddress,
-      destinationAddress,
-      stopoverAddresses: stopoverAddresses?.slice(0, 2) || [],
-      startTime
-    }, null, 2));
-    console.error('에러 상태:', error.response?.status);
-    console.error('에러 메시지:', error.response?.data);
-    console.error('에러 전체:', error);
-    console.error('========================');
-    
     throw error;
   }
 };
 
 // 즐겨찾기 경로 목록 API
-export const getFavoriteRoutes = async (): Promise<RouteResponse[]> => {
+export const getFavoriteRoutes = async (): Promise<any[]> => {
   try {
     const response = await mapApi.get('/v1/routes/favorites');
     return response.data;
@@ -166,7 +144,7 @@ export const getFavoriteRoutes = async (): Promise<RouteResponse[]> => {
 };
 
 // 즐겨찾기 경로 추가 API
-export const addFavoriteRoute = async (route: Omit<RouteResponse, 'id'>): Promise<RouteResponse> => {
+export const addFavoriteRoute = async (route: any): Promise<any> => {
   try {
     const response = await mapApi.post('/v1/routes/favorites', route);
     return response.data;

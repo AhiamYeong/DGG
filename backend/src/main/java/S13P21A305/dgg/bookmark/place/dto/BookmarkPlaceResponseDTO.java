@@ -15,6 +15,4 @@ public class BookmarkPlaceResponseDTO {
 	private Long bookmarkPlaceId;
 	private String placeName;
 	private String address;
-	private Double latitude;
-	private Double longitude;
 }

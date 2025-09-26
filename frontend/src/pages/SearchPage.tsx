@@ -2,11 +2,11 @@ import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { RecentSearchList, FavoritePlacesList, SearchResultsList } from '../components/search';
 import { ErrorState, LoadingState, EmptyState } from '../components/ui';
-import { useNaverSearch, type SearchResult } from '../hooks/useNaverSearch';
-import { useSearchHistory } from '../hooks/useSearchHistory';
+import { useSearchTabData } from '@/hooks/useSearchTabData';
+import { useFavoritePlaceActions } from '@/hooks/useFavoritePlaceActions';
+import { searchPlaces, removeBTags } from '@/api/placeSearchApi';
 import { testSearchHistoryApiConnection } from '../api/searchHistoryApi';
 import { useSearchStore } from '../stores/useSearchStore';
-import { transformRecentSearches, transformFavoritePlaces } from '../utils/dataTransformers';
 import { log } from '../utils/logger';
 
 /**
@@ -25,35 +25,52 @@ export default function SearchPage() {
   // SearchStore에서 상태와 액션 가져오기
   const { waypoints, setOrigin, setDestination, updateWaypoint } = useSearchStore();
   
-  // 검색 내역 관리 훅 사용
-  const {
-    recentSearches,
-    favoritePlaces,
-    isLoading: historyLoading,
-    error: historyError,
-    addRecentSearch,
-    removeRecentSearch,
-    toggleFavoritePlace,
-    refreshAll
-  } = useSearchHistory();
-  
-  // 네이버 검색 API 훅 사용
-  const {
-    searchQuery,
-    searchState,
-    handleSearchChange,
-    clearSearch
-  } = useNaverSearch({
-    display: 10, // 최대 10개 결과
-    sort: 'random' // 정확도순 정렬
-  });
+  // 탭 기반 데이터 로딩 훅 사용
+  const { items, isLoading: historyLoading, error: historyError, refetch } = useSearchTabData(activeTab);
+  const { deleteFavoritePlace } = useFavoritePlaceActions(refetch);
 
-  // 컴포넌트 마운트 시 현재 값으로 검색어 설정
+  // 검색 상태 (placeSearchApi 기반)
+  const [query, setQuery] = useState('');
+  const [searchItems, setSearchItems] = useState<Array<{ id: string; name: string; address: string; isBookmark?: boolean }>>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  // 입력 변경 시 300ms 디바운스 검색
+  useEffect(() => {
+    const t = setTimeout(async () => {
+      if (!query.trim()) {
+        setSearchItems([]);
+        setSearchError(null);
+        setSearchLoading(false);
+        return;
+      }
+      try {
+        setSearchLoading(true);
+        setSearchError(null);
+        const response = await searchPlaces(query, { display: 10 });
+        const mapped = response.items.map((item, idx) => ({
+          id: `${removeBTags(item.title)}-${idx}`,
+          name: removeBTags(item.title),
+          address: item.roadAddress || item.address,
+          isBookmark: false,
+        }));
+        setSearchItems(mapped);
+      } catch (e) {
+        setSearchError(e instanceof Error ? e.message : '검색에 실패했습니다.');
+        setSearchItems([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  // 초기 검색어 설정
   useEffect(() => {
     if (currentValue) {
-      handleSearchChange(currentValue);
+      setQuery(currentValue);
     }
-  }, [currentValue, handleSearchChange]);
+  }, [currentValue]);
 
   // API 연결 상태 확인 (개발용) - 백그라운드에서 처리
   useEffect(() => {
@@ -85,8 +102,8 @@ export default function SearchPage() {
 
   // 검색어 변경 핸들러 (네이버 API 훅에서 제공하는 함수 사용)
   const handleSearchInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    handleSearchChange(e.target.value);
-  }, [handleSearchChange]);
+    setQuery(e.target.value);
+  }, []);
 
   // 탭 변경 핸들러
   const handleTabChange = useCallback((tab: 'recent' | 'favorite') => {
@@ -94,13 +111,12 @@ export default function SearchPage() {
   }, []);
 
   // 위치 선택 핸들러
-  const handleLocationSelect = useCallback((location: SearchResult) => {
-    log.search('선택된 위치', searchType, location);
+  const handleLocationSelect = useCallback((item: { id: string; name: string; address: string }) => {
+    log.search('선택된 위치', searchType, item);
     
     // 1. 즉시 SearchStore에 반영 (동기적 처리)
-    // 장소명만 표시하고, 도로명 주소는 별도 저장
-    const locationName = location.name;
-    const roadAddress = location.roadAddress || location.address;
+    const locationName = item.name;
+    const roadAddress = item.address;
     
     if (searchType === 'origin') {
       setOrigin(locationName, roadAddress);
@@ -117,36 +133,18 @@ export default function SearchPage() {
     navigate(-1);
     
     // 3. 검색 내역 추가는 백그라운드에서 처리 (비동기적 처리)
-    if (searchQuery.trim()) {
-      // 백그라운드에서 검색 내역 추가 (await 없이)
-      addRecentSearch({
-        query: searchQuery,
-        resultCount: searchState.results.length
-      }).then(() => {
-        log.search('위치 설정 완료', `${location.name}이(가) ${searchType === 'origin' ? '출발지' : searchType === 'destination' ? '도착지' : '경유지'}로 설정되었습니다.`);
-      }).catch((error) => {
-        log.warn('검색 내역 추가 실패 (사용자 경험에 영향 없음):', error);
-      });
-    } else {
-      log.search('위치 설정 완료', `${location.name}이(가) ${searchType === 'origin' ? '출발지' : searchType === 'destination' ? '도착지' : '경유지'}로 설정되었습니다.`);
-    }
-  }, [navigate, searchType, waypointIndex, waypoints, setOrigin, setDestination, updateWaypoint, searchQuery, searchState.results.length, addRecentSearch]);
+    log.search('위치 설정 완료', `${item.name}이(가) ${searchType === 'origin' ? '출발지' : searchType === 'destination' ? '도착지' : '경유지'}로 설정되었습니다.`);
+  }, [navigate, searchType, waypointIndex, waypoints, setOrigin, setDestination, updateWaypoint]);
 
   // 최근 검색 삭제 핸들러
-  const handleDeleteRecent = useCallback(async (id: string) => {
-    log.search('최근 검색 삭제', id);
-    await removeRecentSearch(id);
-  }, [removeRecentSearch]);
+  const handleDeleteRecent = useCallback(async (_id: string) => {
+    // 삭제 훅/API 연동 필요 시 구현
+  }, []);
 
   // 즐겨찾기 토글 핸들러
-  const handleToggleFavorite = useCallback(async (id: string) => {
-    log.search('즐겨찾기 토글', id);
-    // 즐겨찾기 목록에서 해당 장소 찾기
-    const place = favoritePlaces.find(fav => fav.id === id);
-    if (place) {
-      await toggleFavoritePlace(place);
-    }
-  }, [favoritePlaces, toggleFavoritePlace]);
+  const handleToggleFavorite = useCallback(async (_id: string) => {
+    // 즐겨찾기 토글 훅/API 연동 필요 시 구현
+  }, []);
 
 
   return (
@@ -187,15 +185,15 @@ export default function SearchPage() {
           </div>
           <input
             type="text"
-            value={searchQuery}
+            value={query}
             onChange={handleSearchInputChange}
             placeholder="장소를 검색하세요"
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
             autoFocus
           />
-          {searchQuery && (
+          {query && (
             <button
-              onClick={clearSearch}
+              onClick={() => setQuery('')}
               className="absolute inset-y-0 right-0 pr-3 flex items-center"
               aria-label="검색어 지우기"
             >
@@ -207,21 +205,22 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {searchQuery ? (
+      {query ? (
         // 검색 결과 영역 (전체 화면)
         <div className="flex-1 overflow-y-auto">
           <div className="px-4">
-            {searchState.isLoading ? (
+            {searchLoading ? (
               <LoadingState message="검색 중..." />
-            ) : searchState.error ? (
+            ) : searchError ? (
               <ErrorState 
-                error={searchState.error}
+                error={searchError}
                 onRetry={() => {
-                  // 검색 다시 시도
-                  handleSearchChange(searchQuery);
+                  const q = query;
+                  setQuery('');
+                  setTimeout(() => setQuery(q), 0);
                 }}
               />
-            ) : searchState.results.length === 0 ? (
+            ) : searchItems.length === 0 ? (
               <EmptyState
                 title="검색 결과가 없습니다"
                 description="다른 검색어로 시도해보세요"
@@ -229,12 +228,11 @@ export default function SearchPage() {
               />
             ) : (
               <SearchResultsList
-                results={searchState.results}
+                items={searchItems}
                 onSelect={handleLocationSelect}
-                onToggleFavorite={handleToggleFavorite}
-                isLoading={searchState.isLoading}
-                error={searchState.error}
-                total={searchState.results.length}
+                isLoading={searchLoading}
+                error={searchError}
+                total={searchItems.length}
               />
             )}
           </div>
@@ -280,13 +278,10 @@ export default function SearchPage() {
                 <LoadingState message="데이터를 불러오는 중..." />
               ) : historyError ? (
                 /* 에러 상태 */
-                <ErrorState 
-                  error={historyError}
-                  onRetry={refreshAll}
-                />
+                <ErrorState error={historyError} onRetry={refetch} />
               ) : activeTab === 'recent' ? (
                 /* 최근 검색 내역 */
-                recentSearches.length === 0 ? (
+                items.length === 0 ? (
                   <EmptyState
                     title="최근 검색 내역이 없습니다"
                     description="검색한 장소가 여기에 표시됩니다"
@@ -294,15 +289,18 @@ export default function SearchPage() {
                   />
                 ) : (
                   <RecentSearchList
-                    items={transformRecentSearches(recentSearches)}
+                    items={Array.isArray(items) ? items
+                      .filter((item): item is import('@/types/api-types').RecentSearchApiResponse => 'query' in item)
+                      .map(item => ({
+                        id: item.id,
+                        name: item.query,
+                        address: '',
+                        timestamp: new Date(item.timestamp)
+                      })) : []}
                     onSelect={(item) => handleLocationSelect({
                       id: item.id,
                       name: item.name,
-                      address: item.address,
-                      roadAddress: item.address,
-                      category: '',
-                      description: '',
-                      location: { lat: 0, lng: 0 }
+                      address: item.address
                     })}
                     onDelete={handleDeleteRecent}
                     onToggleFavorite={handleToggleFavorite}
@@ -310,7 +308,7 @@ export default function SearchPage() {
                 )
               ) : (
                 /* 즐겨찾기 장소 */
-                favoritePlaces.length === 0 ? (
+                items.length === 0 ? (
                   <EmptyState
                     title="즐겨찾는 장소가 없습니다"
                     description="자주 가는 장소를 즐겨찾기에 추가해보세요"
@@ -318,17 +316,19 @@ export default function SearchPage() {
                   />
                 ) : (
                   <FavoritePlacesList
-                    items={transformFavoritePlaces(favoritePlaces)}
+                    items={Array.isArray(items) ? items
+                      .filter((item): item is import('@/types/api-types').FavoritePlaceApiResponse => 'title' in item)
+                      .map(item => ({
+                        bookmarkPlaceId: parseInt(item.id),
+                        placeName: item.title,
+                        address: item.address
+                      })) : []}
                     onSelect={(item) => handleLocationSelect({
-                      id: item.id,
-                      name: item.name,
-                      address: item.address,
-                      roadAddress: item.address,
-                      category: item.category || '',
-                      description: '',
-                      location: { lat: 0, lng: 0 }
+                      id: String(item.bookmarkPlaceId),
+                      name: item.placeName,
+                      address: item.address
                     })}
-                    onToggleFavorite={handleToggleFavorite}
+                    onDeleteFavorite={(id) => deleteFavoritePlace(id)}
                   />
                 )
               )}

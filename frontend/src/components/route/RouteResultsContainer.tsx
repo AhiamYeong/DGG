@@ -10,6 +10,7 @@ interface RouteResultsContainerProps {
   actionLabel: string;
   selectedDepartureOption: 'now' | 'schedule';
   onSelectRoute: (route: SimpleRoute) => Promise<void>;
+  onToggleBookmark?: (id: string) => void;
   onDepartureOptionChange?: (option: 'now' | 'schedule') => void;
   onClose?: () => void;
   currentOrigin?: string;
@@ -27,6 +28,7 @@ export const RouteResultsContainer: React.FC<RouteResultsContainerProps> = ({
   actionLabel,
   selectedDepartureOption,
   onSelectRoute,
+  onToggleBookmark,
   onDepartureOptionChange,
   onClose
 }) => {
@@ -83,6 +85,7 @@ export const RouteResultsContainer: React.FC<RouteResultsContainerProps> = ({
           <RouteList
             routes={routes}
             onSelectRoute={onSelectRoute}
+            onToggleBookmark={onToggleBookmark}
             actionLabel={actionLabel}
           />
         ) : (

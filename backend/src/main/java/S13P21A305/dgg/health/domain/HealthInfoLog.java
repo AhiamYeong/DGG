@@ -17,7 +17,7 @@ public class HealthInfoLog {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name="member_id", nullable=false) private Long memberId;
+    @Column(name="member_id", nullable=false) private Integer memberId;
     @Column(name="stress") private Integer stress;      // 구간 스트레스 지수(선택)
     @Column(name="foot_step") private Integer footStep; // 구간 걸음 수
 

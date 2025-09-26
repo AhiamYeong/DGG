@@ -64,6 +64,12 @@ dependencies {
 	implementation 'me.paulschwarz:spring-dotenv:3.0.0'
 	implementation 'io.github.cdimascio:dotenv-java:3.0.0'
 
+	//AWS
+	implementation(platform("software.amazon.awssdk:bom:2.25.62"))
+	implementation("software.amazon.awssdk:s3")
+	implementation("software.amazon.awssdk:auth")
+	implementation("software.amazon.awssdk:url-connection-client")
+
 	//테스트
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'com.h2database:h2'

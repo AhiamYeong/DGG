@@ -19,9 +19,10 @@ export interface RecommendedRoute {
 }
 
 // 안내시작 API 응답 타입
-export interface RouteStartResponse {
-  routeId: string;
-}
+// 백엔드: ResponseEntity<Long> 반환 (routeId)
+// MSW: Long 타입 직접 반환
+// apiCall 래핑: {success: true, data: Long}
+export type RouteStartResponse = number;
 
 // 상세 경로 API 응답 타입
 export interface RouteDetailResponse {
@@ -30,6 +31,13 @@ export interface RouteDetailResponse {
   arrivalTime: string;
   fatigue: number;
   data: RouteDetailStep[];
+  // 폴리라인 그리기용 데이터 (MSW에서 추가)
+  polyline?: {
+    result: {
+      lane: any[];
+      boundary: any;
+    };
+  };
 }
 
 export interface RouteDetailStep {
