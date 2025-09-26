@@ -53,6 +53,7 @@ export default function FatigueDashboardPage() {
   const maxFatigueDay = weeklyFatigues.find(
     (f) => f.fatigue === maxFatigue
   )?.day;
+  const allZero = weeklyFatigues.every((f) => f.fatigue === 0);
 
   const maxFootStep = Math.max(...weeklyFootSteps.map((f) => f.footStep));
   const maxFootStepDay = weeklyFootSteps.find(
@@ -81,6 +82,8 @@ export default function FatigueDashboardPage() {
         <p className="text-sm text-gray-600 mb-4">
           {weeklyFatigues.length === 0
             ? "이번 주 피로도 데이터가 없어요"
+            : allZero
+            ? "이번 주는 피로도가 전부 0이에요 (데이터가 없거나 미기록 상태)"
             : `${mapDayToKorean(maxFatigueDay)}에 피로도가 가장 높았어요`}
         </p>
 
