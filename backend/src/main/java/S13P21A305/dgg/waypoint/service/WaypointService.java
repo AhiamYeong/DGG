@@ -18,22 +18,24 @@ public class WaypointService {
     private final NearbyPoiService nearbyPoiService; // 내부에서 getNearby 호출 + 마스터/혼잡도 주입
     private final StopRedisService stopRedisService; // ZSET/Hash 조회용
 
-    final int CANDIDATE_CAP = 300;
+    final int CANDIDATE_CAP = 200;
 
     /**
      * 경로(노드 리스트)를 입력으로 받아 Top5 후보 정류장을 산출한다.
+     * 리스트는 TopCandidateDto 형식으로 추출됩니다.
+     * lat, lon 으로 위도, 경도 보내짐
      *
      * @param path                 경로 polyline 노드들 (상위 레이어에서 확보)
-     * @param perNodeRadiusMeters  각 노드 주변 후보 탐색 반경 (예: 300~500m)
+     * @param perNodeRadiusMeters  각 노드 주변 후보 탐색 반경 (1000m)
      * @param timeSlot             혼잡도 조회용 시간대(0~23)
-     * @param wDistance            거리 가중치 [0..1]
-     * @param wCongestion          혼잡도 가중치 [0..1]
+     * @param wDistance            거리 가중치 0.1
+     * @param wCongestion          혼잡도 가중치 0.9
      */
-    public Mono<List<TopCandidateDto>> pickTop5GivenPath(
+    public Mono<List<TopCandidateDto>> pickTop5Waypoint(
             List<LatLon> path, // 확보된 경로의 경유지를 위/경도로 받는다.
-            int perNodeRadiusMeters, // 후보지 탐색 반경 (m)
+            int perNodeRadiusMeters, // 후보지 탐색 반경 1000(m) 고정
             Integer timeSlot, //시간대
-            double wDistance, double wCongestion  //거리, 혼잡도 가중치 ex. (0.4, 0.6)
+            double wDistance, double wCongestion  //거리, 혼잡도 가중치 ex. (0.1, 0.9)
     ) {
         if (path == null || path.isEmpty()) return Mono.just(List.of());
 

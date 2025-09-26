@@ -24,7 +24,7 @@ public class WaypointController {
             @RequestParam(defaultValue = "0.6") double wDistance,     // 거리 가중치
             @RequestParam(defaultValue = "0.4") double wCongestion    // 혼잡도 가중치
     ) {
-        return waypointService.pickTop5GivenPath(
+        return waypointService.pickTop5Waypoint(
                 req.path(), radiusMeters, timeSlot, wDistance, wCongestion
         );
     }
