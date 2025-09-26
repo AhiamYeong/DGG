@@ -110,8 +110,8 @@ public class MemberService {
         // request로 들어온 신규 설문조사 응답 저장
         List<SurveyAnswer> toSave = request.stream()
                 .map(dto -> SurveyAnswer.builder()
-                        .memberId(memberId)
                         .surveyId(dto.getSurveyQuestionId())
+                        .memberId(memberId)
                         .content(dto.getAnswerValue())
                         .build())
                 .toList();

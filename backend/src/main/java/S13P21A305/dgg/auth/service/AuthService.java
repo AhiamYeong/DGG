@@ -72,7 +72,7 @@ public class AuthService {
 
         } else {
             member.setEmail(email);
-            member.setNickname(name);
+//            member.setNickname(name);
 //            memberRepository.save(member);
             try {
                 memberRepository.save(member);
