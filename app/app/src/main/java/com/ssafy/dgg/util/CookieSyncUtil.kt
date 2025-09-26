@@ -2,7 +2,7 @@ package com.ssafy.dgg.util
 
 import okhttp3.Cookie
 
-/* WebView cookie 저장 */
+/* WebView <> Retrofit cookie 동기화 */
 object CookieSyncUtil {
     fun syncToWebView(baseUrl: String, cookies: List<Cookie>?) {
         if (cookies.isNullOrEmpty()) return

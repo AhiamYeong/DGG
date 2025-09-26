@@ -1,5 +1,7 @@
 package S13P21A305.dgg.route.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,12 +9,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import S13P21A305.dgg.auth.dto.CustomOAuth2User;
 import S13P21A305.dgg.route.dto.RouteDetailDTO;
 import S13P21A305.dgg.route.dto.RouteRequestDTO;
 import S13P21A305.dgg.route.dto.RouteResponseDTO;
+import S13P21A305.dgg.route.dto.StationCoordDTO;
 import S13P21A305.dgg.route.service.RouteService;
 
 @RestController
@@ -53,5 +57,13 @@ public class RouteController {
 		Integer memberId = member == null ? null : member.getMemberId();
 
 		return ResponseEntity.ok(routeService.getDetail(routeId, memberId));
+	}
+
+	@GetMapping("/shortest/stations/by-coords")
+	public List<StationCoordDTO> getShortestStationsByCoords(
+		@RequestParam double sx, @RequestParam double sy,
+		@RequestParam double ex, @RequestParam double ey
+	) {
+		return routeService.getShortestStationsByCoords(sx, sy, ex, ey);
 	}
 }

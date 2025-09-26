@@ -73,7 +73,7 @@ public class BookmarkRoute {
 	private Member member;
 
 	@OneToMany(
-		mappedBy = "bookmarkRoute",
+		mappedBy = "bookmark",
 		cascade = CascadeType.REMOVE,   // 부모 삭제 시 자식도 같이 삭제
 		orphanRemoval = true
 	)

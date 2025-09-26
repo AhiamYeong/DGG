@@ -1,4 +1,4 @@
-import { memo, lazy, Suspense } from 'react';
+import { memo, lazy, Suspense, useRef, useEffect, useState } from 'react';
 import { RouteInfo } from '../route';
 import type { SimpleRoute } from '../../types/route-types';
 
@@ -27,14 +27,25 @@ export const NavigationMode = memo<NavigationModeProps>(({
   onPositionChange,
   onClose,
   onStopNavigation,
-  headerHeight = 140
+  headerHeight = 200
 }) => {
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [actualHeaderHeight, setActualHeaderHeight] = useState(headerHeight);
+
+  // 헤더 높이를 동적으로 측정
+  useEffect(() => {
+    if (headerRef.current) {
+      const height = headerRef.current.offsetHeight;
+      setActualHeaderHeight(height);
+    }
+  }, [currentRoute, currentStepIndex]);
+
   return (
     <>
       {/* 통합된 네비게이션 컨테이너 */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-auto">
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         {/* 경로 정보 헤더 */}
-        <div className="absolute top-0 left-0 w-full z-30">
+        <div ref={headerRef} className="absolute top-0 left-0 w-full z-30 pointer-events-auto">
           <RouteInfo
             route={currentRoute}
             currentStepIndex={currentStepIndex}
@@ -42,14 +53,14 @@ export const NavigationMode = memo<NavigationModeProps>(({
         </div>
 
         {/* 사이드 시트 (헤더와 연결된 형태) */}
-        <div className="absolute top-0 left-0 w-full h-full">
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
           <Suspense fallback={<div className="w-full h-20 bg-gray-100 animate-pulse rounded-lg" />}>
             <SideSheet
               position={sideSheetPosition}
               route={currentRoute}
               onPositionChange={onPositionChange}
               onClose={onClose}
-              headerHeight={headerHeight}
+              headerHeight={actualHeaderHeight}
             />
           </Suspense>
         </div>

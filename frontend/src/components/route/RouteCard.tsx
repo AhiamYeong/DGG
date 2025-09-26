@@ -1,6 +1,8 @@
 import { memo, useCallback } from 'react';
 import type { SimpleRoute } from '@/types/route-types';
 import { Button } from '@/components/ui';
+import FavoriteStar from '@/components/ui/FavoriteStar';
+import { useRouteBookmark } from '@/hooks/useRouteBookmark';
 import { getFatigueLevel } from '@/constants';
 
 interface RouteCardProps {
@@ -8,7 +10,9 @@ interface RouteCardProps {
   onSelect: (route: SimpleRoute) => Promise<void>;
   onToggleBookmark?: (id: string) => void;
   onShowOptions?: (id: string) => void;
+  onEdit?: (route: SimpleRoute) => void;
   actionLabel?: string;
+  showEditButton?: boolean;
   className?: string;
 }
 
@@ -22,28 +26,32 @@ interface RouteCardProps {
 const RouteCard = memo<RouteCardProps>(({
   route,
   onSelect,
-  onToggleBookmark,
+  onEdit,
   actionLabel = '선택',
+  showEditButton = false,
   className = ''
 }) => {
+  const bookmark = useRouteBookmark(route);
   // 이벤트 핸들러들을 useCallback으로 최적화
   const handleSelect = useCallback(async () => {
+    console.log('[RouteCard] card select', route.id);
     await onSelect(route);
   }, [onSelect, route]);
 
-  const handleToggleBookmark = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation(); // 카드 선택 이벤트와 분리
-    onToggleBookmark?.(route.id);
-  }, [onToggleBookmark, route.id]);
+  const handleEdit = useCallback((e: React.MouseEvent) => {
+    console.log('RouteCard 편집 버튼 클릭됨:', route);
+    e.stopPropagation(); // 이벤트 버블링 방지
+    onEdit?.(route);
+  }, [onEdit, route]);
+
 
 
   return (
     <div
-      className={`
-        flex items-center justify-between p-4 bg-gray-50 rounded-lg 
-        hover:bg-secondary hover:bg-opacity-20 transition-colors cursor-pointer
-        ${className}
-      `}
+      className={
+        `relative flex items-center justify-between p-4 bg-gray-50 rounded-lg 
+        hover:bg-secondary hover:bg-opacity-20 transition-colors cursor-pointer ${className}`
+      }
       onClick={handleSelect}
       role="button"
       tabIndex={0}
@@ -55,26 +63,19 @@ const RouteCard = memo<RouteCardProps>(({
       }}
       aria-label={`${route.name} 노선 선택`}
     >
+      {/* 우상단 즐겨찾기 아이콘 (배경 투명, 커스텀 컴포넌트) */}
+      <FavoriteStar
+        active={bookmark.isBookmarked}
+        onToggle={() => bookmark.toggle()}
+        size={28}
+        className="absolute top-2 right-2 z-10"
+      />
+
       {/* 노선 정보 */}
-      <div className="flex-1">
+      <div className="flex-1 pr-8">
         {/* 노선명과 즐겨찾기 아이콘 */}
         <div className="flex items-center gap-2 mb-1">
           <h4 className="font-medium text-font">{route.name}</h4>
-          <Button
-            onClick={handleToggleBookmark}
-            className="p-1 hover:bg-accent hover:bg-opacity-20 rounded transition-colors"
-            aria-label={route.isBookmarked ? "즐겨찾기 해제" : "즐겨찾기 추가"}
-          >
-            <svg 
-              className={`w-4 h-4 ${route.isBookmarked ? 'text-accent fill-current' : 'text-gray-400'}`}
-              fill={route.isBookmarked ? 'currentColor' : 'none'}
-              stroke="currentColor"
-              viewBox="0 0 20 20"
-              data-testid="star-icon"
-            >
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          </Button>
         </div>
 
         {/* 출발지 → 도착지 */}
@@ -126,10 +127,27 @@ const RouteCard = memo<RouteCardProps>(({
       
       {/* 액션 버튼들 */}
       <div className="flex items-center gap-2">
+        {/* 편집 버튼 (즐겨찾기 경로인 경우에만 표시) */}
+        {showEditButton && onEdit && (
+          <Button
+            onClick={handleEdit}
+            variant="secondary"
+            size="sm"
+            className="px-3 py-2"
+            aria-label={`${route.name} 편집`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </Button>
+        )}
 
         {/* 선택 버튼 */}
         <Button
-          onClick={handleSelect}
+          onClick={(e) => {
+            e.stopPropagation(); // 이벤트 버블링 방지
+            handleSelect();
+          }}
           variant="primary"
           size="sm"
           className="px-4 py-2"

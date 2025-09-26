@@ -53,6 +53,15 @@ public class RouteInfo {
 	@Column(name = "end_lng")
 	private Double endLng;
 
+	@Column(name = "bus_route_id")
+	private Long busRouteId;
+
+	@Column(name = "bus_station_id")
+	private Long busStationId;
+
+	@Column(name = "path_json", columnDefinition = "TEXT")
+	private String pathJson;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "route_id", insertable = false, updatable = false)
 	private RouteLog routeLog;

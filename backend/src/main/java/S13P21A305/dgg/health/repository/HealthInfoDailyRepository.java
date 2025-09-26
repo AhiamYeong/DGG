@@ -7,5 +7,6 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface HealthInfoDailyRepository extends JpaRepository<HealthInfoDaily, Long> {
-    Optional<HealthInfoDaily> findByMemberIdAndCreatedAt(Long memberId, LocalDateTime createdAtStartOfDay);
+    Optional<HealthInfoDaily> findByMemberIdAndCreatedAt(Integer memberId, LocalDateTime createdAt);
 }
+

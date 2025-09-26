@@ -2,10 +2,12 @@
 package S13P21A305.dgg.health.dto.request;
 
 import jakarta.validation.constraints.*;
-import java.time.OffsetDateTime;
+
+import java.time.Instant;
+import java.time.ZonedDateTime;
 
 public record ActivityUpsertRequest(
-        @NotNull OffsetDateTime windowEnd,
+        @NotNull Instant windowEnd,
         @PositiveOrZero long totalStep,
         @PositiveOrZero int totalActiveTimeSec,
         @PositiveOrZero double totalActiveCaloriesBurned,

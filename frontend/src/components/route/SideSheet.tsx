@@ -191,7 +191,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
 
   // 전역 이벤트 리스너 등록/해제
   useEffect(() => {
-    if (isDragging) {
+    if (isDragging && position > 0) { // SideSheet가 접혀있을 때는 전역 이벤트 리스너 등록하지 않음
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -204,7 +204,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
+  }, [isDragging, position, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   // 스크롤 드래그 이벤트 리스너 등록/해제
   useEffect(() => {
@@ -236,10 +236,10 @@ export const SideSheet: React.FC<SideSheetProps> = ({
     // 노드와 간선 사이의 간격 (드래그 도중 늘어나는 부분)
     const nodeSpacing = 4 + (expansionRatio * 16);
 
-    return (
-      <div className="flex flex-col h-full">
-        {/* 헤더와의 연결을 위한 상단 패딩 */}
-        <div style={{ height: `${headerHeight}px` }} className="bg-white/95 backdrop-blur-sm border-b border-gray-200" />
+  return (
+    <div className="flex flex-col h-full">
+      {/* 헤더와의 연결을 위한 상단 패딩 */}
+      <div style={{ height: `${headerHeight}px` }} className="bg-white/95 backdrop-blur-sm" />
         
         {/* 경로 다이어그램 */}
         <div 
@@ -496,7 +496,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
       
       {/* 사이드 시트 */}
       <div
-        className="absolute bg-white shadow-2xl transition-transform duration-200 ease-out"
+        className="absolute bg-white shadow-2xl transition-transform duration-200 ease-out pointer-events-auto"
         style={{
           zIndex: 20,
           left: 0,

@@ -66,6 +66,13 @@ export async function apiCall<T>(
 ): Promise<{ success: boolean; data: T; message?: string }> {
   try {
     const response = await apiCall();
+    
+    // MSW 응답이 이미 {success, data} 형태인 경우 그대로 반환
+    if (response.data && typeof response.data === 'object' && 'success' in response.data) {
+      return response.data as unknown as { success: boolean; data: T; message?: string };
+    }
+    
+    // 일반 응답인 경우 래핑
     return {
       success: true,
       data: response.data,

@@ -46,13 +46,13 @@ class AuthViewModel(
                 // cookieJar로 변경 (accesstoken intercept)
                 if (success){
                     // cookie 받기: host 단위로 저장 (host만 꺼내기)
-                    val webHost = BuildConfig.WEB_URL.toHttpUrl().host
-                    val cookies = client.getCookies(webHost)
-                    val apiHost = BuildConfig.API_BASE_URL.toHttpUrl().host
-
+                    val cookies = client.getCookies(BuildConfig.WEB_URL.toHttpUrl().host)
                     // cookie 심기: domain 단위로 붙음 -> web에 붙여주기
-                    cookieSyncUtil.syncToWebView(webHost, cookies)
-                    cookieSyncUtil.syncToWebView(apiHost, cookies)  // API 도메인
+                    val webUrl = BuildConfig.WEB_URL.toHttpUrl()
+                    val apiUrl = BuildConfig.API_BASE_URL.toHttpUrl()
+
+                    cookieSyncUtil.syncToWebView(webUrl.toString(), cookies)
+                    cookieSyncUtil.syncToWebView(apiUrl.toString(), cookies)
 
                     _loginState.value = LoginState.LoggedIn
                     Log.d("LoginFlow", "쿠키 동기화 완료: $cookies")
@@ -68,24 +68,60 @@ class AuthViewModel(
         }
     }
 
-    fun logout() {
-        // 기존처럼 tokenStorage 지울 필요 없음 (토큰 직접 안 씀) 대신 WebView 쿠키 삭제 처리
-        val cookieManager = android.webkit.CookieManager.getInstance()
-        cookieManager.removeAllCookies {
-            Log.d("LoginFlow", "WebView 쿠키 삭제 완료: $it")
+    suspend fun logout() {
+        try {
+            val success = authRepository.logout()
+            if (success) {
+                _loginState.value = LoginState.LoggedOut
+            } else {
+                _loginState.value = LoginState.Error("로그아웃 실패")
+            }
+            // 기존처럼 tokenStorage 지울 필요 없음 (토큰 직접 안 씀) 대신 WebView 쿠키 삭제 처리
+            val cookieManager = android.webkit.CookieManager.getInstance()
+            cookieManager.removeAllCookies {
+                Log.d("LoginFlow", "WebView 쿠키 삭제 완료: $it")
+            }
+            cookieManager.flush()
+
+            // RetrofitClient 쿠키 삭제
+            client.clearCookies()
+
+            // 상태 변경
+            _loginState.value = LoginState.LoggedOut
+            Log.d("LoginFlow", "로그아웃 완료 (WebView + RetrofitClient 쿠키 삭제)")
+
+        } catch (e: Exception) {
+            _loginState.value = LoginState.Error(e.message ?: "로그아웃 실패")
+            Log.e("LoginFlow", "로그아웃 실패", e)
         }
-        cookieManager.flush()
-
-        // RetrofitClient 쿠키 삭제
-        client.clearCookies()
-
-        // 상태 변경
-        _loginState.value = LoginState.LoggedOut
-        Log.d("LoginFlow", "로그아웃 완료 (WebView + RetrofitClient 쿠키 삭제)")
     }
 
     // 테스트용 - 열어두기
     fun forceLogin() {
         _loginState.value = LoginState.LoggedIn
     }
+
+    fun withdraw() {
+        try {
+            val success = authRepository.withdraw()
+            if (success) {
+                // 1. 쿠키 정리
+                val cookieManager = android.webkit.CookieManager.getInstance()
+                cookieManager.removeAllCookies {
+                    Log.d("Auth", "WebView 쿠키 삭제 완료")
+                }
+                cookieManager.flush()
+                client.clearCookies()
+
+                // 2. 상태 초기화
+                _loginState.value = LoginState.LoggedOut
+                Log.d("Auth", "회원탈퇴 성공 → 로그아웃 처리 완료")
+            } else {
+                _loginState.value = LoginState.Error("회원탈퇴 실패")
+            }
+        } catch (e: Exception) {
+            _loginState.value = LoginState.Error("회원탈퇴 예외 발생: ${e.message}")
+        }
+    }
+
 }

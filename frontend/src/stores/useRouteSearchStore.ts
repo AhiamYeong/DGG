@@ -1,25 +1,27 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { useNavigationStore } from './useNavigationStore';
-import type { SimpleRoute, PlaceInfo } from '../types/route-types';
-import { log } from '../utils/logger';
+/** @format */
+
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { useNavigationStore } from "./useNavigationStore";
+import type { SimpleRoute, PlaceInfo } from "../types/route-types";
+import { log } from "../utils/logger";
 
 interface RouteSearchState {
   // 검색 결과 관련
   routeResults: SimpleRoute[];
   actionLabel: string;
   showDepartureOptions: boolean;
-  
+
   // 현재 검색 중인 출발지/도착지 (통합된 주소 정보)
   currentOrigin: PlaceInfo | null;
   currentDestination: PlaceInfo | null;
   currentWaypoints?: PlaceInfo[];
-  
+
   // 시간 선택 관련
   showTimePicker: boolean;
   departureTime: Date;
-  selectedDepartureOption: 'now' | 'schedule';
-  
+  selectedDepartureOption: "now" | "schedule";
+
   // 검색 히스토리
   searchHistory: Array<{
     id: string;
@@ -28,108 +30,140 @@ interface RouteSearchState {
     waypoints?: string[];
     timestamp: number;
   }>;
+
+  // 즐겨찾기 목록
+  routeBookmarks?: import("../types/bookmark").BookmarkRoute[];
 }
 
 interface RouteSearchActions {
   // 검색 플로우
-  startRouteSearch: (origin: PlaceInfo, destination: PlaceInfo, waypoints?: PlaceInfo[]) => void;
+  startRouteSearch: (
+    origin: PlaceInfo,
+    destination: PlaceInfo,
+    waypoints?: PlaceInfo[]
+  ) => void;
   confirmTimeSelection: () => Promise<void>;
   cancelTimeSelection: () => void;
   closeRouteResults: () => void;
-  
+
   // 시간 선택
   setDepartureTime: (time: Date) => void;
-  setSelectedDepartureOption: (option: 'now' | 'schedule') => void;
-  
+  setSelectedDepartureOption: (option: "now" | "schedule") => void;
+
   // 경로 선택 (안내시작)
   selectRoute: (route: SimpleRoute) => Promise<void>;
-  
+  selectBookmarkRoute: (route: SimpleRoute) => Promise<void>;
+  toggleBookmark: (id: string) => void;
+  addBookmarkForRoute: (route: SimpleRoute) => Promise<void>;
+  removeBookmarkForRoute: (routeId: string) => Promise<void>;
+  fetchBookmarks: () => Promise<void>;
+
   // 검색 히스토리
-  addSearchHistory: (origin: string, destination: string, waypoints?: string[]) => void;
+  addSearchHistory: (
+    origin: string,
+    destination: string,
+    waypoints?: string[]
+  ) => void;
   clearSearchHistory: () => void;
-  
+
   // 상태 초기화
   reset: () => void;
 }
 
 const initialState: RouteSearchState = {
   routeResults: [],
-  actionLabel: '안내 시작',
+  actionLabel: "안내 시작",
   showDepartureOptions: false,
   currentOrigin: null,
   currentDestination: null,
   currentWaypoints: undefined,
   showTimePicker: false,
   departureTime: new Date(),
-  selectedDepartureOption: 'now',
+  selectedDepartureOption: "now",
   searchHistory: [],
+  routeBookmarks: [],
 };
 
-export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>()(
+export const useRouteSearchStore = create<
+  RouteSearchState & RouteSearchActions
+>()(
   persist(
     (set, get) => ({
       ...initialState,
 
       // 검색 시작
-      startRouteSearch: (origin: PlaceInfo, destination: PlaceInfo, waypoints?: PlaceInfo[]) => {
-        log.route('길찾기 요청', { origin, destination, waypoints });
-        
+      startRouteSearch: (
+        origin: PlaceInfo,
+        destination: PlaceInfo,
+        waypoints?: PlaceInfo[]
+      ) => {
+        log.route("길찾기 요청", { origin, destination, waypoints });
+
         // 현재 검색 중인 출발지/도착지 저장 (통합된 주소 정보)
-        set({ 
+        set({
           currentOrigin: origin,
           currentDestination: destination,
-          currentWaypoints: waypoints
+          currentWaypoints: waypoints,
         });
-        
+
         // 검색 히스토리 추가
-        get().addSearchHistory(origin.name, destination.name, waypoints?.map(wp => wp.name));
-        
+        get().addSearchHistory(
+          origin.name,
+          destination.name,
+          waypoints?.map((wp) => wp.name)
+        );
+
         // 출발 옵션 탭 표시 (경로 결과 페이지)
-        set({ 
+        set({
           showDepartureOptions: true,
-          routeResults: [] // 초기에는 빈 배열
+          routeResults: [], // 초기에는 빈 배열
         });
       },
 
       // 시간 선택 확인
       confirmTimeSelection: async () => {
-        const { departureTime, selectedDepartureOption, currentOrigin, currentDestination, currentWaypoints } = get();
-        
-        
+        const {
+          departureTime,
+          selectedDepartureOption,
+          currentOrigin,
+          currentDestination,
+          currentWaypoints,
+        } = get();
+
         try {
           // 현재 검색 중인 출발지/도착지 사용
           if (!currentOrigin || !currentDestination) {
-            log.error('출발지 또는 도착지가 설정되지 않았습니다');
+            log.error("출발지 또는 도착지가 설정되지 않았습니다");
             return;
           }
-          
+
           // API 호출시에는 도로명 주소를 사용
           const apiOrigin = currentOrigin.address;
           const apiDestination = currentDestination.address;
-          const apiWaypoints = currentWaypoints?.map(wp => wp.address);
-          
+          const apiWaypoints = currentWaypoints?.map((wp) => wp.address);
+
           // RouteService를 통한 실제 API 호출
-          const { RouteService } = await import('../api/routeService');
+          const { RouteService } = await import("../api/routeService");
           const result = await RouteService.executeRouteSearchFlow(
             apiOrigin,
             apiDestination,
             departureTime,
             selectedDepartureOption,
             apiWaypoints,
-            currentOrigin.name,  // 지명 (표시용)
-            currentDestination.name  // 지명 (표시용)
+            currentOrigin.name, // 지명 (표시용)
+            currentDestination.name // 지명 (표시용)
           );
-          
-          log.route('API 호출 결과', result);
-          
-          set({ 
+
+          log.route("API 호출 결과", result);
+
+          set({
             routeResults: result.routes,
             actionLabel: result.actionLabel,
             showTimePicker: false,
-            showDepartureOptions: true
+            showDepartureOptions: true,
           });
         } catch (error) {
-          log.error('경로 검색 실패', error);
+          log.error("경로 검색 실패", error);
           // API 실패시 전역 상태 초기화
           get().reset();
         }
@@ -142,12 +176,12 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
 
       // 경로 결과 닫기
       closeRouteResults: () => {
-        set({ 
+        set({
           routeResults: [],
           showDepartureOptions: false,
           currentOrigin: null,
           currentDestination: null,
-          currentWaypoints: undefined
+          currentWaypoints: undefined,
         });
       },
 
@@ -157,13 +191,13 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
       },
 
       // 출발 옵션 설정
-      setSelectedDepartureOption: (option: 'now' | 'schedule') => {
+      setSelectedDepartureOption: (option: "now" | "schedule") => {
         set({ selectedDepartureOption: option });
-        if (option === 'now') {
+        if (option === "now") {
           set({ departureTime: new Date() });
           // 지금 출발하기 선택 시 바로 경로 검색
           get().confirmTimeSelection();
-        } else if (option === 'schedule') {
+        } else if (option === "schedule") {
           // 출발예약 선택 시 타임픽커 모달 열기
           set({ showTimePicker: true });
         }
@@ -171,27 +205,30 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
 
       // 경로 선택 (안내시작)
       selectRoute: async (route: SimpleRoute) => {
-        log.route('경로 선택 (안내시작)', route);
-        
+        log.route("경로 선택 (안내시작)", route);
+
         try {
           // routeKey가 있는지 확인
           if (!route.routeKey) {
-            throw new Error('경로 키가 없습니다. 다시 검색해주세요.');
+            throw new Error("경로 키가 없습니다. 다시 검색해주세요.");
           }
 
           // RouteService를 사용하여 2단계 API 호출
-          const { RouteService } = await import('../api/routeService');
-          const routeDetail = await RouteService.startNavigation(route.routeKey);
-          
+          const { RouteService } = await import("../api/routeService");
+          const routeDetail = await RouteService.startNavigation(
+            route.routeKey
+          );
+
           // 상세 경로 데이터를 steps로 변환
           const steps = RouteService.convertDetailDataToSteps(routeDetail);
-          
+
           // route 객체에 상세 정보 업데이트
           const updatedRoute: SimpleRoute = {
             ...route,
             steps: steps,
             totalDuration: routeDetail.totalTime,
-            fatigueLevel: routeDetail.fatigue
+            fatigueLevel: routeDetail.fatigue,
+            polylineData: routeDetail, // MSW에서 오는 폴리라인 데이터 저장
           };
 
           // 네비게이션 시작
@@ -199,23 +236,158 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
           // 검색 결과 화면 닫기
           get().closeRouteResults();
         } catch (error) {
-          log.error('안내시작 실패', error);
+          log.error("안내시작 실패", error);
           // 에러 처리 (사용자에게 알림)
-          alert('안내시작에 실패했습니다. 다시 시도해주세요.');
+          alert("안내시작에 실패했습니다. 다시 시도해주세요.");
+        }
+      },
+
+      // 즐겨찾기 경로 선택 (안내시작)
+      selectBookmarkRoute: async (route: SimpleRoute) => {
+        log.route("즐겨찾기 경로 선택 (안내시작)", route);
+
+        try {
+          // 즐겨찾기 경로의 상세 정보를 가져오기 위해 API 호출
+          const { favoriteRoutesApi } = await import("../api/favoriteRoutes");
+
+          // routeKey에서 bookmarkRouteId 추출 (bookmark-21 형식)
+          const bookmarkRouteId = route.routeKey?.replace("bookmark-", "");
+          if (!bookmarkRouteId) {
+            throw new Error("즐겨찾기 경로 ID를 찾을 수 없습니다.");
+          }
+
+          // 즐겨찾기 경로 상세 조회
+          const bookmarkDetail = await favoriteRoutesApi.getRouteBookmarkDetail(
+            parseInt(bookmarkRouteId)
+          );
+
+          // 상세 경로 데이터를 steps로 변환
+          const { RouteService } = await import("../api/routeService");
+          const steps = RouteService.convertDetailDataToSteps(
+            bookmarkDetail.data
+          );
+
+          // route 객체에 상세 정보 업데이트
+          const updatedRoute: SimpleRoute = {
+            ...route,
+            steps: steps,
+            totalDuration: bookmarkDetail.data.totalTime,
+            fatigueLevel: 0, // 즐겨찾기 데이터에는 fatigue 정보가 없음
+            polylineData: bookmarkDetail.data, // 즐겨찾기 데이터 저장
+          };
+
+          // 네비게이션 시작
+          useNavigationStore.getState().startNavigation(updatedRoute);
+          // 검색 결과 화면 닫기
+          get().closeRouteResults();
+        } catch (error) {
+          log.error("즐겨찾기 경로 선택 실패", error);
+          alert("즐겨찾기 경로 선택에 실패했습니다. 다시 시도해주세요.");
+        }
+      },
+
+      // 즐겨찾기 토글
+      toggleBookmark: (id: string) => {
+        const { routeResults } = get();
+        const updated = routeResults.map((r) =>
+          r.id === id ? { ...r, isBookmarked: !r.isBookmarked } : r
+        );
+        set({ routeResults: updated });
+      },
+
+      // 즐겨찾기 추가 (API 연동)
+      addBookmarkForRoute: async (route: SimpleRoute) => {
+        try {
+          if (!route.routeKey) throw new Error("routeKey가 없습니다");
+          const name = route.name || "즐겨찾기 경로";
+          const departureName = route.from?.name || "출발지";
+          const destinationName = route.to?.name || "도착지";
+
+          const { favoriteRoutesApi } = await import("../api/favoriteRoutes");
+          const created = await favoriteRoutesApi.createRouteBookmark({
+            name,
+            departureName,
+            destinationName,
+            routeKey: route.routeKey,
+          });
+
+          // 상태 반영
+          const { routeResults, routeBookmarks } = get();
+          set({
+            routeResults: routeResults.map((r) =>
+              r.id === route.id
+                ? {
+                    ...r,
+                    isBookmarked: true,
+                    bookmarkRouteId: created.bookmarkRouteId,
+                  }
+                : r
+            ),
+            routeBookmarks: [...(routeBookmarks || []), created],
+          });
+        } catch (e) {
+          log.error("즐겨찾기 추가 실패", e);
+          alert("즐겨찾기 추가에 실패했습니다.");
+        }
+      },
+
+      // 즐겨찾기 제거 (API 연동) - bookmarkId 매핑 필요시 목록 갱신으로 대체
+      removeBookmarkForRoute: async (routeId: string) => {
+        try {
+          const { routeResults } = get();
+          const target = routeResults.find((r) => r.id === routeId);
+          if (!target || !target.bookmarkRouteId) {
+            // 매핑이 없으면 목록을 갱신만
+            await get().fetchBookmarks();
+            return;
+          }
+          const { favoriteRoutesApi } = await import("../api/favoriteRoutes");
+          await favoriteRoutesApi.deleteRouteBookmark(target.bookmarkRouteId);
+          // 성공 시 로컬 상태 반영
+          set({
+            routeResults: routeResults.map((r) =>
+              r.id === routeId
+                ? { ...r, isBookmarked: false, bookmarkRouteId: undefined }
+                : r
+            ),
+          });
+          // 목록도 최신화
+          await get().fetchBookmarks();
+        } catch (e) {
+          log.error("즐겨찾기 제거 실패", e);
+          alert("즐겨찾기 해제에 실패했습니다.");
+        }
+      },
+
+      // 즐겨찾기 목록 조회
+      fetchBookmarks: async () => {
+        try {
+          console.log("useRouteSearchStore: fetchBookmarks 시작");
+          const { favoriteRoutesApi } = await import("../api/favoriteRoutes");
+          const list = await favoriteRoutesApi.getRouteBookmarks();
+          console.log("useRouteSearchStore: fetchBookmarks 성공", list);
+          set({ routeBookmarks: list });
+        } catch (e) {
+          console.error("useRouteSearchStore: fetchBookmarks 실패", e);
+          log.error("즐겨찾기 목록 조회 실패", e);
         }
       },
 
       // 검색 히스토리 추가
-      addSearchHistory: (origin: string, destination: string, waypoints?: string[]) => {
+      addSearchHistory: (
+        origin: string,
+        destination: string,
+        waypoints?: string[]
+      ) => {
         const { searchHistory } = get();
         const newEntry = {
           id: `search-${Date.now()}`,
           origin,
           destination,
           waypoints,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
-        
+
         // 최대 10개까지만 유지
         const updatedHistory = [newEntry, ...searchHistory].slice(0, 10);
         set({ searchHistory: updatedHistory });
@@ -229,10 +401,10 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
       // 상태 초기화
       reset: () => {
         set(initialState);
-      }
+      },
     }),
     {
-      name: 'route-search-store',
+      name: "route-search-store",
       partialize: (state) => ({
         searchHistory: state.searchHistory,
         selectedDepartureOption: state.selectedDepartureOption,
@@ -240,4 +412,3 @@ export const useRouteSearchStore = create<RouteSearchState & RouteSearchActions>
     }
   )
 );
-

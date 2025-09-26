@@ -1,6 +1,7 @@
 // AlarmController.java
 package S13P21A305.dgg.alarm.controller;
 
+import S13P21A305.dgg.auth.dto.CustomOAuth2User;
 import S13P21A305.dgg.alarm.dto.request.*;
 import S13P21A305.dgg.alarm.dto.response.AlarmItemResponse;
 import S13P21A305.dgg.alarm.dto.response.NextAlarmResponse;
@@ -8,6 +9,7 @@ import S13P21A305.dgg.alarm.service.AlarmService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,7 +23,9 @@ public class AlarmController {
 
     // 리스트(리마인더 단위)
     @GetMapping
-    public List<AlarmItemResponse> list(@RequestParam Integer memberId) {
+    public List<AlarmItemResponse> list(
+            @AuthenticationPrincipal(expression = "memberId") Integer memberId
+    ) {
         return service.list(memberId);
     }
 
@@ -49,13 +53,15 @@ public class AlarmController {
     // 삭제(리마인더 단건) -> 남은 리스트 반환
     @DeleteMapping("/{alarmId}")
     public List<AlarmItemResponse> delete(@PathVariable Long alarmId,
-                                          @RequestParam Integer memberId) {
+                                          @AuthenticationPrincipal(expression = "memberId") Integer memberId) {
         return service.delete(alarmId, memberId);
     }
 
     // 가까운 알림(리마인더 1건에 대한 이벤트 정보)
     @GetMapping("/next")
-    public ResponseEntity<NextAlarmResponse> next(@RequestParam Integer memberId) {
+    public ResponseEntity<NextAlarmResponse> next(
+            @AuthenticationPrincipal(expression = "memberId") Integer memberId
+    ) {
         return service.next(memberId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.noContent().build());
@@ -64,7 +70,7 @@ public class AlarmController {
     // (옵션) 특정 알림 즉시 테스트 푸시
     @PostMapping("/{alarmId}/push")
     public ResponseEntity<?> pushOne(@PathVariable Long alarmId,
-                                     @RequestParam Integer memberId) {
+                                     @AuthenticationPrincipal(expression = "memberId") Integer memberId) {
         return ResponseEntity.ok(service.pushNow(alarmId, memberId));
     }
 }

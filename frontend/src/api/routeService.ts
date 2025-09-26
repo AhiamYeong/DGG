@@ -1,4 +1,22 @@
-// import { generateRouteRecommendations } from '../utils/routeDataGenerator'; // 주석화됨
+/**
+ * 경로 검색 비즈니스 로직 서비스
+ * 
+ * 기능:
+ * - 경로 검색 플로우 실행
+ * - API 응답 데이터 변환
+ * - 안내시작 처리 (2단계 API 호출)
+ * - 상세 경로 데이터 변환
+ * - 경로 추천 타입 결정
+ * 
+ * 사용 페이지:
+ * - SearchPage: 경로 검색 실행
+ * - RouteResultsContainer: 경로 결과 표시
+ * - NavigationMode: 안내시작 처리
+ * - useRouteSearchStore: 경로 검색 상태 관리
+ * 
+ * @format
+ */
+
 import { isCurrentTime, getActionLabel, formatDateTimeForApi } from '../utils/timeUtils';
 import { searchRoutesWithTime, startRouteGuidance, getRouteDetail } from './mapApi';
 import type { SimpleRoute } from '../types/route-types';
@@ -143,56 +161,13 @@ export class RouteService {
         actionLabel
       };
     } catch (error) {
-      log.error('백엔드 API 호출 실패, 더미 데이터 사용:', error);
+      log.error('경로 검색 API 호출 실패:', error);
       
-      // 개발 중에는 더미 데이터 사용 (백엔드 API 준비 완료 후 제거)
-      console.warn('⚠️ 백엔드 API 호출 실패 - 더미 데이터 사용 중');
-      
-      // 폴백: 새로운 API 형식의 더미 데이터 사용
-      const dummyApiResponse: NewBackendRouteApiResponse = {
-        departureAddress: "서울특별시 강남구 강남대로 396", // 도로명 주소 (API 응답 형식)
-        destinationAddress: "서울특별시 마포구 마포대로 100", // 도로명 주소 (API 응답 형식)
-        stopoverAddresses: waypoints && waypoints.length > 0 ? waypoints.slice(0, 2) : [],
-        departureTime: formatDateTimeForApi(departureTime),
-        destinationTime: formatDateTimeForApi(new Date(departureTime.getTime() + 50 * 60 * 1000)), // 50분 후
-        recommendedRoutes: [
-          {
-            routeKey: "dummy-route-key-1",
-            name: "최소 피로도",
-            timeTaken: 48,
-            arrivalTime: "2025-12-12 18:46:00",
-            fatigue: 40
-          },
-          {
-            routeKey: "dummy-route-key-2",
-            name: "최소 시간",
-            timeTaken: 38,
-            arrivalTime: "2025-12-12 18:36:00",
-            fatigue: 90
-          },
-          {
-            routeKey: "dummy-route-key-3",
-            name: "최소 환승",
-            timeTaken: 45,
-            arrivalTime: "2025-12-12 18:43:00",
-            fatigue: 60
-          }
-        ]
-      };
-
-      const routes = this.convertApiResponseToRoutes(dummyApiResponse, originName, destinationName);
-      const actionLabel = this.calculateActionLabel(departureTime, selectedOption);
-
-      return {
-        routes,
-        actionLabel
-      };
+      // MSW가 API 호출을 가로채서 더미 데이터를 반환하므로, 
+      // 여기서는 에러를 그대로 전파
+      throw error;
     }
   }
-
-  // convertTestDataToRoutes 메서드 제거됨 (주석화)
-
-  // convertSubPathsToSteps 메서드 제거됨 (주석화)
 
   /**
    * 새로운 백엔드 API 응답을 SimpleRoute 형식으로 변환
@@ -259,9 +234,9 @@ export class RouteService {
   private static getRecommendationType(routeName: string): 'minTime' | 'minTransfer' | 'minFatigue' {
     if (routeName.includes('최소 시간') || routeName.includes('최단 시간')) {
       return 'minTime';
-    } else if (routeName.includes('최소 환승') || routeName.includes('최소 환승')) {
+    } else if (routeName.includes('최소 환승'))  {
       return 'minTransfer';
-    } else if (routeName.includes('최소 피로도') || routeName.includes('피로도')) {
+    } else if (routeName.includes('최소 피로도')) {
       return 'minFatigue';
     }
     return 'minTime'; // 기본값
@@ -318,7 +293,12 @@ export class RouteService {
       log.route('안내시작 API 응답', startResponse);
 
       // 2단계: 상세 경로 조회 API 호출
-      const routeDetail: RouteDetailResponse = await getRouteDetail(startResponse.routeId);
+      // startRouteGuidance는 response.data를 반환하므로 직접 사용
+      const routeId = startResponse;
+      if (!routeId) {
+        throw new Error('routeId를 찾을 수 없습니다.');
+      }
+      const routeDetail: RouteDetailResponse = await getRouteDetail(routeId.toString());
       log.route('상세 경로 조회 완료', routeDetail);
 
       return routeDetail;
@@ -330,15 +310,15 @@ export class RouteService {
 
   /**
    * 상세 경로 데이터를 RouteStep 형식으로 변환
-   * @param detailData 상세 경로 데이터
+   * @param detailData 상세 경로 데이터 (일반 경로 또는 즐겨찾기 경로)
    * @returns RouteStep 배열
    */
-  static convertDetailDataToSteps(detailData: RouteDetailResponse): any[] {
+  static convertDetailDataToSteps(detailData: RouteDetailResponse | any): any[] {
     if (!detailData || !detailData.data) {
       return [];
     }
 
-    return detailData.data.map((step, index) => {
+    return detailData.data.map((step: any, index: number) => {
       // 교통수단 타입 변환
       let type: string;
       switch (step.type) {
@@ -355,20 +335,27 @@ export class RouteService {
           type = 'walk';
       }
 
+      // 즐겨찾기 경로의 경우 startPoint/endPoint가 null일 수 있음
+      const startPoint = step.startPoint || '';
+      const endPoint = step.endPoint || '';
+      const description = startPoint && endPoint ? `${startPoint} → ${endPoint}` : 
+                         step.lineName ? `${step.lineName} 이용` : 
+                         '도보';
+
       return {
         id: `step-${index}`,
         type,
-        description: `${step.startPoint} → ${step.endPoint}`,
+        description,
         duration: step.timeTaken,
         distance: 0, // API에서 거리 정보가 없으므로 0으로 설정
         lineInfo: step.lineName ? {
           name: step.lineName,
           direction: '',
-          stationCount: 0
+          stationCount: step.path ? step.path.length : 0
         } : undefined,
-        stations: [],
-        startName: step.startPoint,
-        endName: step.endPoint,
+        stations: step.path || [],
+        startName: startPoint,
+        endName: endPoint,
         startLocation: {
           latitude: step.startLat,
           longitude: step.startLng
@@ -378,6 +365,7 @@ export class RouteService {
           longitude: step.endLng
         },
         path: step.path || [],
+        etaMin: step.etaMin, // 버스 도착 예정 시간
         createdAt: new Date(),
         updatedAt: new Date()
       };

@@ -1,6 +1,17 @@
-/** @format */
+/**
+ * 사용자 정보 관리 관련 API
+ * 
+ * 기능:
+ * - 기본 정보 (닉네임, 이메일)
+ * - 알람 설정
+ * 
+ * 사용 페이지:
+ * - MypagePage: 사용자 정보 표시 및 수정
+ * - SettingsPage: 알람 설정 관리
+ * 
+ * @format
+ */
 
-// src/api/mypageApi.ts
 import { createApiClient } from "../utils/apiClient";
 
 const API_BASE_URL = "https://j13a305.p.ssafy.io/api/v1/";
@@ -10,12 +21,6 @@ export const mypageApi = createApiClient(API_BASE_URL);
 export interface InfoProps {
   nickname: string;
   email: string;
-}
-
-// 설문조사 응답 interface
-export interface SurveyAnswerProps {
-  surveyQuestionId: number;
-  answerValue: number;
 }
 
 // 알람 설정 interface
