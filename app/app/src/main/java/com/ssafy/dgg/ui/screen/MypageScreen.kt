@@ -1,6 +1,8 @@
 package com.ssafy.dgg.ui.screen
 
 import AuthViewModel
+import android.app.Activity
+import android.webkit.WebView
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import com.ssafy.dgg.model.repository.RetrofitClient
 import com.ssafy.dgg.viewModel.MyPageViewModel
 import kotlinx.coroutines.launch
+import com.ssafy.dgg.R
 
 @Composable
 fun MyPageScreen(
@@ -147,7 +150,6 @@ fun ProfileEditScreen(
             Button(onClick = {
                 onSave()
                 Toast.makeText(context, "변경 닉네임이 저장되었습니다.", Toast.LENGTH_SHORT).show()
-
             }, modifier = Modifier.weight(1f)) { Text("저장") }
             OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) { Text("취소") }
         }
