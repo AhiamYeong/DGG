@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,6 +28,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
 
 @Service
 @RequiredArgsConstructor
@@ -88,7 +92,7 @@ public class MemberService {
     public SubmitSurveyResponseDto submitSurvey(Integer memberId, List<SubmitSurveyRequestDto> request){
         // 비었는지 확인
         if(request == null || request.isEmpty()){
-            throw new IllegalArgumentException("답변이 비어 있습니다.");
+            throw new ResponseStatusException(BAD_REQUEST, "답변이 비어 있습니다.");
         }
 
         // 요청의 survey id 목록 추출
@@ -100,7 +104,7 @@ public class MemberService {
         List<Integer> existingIds = surveyAnswerRepository.findExistingSurveyIds(memberId, surveyIds);
 
         if(!existingIds.isEmpty()) {
-            throw new IllegalStateException("이미 제출하신 설문이 있습니다.");
+            throw new ResponseStatusException(CONFLICT, "이미 제출하신 설문이 있습니다.");
         }
 
         // request로 들어온 신규 설문조사 응답 저장
