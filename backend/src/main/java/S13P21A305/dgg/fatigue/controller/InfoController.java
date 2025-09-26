@@ -1,6 +1,8 @@
 package S13P21A305.dgg.fatigue.controller;
 
 import S13P21A305.dgg.fatigue.service.StatsService;
+import S13P21A305.dgg.member.domain.Member;
+import S13P21A305.dgg.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import java.util.Map;
 public class InfoController {
 
     private final StatsService stats;
+    private final MemberRepository memberRepository;
 
     // GET /api/v1/info/fatigues
     @GetMapping("/fatigues")
@@ -30,7 +33,12 @@ public class InfoController {
                 .map(it -> Map.of("day", it.day(), "fatigue", it.value()))
                 .toList();
 
-        return Map.of("nickname", "닉네임", "fatigue_rank", 7, "data", data);
+        String nickname = memberRepository.findByIdAndIsWithdrawFalse(memberId)
+                .map(Member::getNickname)
+                .filter(n -> n != null && !n.isBlank())
+                .orElse("뚜벅초님");
+
+        return Map.of("nickname", nickname, "fatigue_rank", 7, "data", data);
     }
 
     // GET /api/v1/info/foot-steps
@@ -46,7 +54,11 @@ public class InfoController {
         var data = stats.weeklyFootSteps(memberId, monday).stream()
                 .map(it -> Map.of("day", it.day(), "foot_step", it.value()))
                 .toList();
+        String nickname = memberRepository.findByIdAndIsWithdrawFalse(memberId)
+                .map(Member::getNickname)
+                .filter(n -> n != null && !n.isBlank())
+                .orElse("뚜벅초님");
 
-        return Map.of("nickname", "닉네임", "data", data);
+        return Map.of("nickname", nickname, "data", data);
     }
 }
