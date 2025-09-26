@@ -14,7 +14,7 @@ export default function FatigueHistory({ data }: { data: fatigueHistory[] }) {
               <div className="flex items-center justify-between text-sm">
                 {/* 시간 + 라벨 */}
                 <span>
-                  {item.createdAt?.split(" ")[1]?.slice(0, 5) ?? "--:--"}{" "}
+                  {item.created_at?.split(" ")[1]?.slice(0, 5) ?? "--:--"}{" "}
                   {item.reason}
                 </span>
 

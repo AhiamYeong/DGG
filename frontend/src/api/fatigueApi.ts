@@ -44,7 +44,7 @@ export interface fatigueUpdateResponse {
 // 피로도 하루 히스토리 조회
 export interface fatigueHistory {
   fatigueId: number;
-  createdAt: string;
+  created_at: string;
   reason: string;
   fatigue: number;
   fatigueChange: number;
