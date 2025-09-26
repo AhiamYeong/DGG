@@ -4,6 +4,8 @@ import AuthViewModel
 import android.content.Context
 import android.view.ViewGroup
 import android.webkit.WebView
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -44,6 +46,25 @@ fun MainScreen(authViewModel: AuthViewModel) {
     val fatigueWebView = remember { context.createConfiguredWebView("$BASE_URL/fatigue") }
     val mapWebView = remember { context.createConfiguredWebView("$BASE_URL/map") }
     val alarmWebView = remember { context.createConfiguredWebView("$BASE_URL/alarm") }
+
+    // 현재 생성된 웹뷰 추적
+    val currentWebView = when (selectedItem.route) {
+        "main" -> mainWebView
+        "fatigue" -> fatigueWebView
+        "map" -> mapWebView
+        "alarm" -> alarmWebView
+        else -> null
+    }
+
+    // 뒤로가기 핸들링
+    BackHandler {
+        if (currentWebView?.canGoBack() == true) {
+            currentWebView.goBack()
+        } else {
+            // 더 이상 뒤로 갈 페이지 없으면 앱 종료
+            (context as? ComponentActivity)?.finish()
+        }
+    }
 
     Scaffold(
         bottomBar = {
