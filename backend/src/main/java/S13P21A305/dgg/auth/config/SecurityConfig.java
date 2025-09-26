@@ -72,6 +72,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/mypage/**").hasAnyRole("GUEST","MEMBER")
                         .requestMatchers("/api/v1/maps/**").permitAll()
                         .requestMatchers("/api/v1/bookmarks/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll() // 헬스체크 허용 추가
                     .anyRequest().permitAll());
 //                        .anyRequest().authenticated());
 
