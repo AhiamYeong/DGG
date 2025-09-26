@@ -1,6 +1,8 @@
 package com.ssafy.dgg.ui.screen
 
 import AuthViewModel
+import android.app.Activity
+import android.webkit.WebView
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -34,11 +36,13 @@ import androidx.compose.ui.unit.dp
 import com.ssafy.dgg.model.repository.RetrofitClient
 import com.ssafy.dgg.viewModel.MyPageViewModel
 import kotlinx.coroutines.launch
+import com.ssafy.dgg.R
 
 @Composable
 fun MyPageScreen(
     modifier: Modifier = Modifier,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    onProfileUpdated: () -> Unit
 ) {
 //     val loginState by viewModel.loginState
     val myPageRepo = _root_ide_package_.com.ssafy.dgg.model.repository.mypage.MyPageRepositoryImpl(RetrofitClient.myPageApiService)
@@ -70,7 +74,10 @@ fun MyPageScreen(
                 nickname = tempNickname,
                 email = profile.email,
                 onNicknameChange = { myPageViewModel.onNicknameChange(it)},
-                onSave = { myPageViewModel.saveNickname() },
+                onSave = {
+                    myPageViewModel.saveNickname()
+                    onProfileUpdated()
+                 },
                 onCancel = { myPageViewModel.cancelEdit() },
                 onWithdraw = { authViewModel.withdraw() },
                 onLogout = { authViewModel.logout() }

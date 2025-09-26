@@ -1,16 +1,14 @@
 package com.ssafy.dgg.ui.screen
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,8 +17,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.ssafy.dgg.R
 
 /* 상태 직접 관리X, 요청을 외부에 전달 -> State Hoisting
 * 버튼 -> googlesigninmanager.signinIntent 실행
@@ -48,47 +49,21 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // 랜딩페이지 로고 추가하기
         Text(
-            text = "로그인",
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onBackground
+            text = "덜낑김",
+            fontSize = 36.sp,             // 크게!
+            fontWeight = FontWeight.Bold, // 두껍게
+            color = MaterialTheme.colorScheme.primary, // 브랜드 컬러 적용 가능
+            modifier = Modifier.padding(bottom = 24.dp)
         )
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // 아이디 입력 필드
-        OutlinedTextField(
-            value = userId,
-            onValueChange = { newText : String -> userId = newText },
-            label = { Text("아이디를 입력하세요") },
-            modifier = Modifier.fillMaxWidth()
+        Image(
+            painter = painterResource(id = R.drawable.dgg_icon), // logo.png 넣은 파일명
+            contentDescription = "앱 로고",
+            modifier = Modifier
+                .padding(bottom = 24.dp)
+                .size(120.dp) // 원하는 크기로 조절
         )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 비밀번호 입력 필드
-        OutlinedTextField(
-            value = password,
-            onValueChange = { newText : String -> password = newText },
-            label = { Text("비밀번호를 입력하세요") },
-            visualTransformation = PasswordVisualTransformation(), // 비밀번호를 *로 가립니다.
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // 로그인 버튼
-        Button(
-            onClick = {
-                // TODO: 여기에 실제 로그인 로직(예: API 호출)을 구현합니다.
-                // 현재는 단순히 성공했다고 가정하고 onLoginSuccess 람다를 호출합니다.
-                // 웹뷰로 변경
-                Log.d("LoginFlow", "일반 로그인 버튼 클릭") // 로그 추가
-                onLoginSuccess() // onLoginSuccess 람다 호출
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("로그인")
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-
         // google 로그인 버튼 추가
         Button(
             onClick = onGoogleSignInClicked

@@ -19,6 +19,7 @@ const questions: Question[] = [
 
 export default function FatigueSurveyPage() {
   const [answers, setAnswers] = useState<{ [key: number]: number }>({});
+  const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
 
   // 기존 설문 불러오기
   useEffect(() => {
@@ -26,14 +27,18 @@ export default function FatigueSurveyPage() {
       try {
         const res = await fatigueApi.get<SurveyAnswerProps[]>("mypage/survey");
 
-        // 배열을 객체 {id: value}로 변환해서 상태에 저장
-        const loadedAnswers: { [key: number]: number } = {};
-        res.data.forEach((a) => {
-          loadedAnswers[a.surveyQuestionId] = a.answerValue;
-        });
-
-        setAnswers(loadedAnswers);
-        console.log("불러온 답변:", res.data);
+        // 데이터 있으면 넣기
+        if (res.data.length > 0) {
+          // 배열을 객체 {id: value}로 변환해서 상태에 저장
+          const loadedAnswers: { [key: number]: number } = {};
+          res.data.forEach((a) => {
+            loadedAnswers[a.surveyQuestionId] = a.answerValue;
+          });
+          setAnswers(loadedAnswers);
+          // 기존 답변이 있다면 수정모드로 변경
+          setHasSubmitted(true);
+          console.log("불러온 답변:", res.data);
+        }
       } catch (err) {
         console.error("설문 조회 실패:", err);
       }
@@ -57,12 +62,23 @@ export default function FatigueSurveyPage() {
     console.log("저장된 답변 (payload):", payload);
 
     try {
-      const res = await fatigueApi.post<SurveyAnswerProps[]>(
-        "mypage/survey",
-        payload
-      );
-      console.log(res);
-      alert("저장 완료");
+      // 수정모드일 경우 put, 신규모드일 경우 post
+      if (hasSubmitted) {
+        const res = await fatigueApi.put<SurveyAnswerProps[]>(
+          "mypage/survey",
+          payload
+        );
+        console.log(res);
+        alert("저장 완료");
+      } else {
+        const res = await fatigueApi.post<SurveyAnswerProps[]>(
+          "mypage/survey",
+          payload
+        );
+        console.log(res);
+        setHasSubmitted(true); // 다음부터는 PUT 모드
+        alert("저장 완료");
+      }
     } catch (err) {
       console.error("제출 실패:", err);
     }
