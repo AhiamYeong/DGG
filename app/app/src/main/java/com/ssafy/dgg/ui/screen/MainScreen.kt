@@ -106,7 +106,18 @@ fun MainScreen(authViewModel: AuthViewModel) {
             if (selectedItem.route == "mypage") {
                 MyPageScreen(
                     modifier = Modifier.fillMaxSize(),
-                    authViewModel = authViewModel
+                    authViewModel = authViewModel,
+                    // 닉네임 바뀌면 main/fatigue Webview에 이벤트 쏘기
+                    onProfileUpdated = {
+                        mainWebView.evaluateJavascript(
+                        "window.dispatchEvent(new Event('profile-updated'))",
+                        null
+                    )
+                    fatigueWebView.evaluateJavascript(
+                        "window.dispatchEvent(new Event('profile-updated'))",
+                        null
+                    )
+                }
                 )
             }
         }

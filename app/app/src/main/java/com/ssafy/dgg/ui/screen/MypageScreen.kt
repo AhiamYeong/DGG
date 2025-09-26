@@ -38,7 +38,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun MyPageScreen(
     modifier: Modifier = Modifier,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    onProfileUpdated: () -> Unit
 ) {
 //     val loginState by viewModel.loginState
     val myPageRepo = _root_ide_package_.com.ssafy.dgg.model.repository.mypage.MyPageRepositoryImpl(RetrofitClient.myPageApiService)
@@ -70,7 +71,10 @@ fun MyPageScreen(
                 nickname = tempNickname,
                 email = profile.email,
                 onNicknameChange = { myPageViewModel.onNicknameChange(it)},
-                onSave = { myPageViewModel.saveNickname() },
+                onSave = {
+                    myPageViewModel.saveNickname()
+                    onProfileUpdated()
+                 },
                 onCancel = { myPageViewModel.cancelEdit() },
                 onWithdraw = { authViewModel.withdraw() },
                 onLogout = { authViewModel.logout() }
@@ -143,6 +147,7 @@ fun ProfileEditScreen(
             Button(onClick = {
                 onSave()
                 Toast.makeText(context, "변경 닉네임이 저장되었습니다.", Toast.LENGTH_SHORT).show()
+
             }, modifier = Modifier.weight(1f)) { Text("저장") }
             OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) { Text("취소") }
         }

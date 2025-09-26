@@ -33,6 +33,7 @@ fun WebViewScreen(
                 settings.domStorageEnabled = true
                 loadUrl(url)
             }
+
         },
         update = { webView ->
             if (webView.url != url) {
