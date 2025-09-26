@@ -16,34 +16,46 @@ export default function FatigueManagePage() {
   const [nickname, setNickname] = useState<string>("");
   // const [isLoading, setIsLoading] = useState<boolean>(true);
   const [historyData, setHistoryData] = useState<fatigueHistory[]>([]);
-  // 초기 렌더링시 피로도 데이터 전부 불러오기
+
+  // 피로도 데이터 호출
+  const fetchFatigue = async () => {
+    try {
+      const res = await fatigueApi.get("/fatigues");
+      const data: MainFatigueProps = res.data;
+
+      setFatigue(data.current_fatigue);
+      setNickname(data.nickname);
+    } catch (err) {
+      console.error("에러 발생", err);
+    }
+  };
+
+  // 피로도 히스토리 데이터 호출
+  const fetchFatigueHistory = async () => {
+    try {
+      const res = await fatigueApi.get("/fatigues/daily");
+      const data: fatigueHistory[] = res.data;
+      setHistoryData(data);
+    } catch (error) {
+      console.error("에러", error);
+    }
+  };
+
   useEffect(() => {
-    // 피로도 데이터 호출
-    const fetchFatigue = async () => {
-      try {
-        const res = await fatigueApi.get("/fatigues");
-        const data: MainFatigueProps = res.data;
-
-        setFatigue(data.current_fatigue);
-        setNickname(data.nickname);
-      } catch (err) {
-        console.error("에러 발생", err);
-      }
-    };
-
-    // 피로도 히스토리 데이터 호출
-    const fetchFatigueHistory = async () => {
-      try {
-        const res = await fatigueApi.get("/fatigues/daily");
-        const data: fatigueHistory[] = res.data;
-        setHistoryData(data);
-      } catch (error) {
-        console.error("에러", error);
-      }
-    };
-
+    // 초기 호출
     fetchFatigue();
     fetchFatigueHistory();
+
+    // 닉네임 변경 이벤트 리스너 등록
+    const handleProfileUpdated = () => {
+      fetchFatigue(); // 다시 API 호출해서 최신 닉네임 반영
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdated);
+
+    return () => {
+      window.removeEventListener("profile-updated", handleProfileUpdated);
+    };
   }, []);
 
   return (

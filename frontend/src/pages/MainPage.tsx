@@ -19,38 +19,47 @@ export default function Mainpage() {
 
   const navigate = useNavigate();
 
+  const fetchFatigue = async () => {
+    try {
+      const resp = await fatigueApi.get(`/fatigues`);
+      const data = resp.data;
+
+      setNickname(data.nickname);
+      setFatigue(data.current_fatigue);
+    } catch (err) {
+      console.error("에러 발생", err);
+    }
+  };
+
+  // 장소 별명 props로 떼오기
+  const fetchFavoriteRoute = async () => {
+    try {
+      const resp = await favoriteRoutesApi.getRouteBookmarks();
+
+      // id, name 묶어서 저장
+      const mapped = resp.map((item) => ({
+        id: item.bookmarkRouteId,
+        name: item.name,
+      }));
+      setRoutes(mapped);
+    } catch (error) {
+      console.error("에러 발생", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchFatigue = async () => {
-      try {
-        const resp = await fatigueApi.get(`/fatigues`);
-        const data = resp.data;
-
-        setNickname(data.nickname);
-        setFatigue(data.current_fatigue);
-      } catch (err) {
-        console.error("에러 발생", err);
-      }
-    };
-
     // TODO: 날씨 API
-
-    // 장소 별명 props로 떼오기
-    const fetchFavoriteRoute = async () => {
-      try {
-        const resp = await favoriteRoutesApi.getRouteBookmarks();
-
-        // id, name 묶어서 저장
-        const mapped = resp.map((item) => ({
-          id: item.bookmarkRouteId,
-          name: item.name,
-        }));
-        setRoutes(mapped);
-      } catch (error) {
-        console.error("에러 발생", error);
-      }
-    };
     fetchFatigue();
     fetchFavoriteRoute();
+
+    const handleProfileUpdated = () => {
+      fetchFatigue(); // 닉네임 최신화
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdated);
+    return () => {
+      window.removeEventListener("profile-updated", handleProfileUpdated);
+    };
   }, []);
 
   const handleClick = (path: string) => {
