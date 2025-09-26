@@ -10,6 +10,7 @@ import S13P21A305.dgg.route.dto.RecommendedRouteDTO;
 import S13P21A305.dgg.route.dto.RouteDetailDTO;
 import S13P21A305.dgg.route.dto.RouteRequestDTO;
 import S13P21A305.dgg.route.dto.RouteResponseDTO;
+import S13P21A305.dgg.route.dto.StationCoordDTO;
 import S13P21A305.dgg.route.entity.RouteInfo;
 import S13P21A305.dgg.route.entity.RouteLog;
 import S13P21A305.dgg.route.entity.RouteType;
@@ -797,5 +798,83 @@ public class RouteServiceImpl implements RouteService {
 			+ Math.cos(Math.toRadians(lat1))*Math.cos(Math.toRadians(lat2))
 			* Math.sin(dLon/2)*Math.sin(dLon/2);
 		return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<StationCoordDTO> getShortestStationsByCoords(double sx, double sy, double ex, double ey) {
+		validateCoords(sy, sx);
+		validateCoords(ey, ex);
+
+		List<OdSayResponseDTO.Path> candidates = findPathsBetweenCoords(sx, sy, ex, ey);
+		OdSayResponseDTO.Path shortest = pickShortest(candidates);
+		return extractStations(shortest);
+	}
+
+	/** 좌표 검증 */
+	private void validateCoords(double lat, double lng) {
+		if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+			throw new IllegalArgumentException("잘못된 좌표 값입니다. lat=" + lat + ", lng=" + lng);
+		}
+	}
+
+	/** 좌표 기반 길찾기 호출 */
+	private List<OdSayResponseDTO.Path> findPathsBetweenCoords(double sx, double sy, double ex, double ey) {
+		final String url = "https://api.odsay.com/v1/api/searchPubTransPathT";
+		URI uri = UriComponentsBuilder.fromHttpUrl(url)
+			.queryParam("apiKey", odsayApiKey)
+			.queryParam("SX", sx).queryParam("SY", sy)
+			.queryParam("EX", ex).queryParam("EY", ey)
+			.encode(StandardCharsets.UTF_8).build().toUri();
+
+		OdSayResponseDTO res = restTemplate.getForObject(uri, OdSayResponseDTO.class);
+		if (res == null || res.getResult() == null || res.getResult().getPath() == null || res.getResult().getPath().isEmpty()) {
+			throw new IllegalStateException("길찾기 결과가 없습니다. [%.6f,%.6f -> %.6f,%.6f]".formatted(sx, sy, ex, ey));
+		}
+		return res.getResult().getPath();
+	}
+
+	/** 최단거리 Path 선택 */
+	private OdSayResponseDTO.Path pickShortest(List<OdSayResponseDTO.Path> paths) {
+		return paths.stream()
+			.min(Comparator.comparingInt(p -> p.getInfo().getTotalDistance()))
+			.orElseThrow(() -> new IllegalStateException("최단 경로 선택 실패"));
+	}
+
+	/** 선택된 Path에서 BUS/SUBWAY 구간의 모든 정류장/역 좌표 평탄화 */
+	private List<StationCoordDTO> extractStations(OdSayResponseDTO.Path path) {
+		List<StationCoordDTO> out = new ArrayList<>();
+		if (path == null || path.getSubPath() == null) return out;
+
+		int seq = 1;
+		for (OdSayResponseDTO.SubPath sp : path.getSubPath()) {
+			int t = sp.getTrafficType(); // 1=subway, 2=bus, 3=walk
+			if (t != 1 && t != 2) continue; // 걷기는 스킵
+			if (sp.getPassStopList() == null || sp.getPassStopList().getStations() == null) continue;
+
+			for (OdSayResponseDTO.Station st : sp.getPassStopList().getStations()) {
+				if (st == null || st.getY() == null || st.getX() == null) continue;
+				out.add(StationCoordDTO.builder()
+					.lat(st.getY()) // y=lat
+					.lng(st.getX()) // x=lng
+					.build());
+			}
+		}
+
+		// 연속 중복 좌표 제거
+		if (!out.isEmpty()) {
+			List<StationCoordDTO> dedup = new ArrayList<>();
+			StationCoordDTO prev = null;
+			for (StationCoordDTO cur : out) {
+				if (prev == null
+					|| !Objects.equals(prev.getLat(), cur.getLat())
+					|| !Objects.equals(prev.getLng(), cur.getLng())) {
+					dedup.add(cur);
+					prev = cur;
+				}
+			}
+			return dedup;
+		}
+		return out;
 	}
 }
