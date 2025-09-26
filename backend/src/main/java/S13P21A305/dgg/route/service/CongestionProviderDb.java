@@ -74,9 +74,9 @@ public class CongestionProviderDb implements CongestionProvider {
         String sql = """
             SELECT CONCAT(route_name,'|',departure,'|',destination) AS k,
                    AVG(congestion_ratio) AS v
-            FROM bus_congestion
+            FROM gold_bus
             WHERE time_slot = :slot
-              AND month = (SELECT MAX(month) FROM bus_congestion)  -- 최신월
+              AND month = (SELECT MAX(month) FROM gold_bus)  -- 최신월
               AND CONCAT(route_name,'|',departure,'|',destination) IN (:keys)
             GROUP BY 1
         """;
@@ -94,9 +94,9 @@ public class CongestionProviderDb implements CongestionProvider {
 
         String sql = """
             SELECT route_name AS k, AVG(congestion_ratio) AS v
-            FROM bus_congestion
+            FROM gold_bus
             WHERE time_slot = :slot
-              AND month = (SELECT MAX(month) FROM bus_congestion)
+              AND month = (SELECT MAX(month) FROM gold_bus)
               AND route_name IN (:names)
             GROUP BY route_name
         """;
@@ -114,8 +114,8 @@ public class CongestionProviderDb implements CongestionProvider {
 
         String sql = """
             SELECT route_name AS k, AVG(congestion_ratio) AS v
-            FROM bus_congestion
-            WHERE month = (SELECT MAX(month) FROM bus_congestion)
+            FROM gold_bus
+            WHERE month = (SELECT MAX(month) FROM gold_bus)
               AND route_name IN (:names)
             GROUP BY route_name
         """;
@@ -139,7 +139,7 @@ public class CongestionProviderDb implements CongestionProvider {
         String sql = """
             SELECT CONCAT(station,'|',destination) AS k,
                    AVG(congestion) AS v
-            FROM subway_congestion
+            FROM gold_subway
             WHERE time_slot = :slot
               AND CONCAT(station,'|',destination) IN (:keys)
             GROUP BY 1
@@ -158,7 +158,7 @@ public class CongestionProviderDb implements CongestionProvider {
 
         String sql = """
             SELECT station AS k, AVG(congestion) AS v
-            FROM subway_congestion
+            FROM gold_subway
             WHERE time_slot = :slot
               AND station IN (:stations)
             GROUP BY station
@@ -177,7 +177,7 @@ public class CongestionProviderDb implements CongestionProvider {
 
         String sql = """
             SELECT station AS k, AVG(congestion) AS v
-            FROM subway_congestion
+            FROM gold_subway
             WHERE station IN (:stations)
             GROUP BY station
         """;

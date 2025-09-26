@@ -6,8 +6,10 @@ import S13P21A305.dgg.fatigue.dto.response.FatigueResponse;
 import S13P21A305.dgg.member.domain.SurveyAnswer;
 import S13P21A305.dgg.member.repository.SurveyAnswerRepository;
 import S13P21A305.dgg.route.domain.Route;
+import S13P21A305.dgg.route.domain.RoutePayload;
 import S13P21A305.dgg.route.domain.TransportType;
 import S13P21A305.dgg.route.service.CongestionProvider;
+import S13P21A305.dgg.route.util.RoutePayloadMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -103,96 +105,6 @@ public class FatigueServiceImpl implements FatigueService {
 
     private final CongestionProvider congestionProvider;
 
-
-    // ===================== JSON "data" -> List<Route> 변환 =====================
-    @SuppressWarnings("unchecked")
-    private List<Route> toRoutesFromPayload(List<Map<String, Object>> data) {
-        if (data == null || data.isEmpty()) return List.of();
-
-        var sorted = data.stream()
-                .sorted(Comparator.comparingInt(m -> ((Number) m.getOrDefault("order", 0)).intValue()))
-                .collect(Collectors.toList());
-
-        List<Route> routes = new ArrayList<>(sorted.size());
-        for (Map<String, Object> seg : sorted) {
-            String typeStr = str(seg.get("type"));
-            TransportType type = parseType(typeStr);
-
-            String lineName   = str(seg.get("lineName"));
-            String startPoint = str(seg.get("startPoint"));
-            String endPoint   = str(seg.get("endPoint"));
-
-            double startLat = dbl(seg.get("startLat"));
-            double startLng = dbl(seg.get("startLng"));
-            double endLat   = dbl(seg.get("endLat"));
-            double endLng   = dbl(seg.get("endLng"));
-
-            // durationMin / timeTaken 둘 다 x지원
-            int durationMin = ((Number) seg.getOrDefault("durationMin",
-                    seg.getOrDefault("timeTaken", 0))).intValue();
-
-            // path가 있으면 경로 길이, 없으면 좌표, 그래도 없으면 payload의 distanceM 사용
-            List<Map<String, Object>> path = (List<Map<String, Object>>) seg.getOrDefault("path", null);
-            double distanceM = Double.NaN;
-            if (path != null && path.size() >= 2) {
-                distanceM = polylineDistanceM(path);
-            } else if (!Double.isNaN(startLat) && !Double.isNaN(startLng)
-                    && !Double.isNaN(endLat) && !Double.isNaN(endLng)) {
-                distanceM = haversineM(startLat, startLng, endLat, endLng);
-            } else {
-                // payload로 온 distanceM 최종 폴백
-                distanceM = dbl(seg.get("distanceM"));
-            }
-            if (Double.isNaN(distanceM)) distanceM = 0.0;
-
-            // WALKING은 null, 나머지는 0으로 시작(Provider가 덮어씀)
-            Double congestionRate = (type == TransportType.WALKING) ? null : 0.0;
-
-            routes.add(Route.builder()
-                    .type(type)
-                    .distanceM(distanceM)
-                    .durationMin(durationMin)
-                    .congestionRate(congestionRate)
-                    .startPoint(startPoint)
-                    .endPoint(endPoint)
-                    .lineName(lineName)
-                    .build());
-        }
-        return routes;
-    }
-
-
-    private static TransportType parseType(String s) {
-        if (s == null) return TransportType.WALKING;
-        return switch (s.toUpperCase(Locale.ROOT)) {
-            case "SUBWAY" -> TransportType.SUBWAY;
-            case "BUS"    -> TransportType.BUS;
-            case "WALKING", "WALK", "TRANSFER" -> TransportType.WALKING; // 환승 보행도 WALKING으로 통일
-            default -> TransportType.WALKING;
-        };
-    }
-
-    private static String str(Object o) { return o == null ? null : String.valueOf(o); }
-    private static double dbl(Object o) {
-        if (o == null) return Double.NaN;
-        if (o instanceof Number n) return n.doubleValue();
-        try { return Double.parseDouble(String.valueOf(o)); } catch (Exception e) { return Double.NaN; }
-    }
-
-    private static double polylineDistanceM(List<Map<String, Object>> path) {
-        double sum = 0.0;
-        for (int i = 1; i < path.size(); i++) {
-            double lat1 = dbl(path.get(i - 1).get("lat"));
-            double lon1 = dbl(path.get(i - 1).get("lng"));
-            double lat2 = dbl(path.get(i).get("lat"));
-            double lon2 = dbl(path.get(i).get("lng"));
-            if (!Double.isNaN(lat1) && !Double.isNaN(lon1) && !Double.isNaN(lat2) && !Double.isNaN(lon2)) {
-                sum += haversineM(lat1, lon1, lat2, lon2);
-            }
-        }
-        return sum;
-    }
-
     private static double haversineM(double lat1, double lon1, double lat2, double lon2) {
         final double R = 6371000.0; // meters
         double dLat = Math.toRadians(lat2 - lat1);
@@ -239,7 +151,7 @@ public class FatigueServiceImpl implements FatigueService {
         double acc = 0, dist = 0;
         long totalSec = 0;
         for (Route r : legs) {
-            totalSec += Math.max(0, r.getDurationMin()) * 60L;
+            totalSec += Math.max(0, r.getTimeTaken()) * 60L;
 
             if (r.getType() == TransportType.WALKING) continue;
             double d = Math.max(0.0, r.getDistanceM());
@@ -361,10 +273,9 @@ public class FatigueServiceImpl implements FatigueService {
     private static double clamp100(double v){ return Math.max(0, Math.min(100, v)); }
     private static double clamp(double v, double lo, double hi){ return Math.max(lo, Math.min(hi, v)); }
 
-    // FatigueServiceImpl에 구현 추가
     @Override
-    public double calculateFatigueFromPayload(Integer memberId, List<Map<String, Object>> data) {
-        List<Route> routes = toRoutesFromPayload(data);
+    public double calculateFatigueFromPayload(Integer memberId, List<RoutePayload> payload) {
+        List<Route> routes = RoutePayloadMapper.toRoutesFromPayload(payload);
         return calculateFatigue(memberId, routes);
     }
 

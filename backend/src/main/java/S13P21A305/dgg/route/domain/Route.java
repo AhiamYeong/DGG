@@ -1,4 +1,3 @@
-// src/main/java/S13P21A305/dgg/route/domain/Route.java
 package S13P21A305.dgg.route.domain;
 
 import lombok.*;
@@ -13,7 +12,7 @@ public class Route {
 
     private TransportType type;    // SUBWAY | BUS | WALKING
     private double distanceM;      // 미터
-    private int    durationMin;    // 분
+    private int    timeTaken;    // 분
     private Double congestionRate; // 0~1 (BUS/SUBWAY만 의미있음, WALKING은 null)
 
     // (선택) 디버그용 라벨
