@@ -29,7 +29,7 @@ import com.ssafy.dgg.model.repository.health.HealthDataRepository
 import com.ssafy.dgg.model.repository.health.HealthPermissionRepository
 import com.ssafy.dgg.model.repository.health.HealthRepositoryImpl
 import com.ssafy.dgg.ui.screen.LoginScreen
-import com.ssafy.dgg.ui.screen.MainScreen
+import com.ssafy.dgg.ui.screen.NavigationScreen
 import com.ssafy.dgg.ui.theme.DGGTheme
 import com.ssafy.dgg.util.HealthStoreProvider
 import com.ssafy.dgg.viewModel.HealthViewModel
@@ -152,7 +152,8 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         is LoginState.LoggedIn -> {
-                            MainScreen(authViewModel)
+                            NavigationScreen()
+                            // MainScreen(authViewModel)
                             // 수면 데이터는 최초 실행
                             healthViewModel.loadHealthData(this)
 

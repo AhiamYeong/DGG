@@ -11,16 +11,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ssafy.dgg.BuildConfig
 import com.ssafy.dgg.R
 
 /* 상태 직접 관리X, 요청을 외부에 전달 -> State Hoisting
@@ -38,10 +35,6 @@ fun LoginScreen(
     // onSignUpClicked: () -> Unit,
     onGoogleSignInClicked: () -> Unit,
 ){
-    // 사용자가 입력한 아이디와 비밀번호를 상태로 관리
-    var userId by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-
     Column (
         modifier = Modifier
             .fillMaxSize()
@@ -70,6 +63,13 @@ fun LoginScreen(
         ) {
             Log.d("LoginFlow", "구글 로그인 버튼 클릭")
             Text("Google로 로그인")
+        }
+
+        // 디버깅용 force login
+        if (BuildConfig.DEBUG) {
+            Button(onClick = { onLoginSuccess() }) {
+                Text("Force Login (Dev Only)")
+            }
         }
     }
 }

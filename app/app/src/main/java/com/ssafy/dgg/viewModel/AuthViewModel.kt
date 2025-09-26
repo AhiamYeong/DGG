@@ -98,7 +98,9 @@ class AuthViewModel(
 
     // 테스트용 - 열어두기
     fun forceLogin() {
+        Log.d("LoginFlow", "forceLogin 호출됨!")
         _loginState.value = LoginState.LoggedIn
+        Log.d("LoginFlow", "state=${_loginState.value}")
     }
 
     fun withdraw() {
