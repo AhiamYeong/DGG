@@ -25,7 +25,7 @@ export default function Mainpage() {
       const data = resp.data;
 
       setNickname(data.nickname);
-      setFatigue(data.currentFatigue);
+      setFatigue(data.current_fatigue);
     };
 
     // TODO: 날씨 API
@@ -91,16 +91,20 @@ export default function Mainpage() {
 
           {/* TODO: 루트 누르면 경로 이동 */}
           {/* 루트 목록 */}
-          <div className="flex flex-row gap-5 justify-center">
-            {routes.map((route) => (
-              <button
-                key={route.id}
-                className="rounded-lg bg-green-100 px-3 py-1"
-                onClick={() => handleRouteClick(route.id)}
-              >
-                {route.name}
-              </button>
-            ))}
+          <div className="relative">
+            <div className="flex flex-row gap-5 overflow-x-auto scrollbar-hide pr-6">
+              {routes.map((route) => (
+                <button
+                  key={route.id}
+                  className="rounded-lg bg-green-100 px-3 py-1 flex-shrink-0"
+                >
+                  {route.name}
+                </button>
+              ))}
+            </div>
+
+            {/* 오른쪽 힌트 (그라데이션) */}
+            <div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-gradient-to-l from-white"></div>
           </div>
 
           {/* 버튼 */}

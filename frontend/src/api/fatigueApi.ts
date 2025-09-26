@@ -1,19 +1,19 @@
 /**
  * 피로도 관리 및 통계 관련 API
- * 
+ *
  * 기능:
  * - 메인페이지 피로도 조회
  * - 피로도 업데이트 (커피, 걷기, 낮잠)
  * - 피로도 하루/일주일 히스토리 조회
  * - 걸음 수 통계 조회
  * - 피로도 설문조사
- * 
+ *
  * 사용 페이지:
  * - MainPage: 현재 피로도 표시
  * - FatiguePage: 피로도 관리 및 히스토리
  * - FatigueButtons: 피로도 업데이트 버튼
  * - WeeklyBarChart: 일주일 통계 차트
- * 
+ *
  * @format
  */
 
@@ -25,7 +25,7 @@ export const fatigueApi = createApiClient(API_BASE_URL);
 // 메인페이지 피로도 조회
 export interface MainFatigueProps {
   nickname: string;
-  currentFatigue: number;
+  current_fatigue: number;
 }
 
 // 피로도 업데이트
