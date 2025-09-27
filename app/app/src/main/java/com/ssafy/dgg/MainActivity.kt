@@ -2,6 +2,7 @@ package com.ssafy.dgg
 
 import AuthViewModel
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -28,6 +29,7 @@ import com.ssafy.dgg.model.repository.auth.AuthRepositoryImpl
 import com.ssafy.dgg.model.repository.health.HealthDataRepository
 import com.ssafy.dgg.model.repository.health.HealthPermissionRepository
 import com.ssafy.dgg.model.repository.health.HealthRepositoryImpl
+import com.ssafy.dgg.service.MyNavigationService
 import com.ssafy.dgg.ui.screen.LoginScreen
 import com.ssafy.dgg.ui.screen.NavigationScreen
 import com.ssafy.dgg.ui.theme.DGGTheme
@@ -103,6 +105,19 @@ class MainActivity : ComponentActivity() {
         HealthViewModel(permissionRepo, dataRepo, healthRepo)
     }
 
+    private val requestLocationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                Log.d("MainActivity", "위치 권한 허용됨")
+                // 여기서 바로 서비스 시작 가능
+                val intent = Intent(this, MyNavigationService::class.java)
+                ContextCompat.startForegroundService(this, intent)
+            } else {
+                Log.d("MainActivity", "위치 권한 거부됨")
+            }
+        }
+
+
     private lateinit var googleSignInManager: GoogleSignInManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,6 +132,16 @@ class MainActivity : ComponentActivity() {
         )
         // UI ~ 비즈니스 로직 연결 -> compose UI가 viewmodel의 loginState를 관찰
         val authViewModel = AuthViewModel(authRepository)
+
+        if (ContextCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+            requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        } else {
+            // 이미 권한 있음 → 서비스 실행
+            val intent = Intent(this, MyNavigationService::class.java)
+            ContextCompat.startForegroundService(this, intent)
+        }
 
 
         askNotificationPermission()

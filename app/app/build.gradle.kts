@@ -146,4 +146,6 @@ dependencies {
     // windowTime 맞추기
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+    // gps
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 }
