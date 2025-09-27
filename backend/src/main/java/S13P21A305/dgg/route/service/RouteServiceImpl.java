@@ -1,11 +1,13 @@
 package S13P21A305.dgg.route.service;
 
 import S13P21A305.dgg.common.dto.Point;
+import S13P21A305.dgg.fatigue.service.FatigueService;
 import S13P21A305.dgg.global.external.dto.OdSayResponseDTO;
 import S13P21A305.dgg.global.external.service.GeocodingService;
 import S13P21A305.dgg.global.external.service.OdsayClient;
 import S13P21A305.dgg.member.domain.Member;
 import S13P21A305.dgg.member.repository.MemberRepository;
+import S13P21A305.dgg.route.domain.RoutePayload;
 import S13P21A305.dgg.route.dto.RecommendedRouteDTO;
 import S13P21A305.dgg.route.dto.RouteDetailDTO;
 import S13P21A305.dgg.route.dto.RouteRequestDTO;
@@ -17,6 +19,9 @@ import S13P21A305.dgg.route.entity.RouteType;
 import S13P21A305.dgg.route.repository.RouteInfoRepository;
 import S13P21A305.dgg.route.repository.RouteLogRepository;
 import S13P21A305.dgg.route.util.RouteKeyUtil;
+import S13P21A305.dgg.waypoint.dto.LatLon;
+import S13P21A305.dgg.waypoint.dto.TopCandidateDto;
+import S13P21A305.dgg.waypoint.service.WaypointService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,6 +52,8 @@ public class RouteServiceImpl implements RouteService {
 	private final MemberRepository memberRepository;
 
 	private final OdsayClient odsayClient;
+	private final FatigueService fatigueService;
+	private final WaypointService waypointService;
 
 	@Value("${odsay.api.key}")
 	private String odsayApiKey;
@@ -55,9 +62,9 @@ public class RouteServiceImpl implements RouteService {
 
 	/**
 	 * 출발지 - 경유지 - 도착지 사이를 구간별로 ODSay 검색
-	 * - 최단거리, 최소환승에 대한 요약 생성
+	 * - 최단거리, 최소환승, 최소피로에 대한 요약 생성
 	 * - 캐시에 요약 + 메타 저장
-	 * */
+	 */
 	@Override
 	public RouteResponseDTO findRoute(RouteRequestDTO routeRequestDTO) {
 		List<String> waypoints = new ArrayList<>();
@@ -69,35 +76,78 @@ public class RouteServiceImpl implements RouteService {
 
 		LocalDateTime depTime = LocalDateTime.parse(routeRequestDTO.getStartTime(), FMT); // 출발시각
 
-		// 최단 경로
+		// ===== (1) 시간/도착시각 계산 (요약용) =====
 		int shortestMinutes = calculateTotalMetric(waypoints, this::findShortestDistancePathSegment, p -> p.getInfo().getTotalTime());
 		String shortestArrival = depTime.plusMinutes(shortestMinutes).format(FMT);
+
+		int minTransferMinutes = calculateTotalMetric(waypoints, this::findMinTransferPathSegment, p -> p.getInfo().getTotalTime());
+		String minTransferArrival = depTime.plusMinutes(minTransferMinutes).format(FMT);
+
 		String shortestId = RouteKeyUtil.makeRouteId(
 			routeRequestDTO.getDepartureAddress(),
 			routeRequestDTO.getDestinationAddress(),
 			"SHORTEST",
 			routeRequestDTO.getStartTime()
 		);
-		RecommendedRouteDTO shortest = RecommendedRouteDTO.builder()
-			.routeKey(shortestId).name("최단 경로")
-			.timeTaken(shortestMinutes).arrivalTime(shortestArrival).fatigue(75)
-			.build();
-
-		// 최소 환승
-		int minTransferMinutes = calculateTotalMetric(waypoints, this::findMinTransferPathSegment, p -> p.getInfo().getTotalTime());
-		String minTransferArrival = depTime.plusMinutes(minTransferMinutes).format(FMT);
 		String minTransferId = RouteKeyUtil.makeRouteId(
 			routeRequestDTO.getDepartureAddress(),
 			routeRequestDTO.getDestinationAddress(),
 			"MIN_TRANSFER",
 			routeRequestDTO.getStartTime()
 		);
-		RecommendedRouteDTO minTransfer = RecommendedRouteDTO.builder()
-			.routeKey(minTransferId).name("최소 환승")
-			.timeTaken(minTransferMinutes).arrivalTime(minTransferArrival).fatigue(60)
+
+		RecommendedRouteDTO shortest = RecommendedRouteDTO.builder()
+			.routeKey(shortestId).name("최단 경로")
+			.timeTaken(shortestMinutes).arrivalTime(shortestArrival)
+			.fatigue(0) // 아래에서 실제 피로도로 대체
 			.build();
 
-		// 캐시 저장(요약 + 메타)
+		RecommendedRouteDTO minTransfer = RecommendedRouteDTO.builder()
+			.routeKey(minTransferId).name("최소 환승")
+			.timeTaken(minTransferMinutes).arrivalTime(minTransferArrival)
+			.fatigue(0) // 아래에서 실제 피로도로 대체
+			.build();
+
+		// ===== (2) 최단/최소환승의 실제 피로도 계산 =====
+		try {
+			Point depPt  = geocodingService.getCoordinates(routeRequestDTO.getDepartureAddress());
+			Point destPt = geocodingService.getCoordinates(routeRequestDTO.getDestinationAddress());
+			if (depPt != null && destPt != null) {
+				List<OdSayResponseDTO.Path> cand = findPathsBetweenCoords(depPt.lon(), depPt.lat(), destPt.lon(), destPt.lat());
+
+				// 최단 경로
+				try {
+					OdSayResponseDTO.Path chosen = findShortestDistancePathSegment(cand);
+					List<RoutePayload> payload = mapPathsToPayloads(List.of(chosen));
+					double score = fatigueService.calculateFatigueFromPayload(null, payload);
+					shortest.setFatigue((int)Math.round(score));
+				} catch (Exception e) {
+					log.warn("[fatigue] 최단 경로 피로도 계산 실패, 기본값 사용: {}", e.toString());
+					shortest.setFatigue(75);
+				}
+
+				// 최소 환승
+				try {
+					OdSayResponseDTO.Path chosen = findMinTransferPathSegment(cand);
+					List<RoutePayload> payload = mapPathsToPayloads(List.of(chosen));
+					double score = fatigueService.calculateFatigueFromPayload(null, payload);
+					minTransfer.setFatigue((int)Math.round(score));
+				} catch (Exception e) {
+					log.warn("[fatigue] 최소 환승 피로도 계산 실패, 기본값 사용: {}", e.toString());
+					minTransfer.setFatigue(60);
+				}
+			} else {
+				// 지오코딩 실패 시 폴백
+				shortest.setFatigue(75);
+				minTransfer.setFatigue(60);
+			}
+		} catch (Exception e) {
+			log.warn("[fatigue] 요약 피로도 계산 중 예외, 기본값 사용: {}", e.toString());
+			shortest.setFatigue(75);
+			minTransfer.setFatigue(60);
+		}
+
+		// ===== (3) 캐시 저장(요약 + 메타) =====
 		cache.saveSummary(shortestId, shortest);
 		cache.saveSummary(minTransferId, minTransfer);
 		cache.saveMeta(shortestId, new RouteMeta(
@@ -117,23 +167,25 @@ public class RouteServiceImpl implements RouteService {
 
 		String representativeArrival = shortestMinutes <= minTransferMinutes ? shortestArrival : minTransferArrival;
 
+		// ===== (4) 최소 피로도 경로(경유 후보 기반) =====
+		RecommendedRouteDTO minFatigue = computeMinFatigueRoute(routeRequestDTO);
+
 		return RouteResponseDTO.builder()
 			.departureAddress(routeRequestDTO.getDepartureAddress())
 			.destinationAddress(routeRequestDTO.getDestinationAddress())
 			.stopoverAddresses(routeRequestDTO.getStopoverAddresses())
 			.departureTime(routeRequestDTO.getStartTime())
 			.destinationTime(representativeArrival)
-			.recommendedRoutes(List.of(shortest, minTransfer))
+			.recommendedRoutes(List.of(minFatigue, shortest, minTransfer))
 			.build();
 	}
 
-	/** routeKey로 요약 복구 */
+	/** routeKey로 요약 복구 (실제 피로도 재계산 포함) */
 	@Override
 	public RecommendedRouteDTO getSummary(String routeKey) {
 		RecommendedRouteDTO s = cache.getSummary(routeKey, RecommendedRouteDTO.class);
-		if (s != null) return s; // 캐시에 있으면 그대로
+		if (s != null) return s;
 
-		// 캐시에 없으면 메타로 다시 계산
 		RouteMeta meta = cache.getMeta(routeKey, RouteMeta.class);
 		if (meta == null) return null;
 
@@ -150,16 +202,28 @@ public class RouteServiceImpl implements RouteService {
 		int minutes = calculateTotalMetric(waypoints, selector, p -> p.getInfo().getTotalTime());
 		String arrival = LocalDateTime.parse(meta.departureTime, FMT).plusMinutes(minutes).format(FMT);
 
+		// 실제 피로도 재계산
+		int fatigue;
+		try {
+			List<OdSayResponseDTO.Path> cand = findPathsBetween(meta.departure, meta.destination);
+			OdSayResponseDTO.Path chosen = selector.apply(cand);
+			List<RoutePayload> payload = mapPathsToPayloads(List.of(chosen));
+			double score = fatigueService.calculateFatigueFromPayload(null, payload);
+			fatigue = (int)Math.round(score);
+		} catch (Exception e) {
+			log.warn("[fatigue] getSummary 재계산 실패, 기본값 사용: {}", e.toString());
+			fatigue = "MIN_TRANSFER".equals(meta.option) ? 60 : 75;
+		}
+
 		RecommendedRouteDTO rebuilt = RecommendedRouteDTO.builder()
 			.routeKey(routeKey)
 			.name("MIN_TRANSFER".equals(meta.option) ? "최소 환승" : "최단 경로")
 			.timeTaken(minutes)
 			.arrivalTime(arrival)
-			.fatigue("MIN_TRANSFER".equals(meta.option) ? 60 : 75)
+			.fatigue(fatigue)
 			.build();
 
 		cache.saveSummary(routeKey, rebuilt);
-
 		return rebuilt;
 	}
 
@@ -167,7 +231,7 @@ public class RouteServiceImpl implements RouteService {
 	 * DB의 route_log, route_info로 상세경로 만들고,
 	 * 레그마다 정류장 리스트(passStopList)를 ODSay 다시 호출해서 복구,
 	 * loadLane(mapObj) 써서 폴리라인 생성 - 시작/끝으로 조립 - 부족하면 보강
-	 * */
+	 */
 	@Override
 	@Transactional(readOnly = true)
 	public RouteDetailDTO getDetail(Long routeId, Integer memberId) {
@@ -221,21 +285,21 @@ public class RouteServiceImpl implements RouteService {
 
 	/**
 	 * 출발 - 경유 - 도착을 구간별로 쪼개서, 매 구간마다 ODSay 경로 후보 가져오고,
-	 * 선택 규칙으로 최적 path 하나 골라서, 그 path에서 지표(metric)를 뽑아 합산
-	 * */
+	 * 선택 규칙으로 최적 path 하나 고르기 → metric 합산
+	 */
 	private int calculateTotalMetric(List<String> waypoints,
 		Function<List<OdSayResponseDTO.Path>, OdSayResponseDTO.Path> pathSelector,
 		Function<OdSayResponseDTO.Path, Integer> metricExtractor) {
 		int total = 0;
 		for (int i = 0; i < waypoints.size() - 1; i++) {
-			List<OdSayResponseDTO.Path> paths = findPathsBetween(waypoints.get(i), waypoints.get(i + 1)); // 후보 path 목록 가져오기
-			OdSayResponseDTO.Path selected = pathSelector.apply(paths); // 최적의 path 하나 고르기
+			List<OdSayResponseDTO.Path> paths = findPathsBetween(waypoints.get(i), waypoints.get(i + 1));
+			OdSayResponseDTO.Path selected = pathSelector.apply(paths);
 			total += metricExtractor.apply(selected);
 		}
 		return total;
 	}
 
-	/** 주소 -> 좌표로 변환 */
+	/** 주소 → 좌표 → ODsay 호출 */
 	private List<OdSayResponseDTO.Path> findPathsBetween(String startAddress, String endAddress) {
 		Point startPoint = geocodingService.getCoordinates(startAddress);
 		Point endPoint   = geocodingService.getCoordinates(endAddress);
@@ -243,10 +307,10 @@ public class RouteServiceImpl implements RouteService {
 		if (startPoint == null || endPoint == null) {
 			throw new IllegalStateException("지오코딩 실패 - 주소를 좌표로 변환하지 못했습니다.");
 		}
-		return findPathsBetweenCoords(startPoint.lon(), startPoint.lat(), endPoint.lon(), endPoint.lat()); // ODSay 호출
+		return findPathsBetweenCoords(startPoint.lon(), startPoint.lat(), endPoint.lon(), endPoint.lat());
 	}
 
-	/** 좌표 기반 길찾기 (주소 지오코딩 없이 바로 호출 가능) */
+	/** 좌표 기반 길찾기 (Double 버전) */
 	private List<OdSayResponseDTO.Path> findPathsBetweenCoords(Double sx, Double sy, Double ex, Double ey) {
 		final String url = "https://api.odsay.com/v1/api/searchPubTransPathT";
 		URI uri = UriComponentsBuilder.fromHttpUrl(url)
@@ -283,7 +347,7 @@ public class RouteServiceImpl implements RouteService {
 		String option // 어떤 경로인지
 	) {}
 
-	/** 캐시의 메타로 상세를 새로 구성해서 DB에 route_log, route_info 저장(길안내 시작) */
+	/** 길안내 시작: 캐시 메타로 상세 재생성 → DB 저장 */
 	@Transactional
 	public RouteLog startNavigation(String routeKey, Integer memberId) {
 		RecommendedRouteDTO summary = cache.getSummary(routeKey, RecommendedRouteDTO.class);
@@ -292,7 +356,6 @@ public class RouteServiceImpl implements RouteService {
 			throw new IllegalStateException("메타 정보가 없어 저장할 수 없습니다. routeKey=" + routeKey);
 		}
 
-		// 상세는 메타로 다시 생성
 		RouteDetailDTO detail = buildDetailFromOdsay(meta);
 
 		Member member = memberRepository.findById(memberId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
@@ -337,7 +400,6 @@ public class RouteServiceImpl implements RouteService {
 
 	/** findRoute의 계산 로직을 다시 수행해서 상세 레그를 만듦 */
 	private RouteDetailDTO buildDetailFromOdsay(RouteMeta meta) {
-		// 경유 포함 전체 지점
 		List<String> waypoints = new ArrayList<>();
 		waypoints.add(meta.departure);
 		if (meta.stopovers != null && !meta.stopovers.isEmpty()) waypoints.addAll(meta.stopovers);
@@ -353,19 +415,15 @@ public class RouteServiceImpl implements RouteService {
 		int orderCounter = 1;
 
 		for (int i = 0; i < waypoints.size() - 1; i++) {
-			List<OdSayResponseDTO.Path> paths =
-				findPathsBetween(waypoints.get(i), waypoints.get(i + 1));
-
+			List<OdSayResponseDTO.Path> paths = findPathsBetween(waypoints.get(i), waypoints.get(i + 1));
 			OdSayResponseDTO.Path selected = selector.apply(paths);
 			totalMinutes += selected.getInfo().getTotalTime();
 
 			List<RouteDetailDTO.PolylinePointDTO> segmentPolyline = loadLanePolyline(selected);
 
-			// 선택된 경로의 subPath를 Leg로 변환
 			if (selected.getSubPath() != null) {
 				for (OdSayResponseDTO.SubPath sp : selected.getSubPath()) {
 					RouteDetailDTO.Leg leg = toLeg(orderCounter++, sp);
-					// 좌표 보강
 					leg = enrichLegWithGeocoding(leg);
 
 					List<RouteDetailDTO.PolylinePointDTO> legPolyline =
@@ -400,17 +458,14 @@ public class RouteServiceImpl implements RouteService {
 	) {
 		List<RouteDetailDTO.PolylinePointDTO> list = new ArrayList<>();
 
-		// 시작점
 		if (startLat != null && startLng != null) {
 			list.add(RouteDetailDTO.PolylinePointDTO.builder()
 				.lat(startLat).lng(startLng).build());
 		}
 
-		// 경유 정류장/역
 		if (stations != null && !stations.isEmpty()) {
 			for (RouteDetailDTO.PathNodeDTO n : stations) {
 				if (n.getLat() != null && n.getLng() != null) {
-					// 직전 점과 동일하면 생략(중복 제거)
 					if (list.isEmpty()
 						|| !Objects.equals(list.get(list.size()-1).getLat(), n.getLat())
 						|| !Objects.equals(list.get(list.size()-1).getLng(), n.getLng())) {
@@ -421,7 +476,6 @@ public class RouteServiceImpl implements RouteService {
 			}
 		}
 
-		// 도착점
 		if (endLat != null && endLng != null) {
 			if (list.isEmpty()
 				|| !Objects.equals(list.get(list.size()-1).getLat(), endLat)
@@ -436,13 +490,11 @@ public class RouteServiceImpl implements RouteService {
 
 	/** 레그단위 자연스러운 폴리라인 만들기 위한 함수 */
 	private List<RouteDetailDTO.PolylinePointDTO> buildPolylineForDetailLeg(RouteDetailDTO.Leg leg) {
-		// 걷기면 그대로 폴백
 		if (!"BUS".equals(leg.getType()) && !"SUBWAY".equals(leg.getType())) {
 			return buildPolylineFromStations(leg.getPath(), leg.getStartLat(), leg.getStartLng(), leg.getEndLat(), leg.getEndLng());
 		}
 
 		try {
-			// 1) 후보 path 고르기 (좌표 우선, 아니면 지명)
 			List<OdSayResponseDTO.Path> candidates;
 			if (leg.getStartLat()!=null && leg.getStartLng()!=null && leg.getEndLat()!=null && leg.getEndLng()!=null) {
 				candidates = findPathsBetweenCoords(leg.getStartLng(), leg.getStartLat(), leg.getEndLng(), leg.getEndLat());
@@ -455,7 +507,6 @@ public class RouteServiceImpl implements RouteService {
 				return buildPolylineFromStations(leg.getPath(), leg.getStartLat(), leg.getStartLng(), leg.getEndLat(), leg.getEndLng());
 			}
 
-			// 타입/노선명으로 더 정확한 후보 선택
 			OdSayResponseDTO.Path chosen = candidates.stream()
 				.filter(p -> p.getSubPath()!=null && p.getSubPath().stream().anyMatch(sp -> {
 					String t = (sp.getTrafficType()==1) ? "SUBWAY" : (sp.getTrafficType()==2) ? "BUS" : "WALKING";
@@ -466,14 +517,12 @@ public class RouteServiceImpl implements RouteService {
 				.findFirst()
 				.orElse(candidates.get(0));
 
-			// 우선 전체 mapObj로 loadLane
 			String mapObj = (chosen.getInfo() != null) ? chosen.getInfo().getMapObj() : null;
 			log.debug("[polyline] leg={}, type={}, line={}, mapObj={}",
 				leg.getOrder(), leg.getType(), leg.getLineName(), mapObj);
 			List<RouteDetailDTO.PolylinePointDTO> segmentPolyline = loadLanePolyline(mapObj);
 			log.debug("[polyline] loadLane points={}", segmentPolyline.size());
 
-			// 0점이면: 이 leg에 해당하는 subPath의 lane.mapObj로 폴백 loadLane
 			if (segmentPolyline.isEmpty() && chosen.getSubPath()!=null) {
 				for (OdSayResponseDTO.SubPath sp : chosen.getSubPath()) {
 					String t = (sp.getTrafficType()==1) ? "SUBWAY" : (sp.getTrafficType()==2) ? "BUS" : "WALKING";
@@ -482,7 +531,7 @@ public class RouteServiceImpl implements RouteService {
 						(leg.getLineName()==null || Objects.equals(leg.getLineName(), ln))) {
 
 						if (sp.getLane()!=null && !sp.getLane().isEmpty()) {
-							String laneMapObj = sp.getLane().get(0).getMapObj(); // ★ lane.mapObj 사용
+							String laneMapObj = sp.getLane().get(0).getMapObj();
 							log.debug("[polyline] laneMapObj fallback = {}", laneMapObj);
 							if (laneMapObj != null && !laneMapObj.isBlank()) {
 								List<RouteDetailDTO.PolylinePointDTO> lanePts = loadLanePolyline(laneMapObj);
@@ -494,16 +543,14 @@ public class RouteServiceImpl implements RouteService {
 				}
 			}
 
-			// 클립 + 폴백
 			List<RouteDetailDTO.PolylinePointDTO> legPolyline =
 				clipPolylineForLeg(segmentPolyline, leg.getStartLat(), leg.getStartLng(), leg.getEndLat(), leg.getEndLng());
 			if (legPolyline == null || legPolyline.isEmpty()) {
 				legPolyline = buildPolylineFromStations(leg.getPath(), leg.getStartLat(), leg.getStartLng(), leg.getEndLat(), leg.getEndLng());
 			}
 
-			// 간격 보강(직선 보강)
-			if (legPolyline.size() < 30) { // 임계치 임의 선정
-				legPolyline = densifyLine(legPolyline, 30.0); // 30m 간격으로 점 보강
+			if (legPolyline.size() < 30) {
+				legPolyline = densifyLine(legPolyline, 30.0);
 			}
 
 			return legPolyline;
@@ -513,16 +560,13 @@ public class RouteServiceImpl implements RouteService {
 		}
 	}
 
-	/** path.getInfo().getMapObj()를 꺼내서 문자열 mapObj를 만든 다음,
-	 * 문자열 버전에 그대로 위임(이미 Path 객체가 있고, 그 Path의 전체를 그리고 싶을때) 사용*/
+	/** path.getInfo().getMapObj()에서 전체 폴리라인 로드 */
 	private List<RouteDetailDTO.PolylinePointDTO> loadLanePolyline(OdSayResponseDTO.Path path) {
 		String mapObj = (path.getInfo() != null) ? path.getInfo().getMapObj() : null;
 		return loadLanePolyline(mapObj);
 	}
 
-	/** mapObj로 loadLane 호출 (캐시 포함)
-	 * - path의 mapObj가 비었거나 좌표가 0개일때 폴백을 직접 넘겨 호출
-	 * */
+	/** mapObj로 loadLane 호출 (캐시 포함) */
 	private List<RouteDetailDTO.PolylinePointDTO> loadLanePolyline(String mapObj) {
 		try {
 			if (mapObj == null || mapObj.isBlank()) return Collections.emptyList();
@@ -575,7 +619,7 @@ public class RouteServiceImpl implements RouteService {
 		return rev;
 	}
 
-	/** 하버사인 거리: 가장 가까운 점의 인덱스 찾는 함수 */
+	/** 하버사인 기반 최근접 인덱스 */
 	private int nearestIndex(List<RouteDetailDTO.PolylinePointDTO> pts, double lat, double lng) {
 		double best = Double.MAX_VALUE;
 		int idx = -1;
@@ -586,19 +630,18 @@ public class RouteServiceImpl implements RouteService {
 			double a = Math.sin(dLat/2)*Math.sin(dLat/2)
 				+ Math.cos(Math.toRadians(lat))*Math.cos(Math.toRadians(p.getLat()))
 				* Math.sin(dLng/2)*Math.sin(dLng/2);
-			double d = 2 * 6371000.0 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); // meters
+			double d = 2 * 6371000.0 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 			if (d < best) { best = d; idx = i; }
 		}
 		return idx;
 	}
 
-	/** ODSay의 SubPath를 dgg의 Leg로 변환하는 함수 */
+	/** ODSay의 SubPath를 dgg의 Leg로 변환 */
 	private RouteDetailDTO.Leg toLeg(int order, OdSayResponseDTO.SubPath sp) {
 		String type = (sp.getTrafficType() == 1) ? "SUBWAY"
 			: (sp.getTrafficType() == 2) ? "BUS" : "WALKING";
 		String lineName = pickLineName(sp, type);
 
-		// 정류장/역 전체 path
 		List<RouteDetailDTO.PathNodeDTO> path = new ArrayList<>();
 		if (sp.getPassStopList() != null && sp.getPassStopList().getStations() != null) {
 			int seq = 1;
@@ -633,7 +676,7 @@ public class RouteServiceImpl implements RouteService {
 			.build();
 	}
 
-	/** 저장된 이름/좌표가 비어있을 때만 지오코딩으로 보강 */
+	/** 필요 시 지오코딩으로 좌표 보강 */
 	private RouteDetailDTO.Leg enrichLegWithGeocoding(RouteDetailDTO.Leg leg) {
 		if ((leg.getStartLat() == null || leg.getStartLng() == null)
 			&& leg.getStartPoint() != null && !leg.getStartPoint().isBlank()) {
@@ -678,10 +721,7 @@ public class RouteServiceImpl implements RouteService {
 	}
 
 	/**
-	 * route_info 레코드를 기반으로 leg의 전체 path를 재구성
-	 * - 1) 좌표가 있으면 좌표로, 2) 없으면 지명으로 ODsay 호출
-	 * - 3) 호출 결과의 subPath 중 type/lineName이 일치하는 것을 우선 사용
-	 * - 4) 없으면 첫 subPath의 passStopList로 폴백
+	 * route_info 레코드를 기반으로 leg의 전체 path 재구성
 	 */
 	private List<RouteDetailDTO.PathNodeDTO> reconstructPathForLeg(RouteDetailDTO.Leg leg) {
 		try {
@@ -689,7 +729,7 @@ public class RouteServiceImpl implements RouteService {
 			if (leg.getStartLat() != null && leg.getStartLng() != null
 				&& leg.getEndLat() != null && leg.getEndLng() != null) {
 				candidates = findPathsBetweenCoords(
-					leg.getStartLng(), leg.getStartLat(), // SX, SY (lng, lat)
+					leg.getStartLng(), leg.getStartLat(), // SX, SY
 					leg.getEndLng(), leg.getEndLat()      // EX, EY
 				);
 			} else if (leg.getStartPoint() != null && leg.getEndPoint() != null) {
@@ -698,7 +738,6 @@ public class RouteServiceImpl implements RouteService {
 				return Collections.emptyList();
 			}
 
-			// 우선순위: type/lineName 매칭되는 subPath
 			for (OdSayResponseDTO.Path p : candidates) {
 				if (p.getSubPath() == null) continue;
 				for (OdSayResponseDTO.SubPath sp : p.getSubPath()) {
@@ -711,13 +750,12 @@ public class RouteServiceImpl implements RouteService {
 				}
 			}
 
-			// 폴백: 첫 경로의 첫 subPath
 			OdSayResponseDTO.Path first = candidates.get(0);
 			if (first.getSubPath() != null && !first.getSubPath().isEmpty()) {
 				return convertStations(first.getSubPath().get(0));
 			}
 		} catch (Exception e) {
-			// 무조건 최소 2개(출발/도착)라도 만들어 주는 폴백
+			// 폴백은 아래에서
 		}
 
 		List<RouteDetailDTO.PathNodeDTO> fallback = new ArrayList<>();
@@ -745,7 +783,7 @@ public class RouteServiceImpl implements RouteService {
 		return fallback;
 	}
 
-	/** ODsay SubPath -> PathNodeDTO 리스트 변환 */
+	/** ODsay SubPath → PathNodeDTO 리스트 변환 */
 	private List<RouteDetailDTO.PathNodeDTO> convertStations(OdSayResponseDTO.SubPath sp) {
 		List<RouteDetailDTO.PathNodeDTO> list = new ArrayList<>();
 		if (sp.getPassStopList() != null && sp.getPassStopList().getStations() != null) {
@@ -763,7 +801,7 @@ public class RouteServiceImpl implements RouteService {
 		return list;
 	}
 
-	/** 두 점 거리가 maxStepMeters보다 크면 그 사이에 균등 분할 점을 삽입(직선보간) */
+	/** 선분을 일정 간격으로 보강 */
 	private List<RouteDetailDTO.PolylinePointDTO> densifyLine(
 		List<RouteDetailDTO.PolylinePointDTO> line, double maxStepMeters) {
 
@@ -818,7 +856,7 @@ public class RouteServiceImpl implements RouteService {
 		}
 	}
 
-	/** 좌표 기반 길찾기 호출 */
+	/** 좌표 기반 길찾기 호출 (primitive 버전) */
 	private List<OdSayResponseDTO.Path> findPathsBetweenCoords(double sx, double sy, double ex, double ey) {
 		final String url = "https://api.odsay.com/v1/api/searchPubTransPathT";
 		URI uri = UriComponentsBuilder.fromHttpUrl(url)
@@ -846,7 +884,6 @@ public class RouteServiceImpl implements RouteService {
 		List<StationCoordDTO> out = new ArrayList<>();
 		if (path == null || path.getSubPath() == null) return out;
 
-		int seq = 1;
 		for (OdSayResponseDTO.SubPath sp : path.getSubPath()) {
 			int t = sp.getTrafficType(); // 1=subway, 2=bus, 3=walk
 			if (t != 1 && t != 2) continue; // 걷기는 스킵
@@ -876,5 +913,330 @@ public class RouteServiceImpl implements RouteService {
 			return dedup;
 		}
 		return out;
+	}
+
+	// ==== (4) 최단경로의 path 노드 모으기 ====
+
+	private List<LatLon> collectPathLatLonsFromPayload(List<RoutePayload> data) {
+		List<LatLon> out = new ArrayList<>();
+		if (data == null || data.isEmpty()) return out;
+
+		for (RoutePayload seg : data) {
+			List<RoutePayload.PathNode> nodes = seg.path();
+			if (nodes != null && !nodes.isEmpty()) {
+				for (RoutePayload.PathNode n : nodes) {
+					if (n == null) continue;
+					Double lat = n.lat();
+					Double lng = n.lng();
+					if (lat != null && lng != null) {
+						appendIfNotDup(out, lat, lng);
+					}
+				}
+			} else {
+				if (seg.startLat() != null && seg.startLng() != null) {
+					appendIfNotDup(out, seg.startLat(), seg.startLng());
+				}
+				if (seg.endLat() != null && seg.endLng() != null) {
+					appendIfNotDup(out, seg.endLat(), seg.endLng());
+				}
+			}
+		}
+
+		if (out.isEmpty()) {
+			for (RoutePayload seg : data) {
+				if (seg.startLat() != null && seg.startLng() != null) {
+					appendIfNotDup(out, seg.startLat(), seg.startLng());
+				}
+				if (seg.endLat() != null && seg.endLng() != null) {
+					appendIfNotDup(out, seg.endLat(), seg.endLng());
+				}
+			}
+		}
+		return out;
+	}
+
+	private void appendIfNotDup(List<LatLon> list, Double lat, Double lng) {
+		if (lat == null || lng == null) return;
+		int n = list.size();
+		if (n == 0) {
+			list.add(new LatLon(lat, lng));
+			return;
+		}
+		LatLon prev = list.get(n - 1);
+		if (prev == null || Double.compare(prev.lat(), lat) != 0 || Double.compare(prev.lon(), lng) != 0) {
+			list.add(new LatLon(lat, lng));
+		}
+	}
+
+	/**
+	 * ODSay Path[] → RoutePayload 리스트 변환
+	 */
+	private List<RoutePayload> mapPathsToPayloads(List<OdSayResponseDTO.Path> paths) {
+		List<RoutePayload> out = new ArrayList<>();
+		if (paths == null || paths.isEmpty()) return out;
+
+		for (OdSayResponseDTO.Path p : paths) {
+			List<OdSayResponseDTO.SubPath> subs = safeSubPaths(p);
+			if (subs == null || subs.isEmpty()) continue;
+
+			int order = 1;
+			for (OdSayResponseDTO.SubPath sp : subs) {
+				int trafficType = sp.getTrafficType(); // 1:지하철, 2:버스, 3:도보
+				String type = switch (trafficType) {
+					case 1 -> "SUBWAY";
+					case 2 -> "BUS";
+					default -> "WALKING";
+				};
+
+				Integer sectionMin = sp.getSectionTime(); // 분
+				String startName = nvl(sp.getStartName());
+				String endName   = nvl(sp.getEndName());
+
+				String lineName = null;
+				try {
+					List<OdSayResponseDTO.Lane> lanes = sp.getLane();
+					if (lanes != null && !lanes.isEmpty()) {
+						if (notEmpty(lanes.get(0).getBusNo())) {
+							lineName = lanes.get(0).getBusNo();
+						}
+						if (notEmpty(lanes.get(0).getName())) {
+							lineName = lanes.get(0).getName();
+						}
+					}
+				} catch (Throwable ignore) {}
+
+				List<RoutePayload.PathNode> nodes = new ArrayList<>();
+				Double startLat = null, startLng = null, endLat = null, endLng = null;
+				try {
+					OdSayResponseDTO.PassStopList pass = sp.getPassStopList();
+					if (pass != null && pass.getStations() != null) {
+						for (OdSayResponseDTO.Station st : pass.getStations()) {
+							Double lat = safeDouble(st.getY()); // y=lat
+							Double lng = safeDouble(st.getX()); // x=lng
+							String nm  = nvl(st.getStationName());
+							if (lat != null && lng != null) {
+								nodes.add(new RoutePayload.PathNode(nm, lat, lng));
+							}
+						}
+						if (!nodes.isEmpty()) {
+							startLat = nodes.get(0).lat(); startLng = nodes.get(0).lng();
+							var last = nodes.get(nodes.size() - 1);
+							endLat = last.lat(); endLng = last.lng();
+						}
+					}
+				} catch (Throwable ignore) {}
+
+				if (startLat == null || startLng == null || endLat == null || endLng == null) {
+					try {
+						Double sLat = safeDouble(sp.getStartY());
+						Double sLng = safeDouble(sp.getStartX());
+						Double eLat = safeDouble(sp.getEndY());
+						Double eLng = safeDouble(sp.getEndX());
+						if (sLat != null && sLng != null) { startLat = sLat; startLng = sLng; }
+						if (eLat != null && eLng != null) { endLat = eLat; endLng = eLng; }
+					} catch (Throwable ignore) {}
+				}
+
+				out.add(new RoutePayload(
+					type,
+					lineName,
+					sectionMin,
+					startName, endName,
+					startLat, startLng, endLat, endLng,
+					nodes.isEmpty() ? null : nodes,
+					order++,
+					null, // polyline 없음
+					null  // etaMin 없음
+				));
+			}
+
+			// dep↔dest 한 개 경로만 사용
+			break;
+		}
+		return out;
+	}
+
+	// ===== 유틸 =====
+
+	private static String nvl(String s) { return s == null ? "" : s; }
+	private static boolean notEmpty(String s) { return s != null && !s.isBlank(); }
+
+	private static Integer safeInteger(Object o) {
+		if (o == null) return null;
+		if (o instanceof Integer i) return i;
+		if (o instanceof Number n) return n.intValue();
+		try { return Integer.parseInt(o.toString()); } catch (Exception e) { return null; }
+	}
+	private static int safeInt(Object o) {
+		Integer i = safeInteger(o);
+		return i == null ? 0 : i;
+	}
+	private static Double safeDouble(Object o) {
+		if (o == null) return null;
+		if (o instanceof Double d) return d;
+		if (o instanceof Number n) return n.doubleValue();
+		try { return Double.parseDouble(o.toString()); } catch (Exception e) { return null; }
+	}
+
+	/** ODsay Path → SubPath 안전 접근 */
+	private static List<OdSayResponseDTO.SubPath> safeSubPaths(OdSayResponseDTO.Path p) {
+		try { return p.getSubPath(); } catch (Throwable t) { return null; }
+	}
+
+	// ===== 최소 피로 경로 계산 (경유 후보 5개) =====
+	private RecommendedRouteDTO computeMinFatigueRoute(RouteRequestDTO req) {
+		final String depAddr = req.getDepartureAddress();
+		final String destAddr = req.getDestinationAddress();
+		final String startTime = req.getStartTime();
+		final Integer memberId = null; // 로그인 연동 전이면 null
+
+		Point depPt  = geocodingService.getCoordinates(depAddr);
+		Point destPt = geocodingService.getCoordinates(destAddr);
+		if (depPt == null || destPt == null)
+			throw new IllegalStateException("지오코딩 실패: 출/도착 좌표를 얻을 수 없습니다.");
+
+		List<OdSayResponseDTO.Path> baseCandidates = findPathsBetweenCoords(depPt.lon(), depPt.lat(), destPt.lon(), destPt.lat());
+		OdSayResponseDTO.Path baseShortest = findShortestDistancePathSegment(baseCandidates);
+		List<RoutePayload> basePayload = mapPathsToPayloads(List.of(baseShortest));
+		List<LatLon> basePathNodes = collectPathLatLonsFromPayload(basePayload);
+
+		Integer timeSlot = toTimeSlot(startTime);
+		List<TopCandidateDto> top5 = waypointService.pickTop5Waypoint(
+			basePathNodes,
+			1000,
+			timeSlot,
+			0.1, 0.9
+		).blockOptional().orElseGet(List::of);
+
+		if (top5.isEmpty()) {
+			String id = RouteKeyUtil.makeRouteId(depAddr, destAddr, "MIN_FATIGUE", startTime);
+			int minutes = baseShortest.getInfo().getTotalTime();
+			String arrival = LocalDateTime.parse(startTime, FMT).plusMinutes(minutes).format(FMT);
+			return RecommendedRouteDTO.builder()
+				.routeKey(id).name("최소 피로 경로")
+				.timeTaken(minutes).arrivalTime(arrival).fatigue(50)
+				.build();
+		}
+
+		double bestScore = Double.POSITIVE_INFINITY;
+		RecommendedRouteDTO bestRoute = null;
+
+		for (TopCandidateDto c : top5) {
+			List<OdSayResponseDTO.Path> depToWp = tryFindPathsBetweenCoords(depPt.lon(), depPt.lat(), c.lon(), c.lat());
+			List<OdSayResponseDTO.Path> wpToDest = tryFindPathsBetweenCoords(c.lon(), c.lat(), destPt.lon(), destPt.lat());
+
+			List<RoutePayload> payloadA;
+			if (!depToWp.isEmpty()) {
+				payloadA = mapPathsToPayloads(depToWp);
+			} else {
+				if (isShortDistance(depPt.lat(), depPt.lon(), c.lat(), c.lon(), 1200.0)) {
+					payloadA = synthesizeWalkingPayload(depPt.lat(), depPt.lon(), req.getDepartureAddress(),
+						c.lat(), c.lon(), c.name());
+				} else {
+					log.debug("[min-fatigue] dep->wp 결과 없음, 거리도 짧지 않아 후보 스킵: stopId={}", c.stopId());
+					continue;
+				}
+			}
+
+			List<RoutePayload> payloadB;
+			if (!wpToDest.isEmpty()) {
+				payloadB = mapPathsToPayloads(wpToDest);
+			} else {
+				if (isShortDistance(c.lat(), c.lon(), destPt.lat(), destPt.lon(), 1200.0)) {
+					payloadB = synthesizeWalkingPayload(c.lat(), c.lon(), c.name(),
+						destPt.lat(), destPt.lon(), req.getDestinationAddress());
+				} else {
+					log.debug("[min-fatigue] wp->dest 결과 없음, 거리도 짧지 않아 후보 스킵: stopId={}", c.stopId());
+					continue;
+				}
+			}
+
+			List<RoutePayload> whole = new ArrayList<>(payloadA);
+			whole.addAll(payloadB);
+
+			double fatigueScore = fatigueService.calculateFatigueFromPayload(memberId, whole);
+
+			if (fatigueScore < bestScore) {
+				bestScore = fatigueScore;
+
+				int totalMin = estimateMinutesFromPayloads(whole);
+				String arrival = LocalDateTime.parse(startTime, FMT).plusMinutes(totalMin).format(FMT);
+
+				bestRoute = RecommendedRouteDTO.builder()
+					.routeKey(RouteKeyUtil.makeRouteId(depAddr, destAddr, "MIN_FATIGUE", startTime))
+					.name("최소 피로도")
+					.timeTaken(totalMin)
+					.arrivalTime(arrival)
+					.fatigue((int)Math.round(bestScore))
+					.build();
+			}
+		}
+
+		if (bestRoute == null) {
+			OdSayResponseDTO.Path fallback = baseShortest;
+			int minutes = (fallback != null && fallback.getInfo()!=null) ? fallback.getInfo().getTotalTime() : 0;
+			String arrival = LocalDateTime.parse(startTime, FMT).plusMinutes(minutes).format(FMT);
+			bestRoute = RecommendedRouteDTO.builder()
+				.routeKey(RouteKeyUtil.makeRouteId(depAddr, destAddr, "MIN_FATIGUE", startTime))
+				.name("최소 피로 경로")
+				.timeTaken(minutes)
+				.arrivalTime(arrival)
+				.fatigue(50)
+				.build();
+		}
+
+		cache.saveSummary(bestRoute.getRouteKey(), bestRoute);
+		cache.saveMeta(bestRoute.getRouteKey(), new RouteMeta(depAddr, destAddr, req.getStopoverAddresses(), startTime, "MIN_FATIGUE"));
+
+		return bestRoute;
+	}
+
+	private Integer toTimeSlot(String startTime) {
+		if (startTime == null || startTime.length() < 13) return null;
+		try { return Integer.parseInt(startTime.substring(11, 13)); }
+		catch (Exception e) { return null; }
+	}
+
+	private int estimateMinutesFromPayloads(List<RoutePayload> payloads) {
+		if (payloads == null) return 0;
+		return payloads.stream()
+			.map(RoutePayload::timeTaken)
+			.filter(Objects::nonNull)
+			.mapToInt(Integer::intValue)
+			.sum();
+	}
+
+	private List<OdSayResponseDTO.Path> tryFindPathsBetweenCoords(double sx, double sy, double ex, double ey) {
+		try {
+			return findPathsBetweenCoords(sx, sy, ex, ey);
+		} catch (IllegalStateException e) {
+			log.warn("[min-fatigue] ODsay 결과 없음: [{} ,{} -> {} ,{}] - {}", sx, sy, ex, ey, e.getMessage());
+			return Collections.emptyList();
+		}
+	}
+
+	private boolean isShortDistance(double lat1, double lng1, double lat2, double lng2, double thresholdMeters) {
+		return haversine(lat1, lng1, lat2, lng2) <= thresholdMeters;
+	}
+
+	private List<RoutePayload> synthesizeWalkingPayload(double sLat, double sLng, String sName,
+		double eLat, double eLng, String eName) {
+		double distM = haversine(sLat, sLng, eLat, eLng);
+		int minutes = Math.max(1, (int)Math.round(distM / 70.0));
+
+		var nodes = new ArrayList<RoutePayload.PathNode>();
+		nodes.add(new RoutePayload.PathNode(sName != null ? sName : "출발", sLat, sLng));
+		nodes.add(new RoutePayload.PathNode(eName != null ? eName : "도착", eLat, eLng));
+
+		return List.of(new RoutePayload(
+			"WALKING",
+			null,
+			minutes,
+			sName, eName,
+			sLat, sLng, eLat, eLng,
+			nodes,
+			1,
+			null, null
+		));
 	}
 }
