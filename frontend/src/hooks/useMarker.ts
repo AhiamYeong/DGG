@@ -1,7 +1,7 @@
 import { useRef, useCallback } from 'react';
 import type { NaverMapInstance, NaverMarkerInstance } from '@/types/map';
 import type { SimpleRoute } from '@/types/route-types';
-import type { SubPath, Station } from '@/types/route-api-types';
+import type { Station } from '@/types/route-api-types';
 import { MARKER_ICONS } from '../constants';
 import { log } from '../utils/logger';
 
@@ -181,7 +181,7 @@ export function useMarker(map: NaverMapInstance | null) {
     const stationSet = new Set<string>(); // 중복 방지
 
     // 모든 subPath에서 지하철역 정보 추출
-    route.rawData.subPath.forEach((subPath: SubPath) => {
+    route.rawData.subPath?.forEach((subPath: any) => {
       if (subPath.trafficType === 1 && subPath.passStopList?.stations) { // 지하철
         subPath.passStopList.stations.forEach((station: Station) => {
           const stationKey = `${station.stationName}-${station.x}-${station.y}`;

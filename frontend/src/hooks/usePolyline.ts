@@ -1,7 +1,7 @@
 import { useRef, useCallback } from 'react';
 import type { NaverMapInstance, NaverPolylineInstance } from '@/types/map';
 import type { SimpleRoute } from '@/types/route-types';
-import type { SubPath } from '@/types/route-api-types';
+// import type { SubPath } from '@/types/route-api-types';
 import { log } from '../utils/logger';
 import { POLYLINE_STYLES, TRAFFIC_TYPES, SUBWAY_LINE_COLORS } from '../constants';
 
@@ -197,7 +197,7 @@ export function usePolyline(map: NaverMapInstance | null) {
     const newPolylines: NaverPolylineInstance[] = [];
 
     // MSW 데이터 형식 처리 (polyline.result.lane)
-    if (routeData.polyline?.result?.lane) {
+    if ('polyline' in routeData && routeData.polyline?.result?.lane) {
       console.log('MSW 폴리라인 데이터 처리:', routeData.polyline.result.lane);
       
       routeData.polyline.result.lane.forEach((lane: any) => {
@@ -253,13 +253,9 @@ export function usePolyline(map: NaverMapInstance | null) {
     }
 
     // 기존 rawData 형식 처리
-    if (!routeData.subPath) {
-      log.error('subPath 데이터가 없습니다.');
-      return;
-    }
-
-    // 각 subPath에 대해 폴리라인 생성
-    routeData.subPath.forEach((subPath: SubPath) => {
+    if ('subPath' in routeData && routeData.subPath) {
+      // 각 subPath에 대해 폴리라인 생성
+      routeData.subPath.forEach((subPath: any) => {
       // passShape이 있으면 사용, 없으면 passStopList.stations로 좌표 생성
       let coordinates: number[][] = [];
       
@@ -312,7 +308,8 @@ export function usePolyline(map: NaverMapInstance | null) {
       });
 
       newPolylines.push(polyline);
-    });
+      });
+    }
 
     // 참조 저장
     polylinesRef.current = newPolylines;

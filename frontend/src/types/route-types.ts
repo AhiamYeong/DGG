@@ -138,10 +138,9 @@ export interface SimpleRoute extends BaseEntity {
   // 서버 즐겨찾기 식별자 (있으면 해제시 사용)
   bookmarkRouteId?: number;
   fatigueLevel?: number; // 피로도 수치 (0-100)
-  // test.json 원본 데이터 (선택사항)
-  rawData?: any;
-  // MSW 폴리라인 데이터 (선택사항)
-  polylineData?: any;
+  // 엄격한 타입 정의로 변경
+  rawData?: import('./strict-types').StrictRouteDetailResponse;
+  polylineData?: import('./strict-types').StrictPolylineData;
   // routeKey (안내시작 시 사용)
   routeKey?: string;
 }

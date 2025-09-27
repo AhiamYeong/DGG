@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
-const API_BASE_URL = 'https://j13a305.p.ssafy.io/api';
+const API_BASE_URL = 'http://localhost:8080/api';
 
 // 장소 검색 관련 핸들러
 export const placeSearchHandlers = [

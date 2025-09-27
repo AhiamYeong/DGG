@@ -17,7 +17,7 @@ import type { ApiResponse, FavoritePlaceApiResponse } from '@/types/api-types';
 import { createApiClient, apiCall } from '@/utils/apiClient';
 import { API_CONSTANTS } from '@/constants';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE || 'https://j13a305.p.ssafy.io/api/';
+const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api/';
 const favoriteApi = createApiClient(API_BASE_URL, API_CONSTANTS.TIMEOUT);
 
 export type FavoritePlace = FavoritePlaceApiResponse;

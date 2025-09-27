@@ -13,7 +13,7 @@ import {
 } from "@/api/fatigueApi";
 import { http, HttpResponse } from "msw";
 
-const API_BASE_URL = "https://j13a305.p.ssafy.io/api/v1";
+const API_BASE_URL = "http://localhost:8080/api/v1";
 const NICKNAME = "애옹";
 
 let fatigue: MainFatigueProps = {
