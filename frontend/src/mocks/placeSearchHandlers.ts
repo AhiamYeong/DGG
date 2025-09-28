@@ -6,6 +6,7 @@ const API_BASE_URL = 'http://localhost:8080/api';
 export const placeSearchHandlers = [
   // 장소 검색 API
   http.get(`${API_BASE_URL}/v1/search/places`, ({ request }) => {
+    console.log('🔍 MSW: 장소 검색 API 요청 가로채기 성공!', request.url);
     const url = new URL(request.url);
     const query = url.searchParams.get('query');
     const display = url.searchParams.get('display');

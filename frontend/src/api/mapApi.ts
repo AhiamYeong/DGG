@@ -21,7 +21,7 @@ import { createApiClient } from '../utils/apiClient';
 import { log } from '../utils/logger';
 
 // API 설정
-const API_BASE_URL = 'http://localhost:8080/api/';
+const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api/';
 
 // 공통 API 클라이언트 생성
 const mapApi = createApiClient(API_BASE_URL);

@@ -10,13 +10,9 @@ import { useNavigationStore } from "@/stores";
 import { SimpleRoute } from "@/types";
 
 export default function Mainpage() {
-  const [routes, setRoutes] = useState<{ id: number; name: string }[]>([]);
-  const [fatigue, setFatigue] = useState<number>(0);
   const [nickname, setNickname] = useState<string>("");
-
-  // TODO: 가장 가까운 알람 추가
-  // const [weather, setWeather] = useState<Weather>();
-
+  const [fatigue, setFatigue] = useState<number>(0);
+  const [routes, setRoutes] = useState<{ id: number; name: string }[]>([]);
   const navigate = useNavigate();
 
   const fetchFatigue = async () => {
