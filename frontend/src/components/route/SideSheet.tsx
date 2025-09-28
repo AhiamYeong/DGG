@@ -321,7 +321,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
                       backgroundColor: SUBWAY_LINE_COLORS[step.lineInfo.name as keyof typeof SUBWAY_LINE_COLORS] || SUBWAY_LINE_COLORS['기타']
                     } : {}}>
                       {step.type === 'walk' && (
-                        <span className="text-xs">🚶‍♂️</span>
+                        <span className="text-xs">🚶</span>
                       )}
                       {step.type === 'bus' && (
                         <span className="text-xs">🚌</span>
