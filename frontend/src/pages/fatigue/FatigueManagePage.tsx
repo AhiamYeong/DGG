@@ -35,6 +35,7 @@ export default function FatigueManagePage() {
     try {
       const res = await fatigueApi.get("/fatigues/daily");
       const data: fatigueHistory[] = res.data;
+      // mock 데이터의 순서 그대로 (시간순) 설정합니다.
       setHistoryData(data);
     } catch (error) {
       console.error("에러", error);

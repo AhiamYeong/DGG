@@ -6,7 +6,7 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
 import "./styles/index.css";
 
-// Mocking Service Worker 추가
+// // Mocking Service Worker 추가
 async function enableMocking() {
   if (process.env.NODE_ENV === "development") {
     const { worker } = await import("./mocks/browsers");
@@ -43,5 +43,5 @@ enableMocking().then(() => {
   createRoot(document.getElementById("root")!).render(<App />);
 });
 
-// // DOM에 렌더링
+// DOM에 렌더링
 // createRoot(document.getElementById("root")!).render(<App />);

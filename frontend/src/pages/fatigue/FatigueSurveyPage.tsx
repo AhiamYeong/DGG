@@ -103,19 +103,32 @@ export default function FatigueSurveyPage() {
           <div key={q.id}>
             <p className="mb-2 text-gray-800 text-sm">{q.text}</p>
             <div className="flex gap-3">
-              {[1, 2, 3, 4, 5].map((num) => (
-                <button
-                  key={num}
-                  onClick={() => handleSelect(q.id, num)}
-                  className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs ${
-                    answers[q.id] === num
-                      ? "bg-green-400 border-green-400 text-white"
-                      : "border-gray-300 text-gray-400"
-                  }`}
-                >
-                  {num}
-                </button>
-              ))}
+              {[1, 2, 3, 4, 5].map((num) => {
+                // 선택된 버튼에 적용할 동적 클래스를 정의합니다.
+                const colorClasses = {
+                  1: "bg-level-1 border-level-1",
+                  2: "bg-level-2 border-level-2",
+                  3: "bg-level-3 border-level-3",
+                  4: "bg-level-4 border-level-4",
+                  5: "bg-level-5 border-level-5",
+                };
+                const isSelected = answers[q.id] === num;
+                const selectedClass = isSelected
+                  ? `${
+                      colorClasses[num as keyof typeof colorClasses]
+                    } text-white`
+                  : "border-gray-300 text-gray-400";
+
+                return (
+                  <button
+                    key={num}
+                    onClick={() => handleSelect(q.id, num)}
+                    className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs ${selectedClass}`}
+                  >
+                    {num}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ))}

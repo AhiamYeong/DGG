@@ -55,9 +55,9 @@ export default function FatigueDashboardPage() {
   )?.day;
   const allZero = weeklyFatigues.every((f) => f.fatigue === 0);
 
-  const maxFootStep = Math.max(...weeklyFootSteps.map((f) => f.footStep));
+  const maxFootStep = Math.max(...weeklyFootSteps.map((f) => f.foot_step));
   const maxFootStepDay = weeklyFootSteps.find(
-    (f) => f.footStep === maxFootStep
+    (f) => f.foot_step === maxFootStep
   )?.day;
 
   return (
@@ -65,7 +65,7 @@ export default function FatigueDashboardPage() {
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-lg font-bold p-6 mb-6">
           {nickname}님, <br />
-          전체 사용자 중 피로도는 {fatigueRank}위예요
+          전체 사용자 중 피로도는 상위 {fatigueRank}퍼센트예요
         </h2>
 
         <h2 className="text-lg font-bold">이번 주 통계 보기</h2>
@@ -90,9 +90,12 @@ export default function FatigueDashboardPage() {
         {/* TODO: 걸음 수 비교 로직 확인 */}
         {/* 이번 주 걸음수 */}
         <WeeklyBarChart
-          data={weeklyFootSteps.map((f) => ({ day: f.day, value: f.footStep }))}
+          data={weeklyFootSteps.map((f) => ({
+            day: f.day,
+            value: f.foot_step,
+          }))}
           label="이번 주 걸음수"
-          max={Math.max(...weeklyFootSteps.map((f) => f.footStep))}
+          max={Math.max(...weeklyFootSteps.map((f) => f.foot_step))}
         />
         <p className="text-sm text-gray-600 mb-4">
           {weeklyFootSteps.length === 0

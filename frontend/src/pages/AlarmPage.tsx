@@ -3,6 +3,22 @@ import { useEffect, useState } from "react";
 import AlarmEditModal from "../components/AlarmEditModal";
 import { AlarmProps, AlarmUpdateProps, alarmApi } from "@/api/alarmApi";
 
+// 날짜 형식을 "M월 D일 H시 m분"으로 변환하는 함수
+const formatDepartureTime = (timeString: string) => {
+  if (!timeString) return "";
+  try {
+    const date = new Date(timeString);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    return `${month}월 ${day}일 ${hours}시 ${minutes}분`;
+  } catch (error) {
+    console.error("Invalid time string:", timeString, error);
+    return "시간 정보 없음";
+  }
+};
+
 export default function AlarmPage() {
   const [alarms, setAlarms] = useState<AlarmProps[]>([]);
   // 수정하는 알람 객체 1개
@@ -63,22 +79,22 @@ export default function AlarmPage() {
   };
 
   const handleSaveEdit = async (updated: AlarmUpdateProps) => {
-    if (!editingAlarm) return; // null이면 그냥 종료
+    if (!editingAlarm) return;
 
-    // 1 API 호출
     try {
+      // 1. API에 수정 요청을 보냅니다.
       await alarmApi.put(`/alarm/${editingAlarm.alarmId}`, updated);
-      setAlarms((prev) =>
-        prev.map((alarm) =>
-          alarm.alarmId === editingAlarm.alarmId
-            ? { ...alarm, ...updated }
-            : alarm
-        )
-      );
-      // 3 모달 닫기
+
+      // 2. 모달을 닫습니다.
       setEditingAlarm(null);
+
+      // 3. 서버로부터 최신 알람 목록을 다시 불러와 화면을 갱신합니다.
+      // 이렇게 하면 여러 개의 알림 시간이 선택되었을 경우에도 정확히 반영됩니다.
+      const res = await alarmApi.get<AlarmProps[]>("alarm");
+      setAlarms(res.data);
     } catch (error) {
       console.error("알람 수정 실패", error);
+      // TODO: 사용자에게 에러 발생을 알리는 UI 처리
     }
   };
 
@@ -129,7 +145,9 @@ export default function AlarmPage() {
               {/* 시간 & 경로 */}
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm">{alarm.departureTime} 출발</p>
+                  <p className="text-sm">
+                    {formatDepartureTime(alarm.departureTime)} 출발
+                  </p>
                   <p className="text-sm text-gray-600">{`${alarm.departure} -> ${alarm.destination}`}</p>
                 </div>
                 {/* 토글 */}

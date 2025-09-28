@@ -2,11 +2,12 @@
 import { LuCoffee } from "react-icons/lu";
 import { RiZzzFill } from "react-icons/ri";
 import { FaWalking } from "react-icons/fa";
-import { fatigueApi, fatigueHistory } from "@/api/fatigueApi";
+import {
+  fatigueApi,
+  fatigueHistory,
+  fatigueUpdateResponse,
+} from "@/api/fatigueApi";
 
-// useState의 setter: 상위에서 상태관리 & 하위에서 상태 바꾸기만 하기 위해 분리
-// 상태 단일 출처를 상위에만 두기!
-// 상태 끌어올리기 (Lifting State Up)
 interface Props {
   setFatigue: React.Dispatch<React.SetStateAction<number>>;
   setHistoryData: React.Dispatch<React.SetStateAction<fatigueHistory[]>>;
@@ -15,44 +16,38 @@ interface Props {
 export default function FatigueButtons({ setFatigue, setHistoryData }: Props) {
   const handleClick = async (
     reason: "COFFEE" | "WALK" | "NAP",
-    fatigueChange: number
+    fatigue_change: number
   ) => {
     try {
       const resp = await fatigueApi.put("/fatigues", {
         reason,
-        fatigueChange: fatigueChange,
+        fatigue_change: fatigue_change,
       });
-      const updated = resp.data;
-      console.log("응답", resp.data);
+      const updated: fatigueUpdateResponse = resp.data;
 
-      // 1. optimistic update
+      // '낙관적 업데이트'를 통해 UI에 즉시 변경 사항을 반영합니다.
+      // 1. 현재 피로도를 업데이트합니다.
       setFatigue(updated.fatigue);
-      setHistoryData((prev) => [
-        {
-          fatigueId: Date.now(), // 임시 ID
-          created_at: updated.created_at,
-          reason: updated.reason,
-          fatigue: updated.fatigue,
-          fatigueChange: updated.fatigueChanfe,
-        },
-        ...prev,
-      ]);
 
-      // 2 최종 싱크 맞추기
-      try {
-        const resp = await fatigueApi.get<fatigueHistory[]>("/fatigues/daily");
-        const data = resp.data;
-        setHistoryData(data);
-      } catch (error) {
-        console.error("에러", error);
+      // 2. 실제 피로도 변화가 있을 때만 히스토리 목록에 새 기록을 추가합니다.
+      if (updated.fatigue_change !== 0) {
+        setHistoryData((prev) => [
+          ...prev,
+          {
+            fatigueId: Date.now(), // 임시 ID
+            created_at: updated.createdAt,
+            reason: updated.reason,
+            fatigue: updated.fatigue,
+            fatigue_change: updated.fatigue_change,
+          },
+        ]);
       }
-
-      // 현재 피로도 갱신
-      setFatigue(updated.fatigue);
     } catch (error) {
-      console.error("감소 실패", error);
+      console.error("피로도 업데이트 실패", error);
+      // TODO: 사용자에게 에러 발생을 알리는 UI 처리 (예: 토스트 메시지)
     }
   };
+
   return (
     <div className="grid grid-cols-3 gap-2">
       <button

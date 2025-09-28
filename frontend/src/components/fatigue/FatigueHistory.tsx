@@ -8,7 +8,7 @@ export default function FatigueHistory({ data }: { data: fatigueHistory[] }) {
         <h3 className="font-semibold">피로도 히스토리</h3>
 
         {data
-          .filter((item) => item.fatigue > 0)
+          .filter((item) => item.fatigue >= 0) // 피로도가 0인 경우도 히스토리에 표시되도록 수정
           .map((item, index) => (
             <div key={index} className="mt-3">
               <div className="flex items-center justify-between text-sm">
@@ -21,19 +21,19 @@ export default function FatigueHistory({ data }: { data: fatigueHistory[] }) {
                 {/* 값 + 증감률 */}
                 <div className="flex items-center gap-2">
                   <span>{item.fatigue}%</span>
-                  {item.fatigueChange !== undefined && (
+                  {item.fatigue_change !== undefined && (
                     <span
                       className={
-                        item.fatigueChange > 0
+                        item.fatigue_change > 0
                           ? "text-red-500 text-xs"
-                          : item.fatigueChange < 0
+                          : item.fatigue_change < 0
                           ? "text-blue-600 text-xs"
                           : "text-gray-400 text-xs"
                       }
                     >
-                      {item.fatigueChange > 0
-                        ? `+${item.fatigueChange}%`
-                        : `${item.fatigueChange}%`}
+                      {item.fatigue_change > 0
+                        ? `+${item.fatigue_change}%`
+                        : `${item.fatigue_change}%`}
                     </span>
                   )}
                 </div>
