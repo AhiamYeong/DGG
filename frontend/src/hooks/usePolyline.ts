@@ -237,23 +237,21 @@ export function usePolyline(map: NaverMapInstance | null) {
 
           console.log(`변환된 좌표 개수: ${path.length}`);
           
-          // 🎯 좌표를 마커로 일일히 찍어서 확인
-          console.log(`📍 마커 생성 시작: ${path.length}개 좌표`);
+          // 🎯 모든 좌표를 마커로 일일히 찍어서 확인
+          console.log(`📍 모든 좌표 마커 생성 시작: ${path.length}개 좌표`);
           path.forEach((coord: any, index: number) => {
-            if (index < 10 || index % 50 === 0) { // 처음 10개와 50개마다 마커 생성
-              const marker = new naver.maps.Marker({
-                position: coord,
-                map: map,
-                title: `${step.lineName} - 좌표 ${index + 1}`,
-                icon: {
-                  content: `<div style="background: red; color: white; padding: 2px 4px; border-radius: 50%; font-size: 10px;">${index + 1}</div>`,
-                  size: new naver.maps.Size(20, 20),
-                  anchor: new naver.maps.Point(10, 10)
-                }
-              });
-              newPolylines.push(marker as any); // 마커도 polylines 배열에 저장
-              console.log(`📍 마커 ${index + 1}: lat=${coord.lat()}, lng=${coord.lng()}`);
-            }
+            const marker = new naver.maps.Marker({
+              position: coord,
+              map: map,
+              title: `${step.lineName} - 좌표 ${index + 1}`,
+              icon: {
+                content: `<div style="background: red; color: white; padding: 1px 2px; border-radius: 50%; font-size: 8px; width: 8px; height: 8px; display: flex; align-items: center; justify-content: center;">${index + 1}</div>`,
+                size: new naver.maps.Size(12, 12),
+                anchor: new naver.maps.Point(6, 6)
+              }
+            });
+            newPolylines.push(marker as any); // 마커도 polylines 배열에 저장
+            console.log(`📍 마커 ${index + 1}: lat=${coord.lat()}, lng=${coord.lng()}`);
           });
         }
         // path 배열이 있는 경우 역들을 연결하는 폴리라인 생성 (폴백)
@@ -270,17 +268,17 @@ export function usePolyline(map: NaverMapInstance | null) {
 
           console.log(`변환된 좌표 개수: ${path.length}`);
           
-          // 🎯 역 좌표를 마커로 일일히 찍어서 확인
-          console.log(`🚉 역 마커 생성 시작: ${path.length}개 역`);
+          // 🎯 모든 역 좌표를 마커로 일일히 찍어서 확인
+          console.log(`🚉 모든 역 마커 생성 시작: ${path.length}개 역`);
           path.forEach((coord: any, index: number) => {
             const marker = new naver.maps.Marker({
               position: coord,
               map: map,
               title: `${step.lineName} - 역 ${index + 1}`,
               icon: {
-                content: `<div style="background: blue; color: white; padding: 2px 4px; border-radius: 50%; font-size: 10px;">역${index + 1}</div>`,
-                size: new naver.maps.Size(20, 20),
-                anchor: new naver.maps.Point(10, 10)
+                content: `<div style="background: blue; color: white; padding: 1px 2px; border-radius: 50%; font-size: 8px; width: 8px; height: 8px; display: flex; align-items: center; justify-content: center;">역${index + 1}</div>`,
+                size: new naver.maps.Size(12, 12),
+                anchor: new naver.maps.Point(6, 6)
               }
             });
             newPolylines.push(marker as any); // 마커도 polylines 배열에 저장
