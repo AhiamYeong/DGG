@@ -14,12 +14,8 @@ const mockData = {
   },
   bookmarkRoutes: [
     {
-      bookmarkRouteId: 101,
-      name: "멀캠멀캠",
-    },
-    {
-      bookmarkRouteId: 102,
-      name: "도서관가는길",
+      bookmarkRouteId: 13,
+      name: "덜 피곤한 경로",
     },
   ],
 };

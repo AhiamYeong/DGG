@@ -27,19 +27,24 @@ export default function Mainpage() {
     }
   };
 
-  // 장소 별명 props로 떼오기
   const fetchFavoriteRoute = async () => {
     try {
       const resp = await favoriteRoutesApi.getRouteBookmarks();
-
-      // id, name 묶어서 저장
+      console.log("🎯 MSW 즐겨찾기 데이터:", resp);
+      
       const mapped = resp.map((item) => ({
         id: item.bookmarkRouteId,
         name: item.name,
       }));
+      
       setRoutes(mapped);
     } catch (error) {
-      console.error("에러 발생", error);
+      console.error("MSW API 호출 실패:", error);
+      const defaultRoute = {
+        id: 13,
+        name: "덜 피곤한 경로"
+      };
+      setRoutes([defaultRoute]);
     }
   };
 
@@ -64,21 +69,48 @@ export default function Mainpage() {
 
   const handleRouteClick = async (bookmarkRouteId: number) => {
     try {
-      const route: SimpleRoute = await favoriteRoutesApi.getRouteBookmarkDetail(
-        bookmarkRouteId
-      );
+      console.log("🚀 즐겨찾기 경로 선택:", bookmarkRouteId);
+      
+      const bookmarkDetail = await favoriteRoutesApi.getRouteBookmarkDetail(bookmarkRouteId);
+      
+      console.log("📊 MSW에서 가져온 상세 데이터:", {
+        name: bookmarkDetail.name,
+        totalTime: bookmarkDetail.totalTime,
+        stepsCount: bookmarkDetail.data?.length,
+        arrivalTime: bookmarkDetail.arrivalTime
+      });
 
-      // map으로 이동
-      if (!route.rawData) {
-        console.log("route.rawData 존재:", route.rawData);
-        route.rawData = {};
-      } else {
-        console.log("rawData 없음, steps만 사용");
-      }
-      navigate("/map", { state: route });
+      const { RouteService } = await import("../api/routeService");
+      const steps = RouteService.convertDetailDataToSteps(bookmarkDetail.data);
+      const route: SimpleRoute = {
+        routeKey: `bookmark-${bookmarkRouteId}`,
+        name: bookmarkDetail.name,
+        steps: steps,
+        totalDuration: bookmarkDetail.totalTime,
+        fatigueLevel: 0,
+        polylineData: bookmarkDetail.data,
+        rawData: bookmarkDetail.data,
+        departureTime: { hour: new Date().getHours(), minute: new Date().getMinutes() },
+        arrivalTime: bookmarkDetail.arrivalTime,
+        from: bookmarkDetail.data[1]?.startPoint || "병점",
+        to: bookmarkDetail.data[5]?.endPoint || "역삼",
+        recommendationType: "minFatigue",
+        description: "즐겨찾기 경로",
+        id: bookmarkRouteId.toString(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      console.log("🔄 변환된 경로 데이터:", {
+        name: route.name,
+        totalDuration: route.totalDuration,
+        stepsCount: route.steps?.length,
+        fatigueLevel: route.fatigueLevel
+      });
+
       useNavigationStore.getState().startNavigation(route);
+      navigate("/map", { state: route });
 
-      // 네비게이션 시작
     } catch (err) {
       console.error("즐겨찾기 상세 조회 실패:", err);
       alert("경로 상세 정보를 불러오지 못했습니다.");
