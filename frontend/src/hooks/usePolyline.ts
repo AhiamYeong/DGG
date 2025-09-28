@@ -178,14 +178,25 @@ export function usePolyline(map: NaverMapInstance | null) {
 
   // 선택된 경로의 폴리라인 그리기
   const drawSelectedRoute = useCallback((route: SimpleRoute): void => {
+    console.log('🎯 drawSelectedRoute 호출됨');
+    console.log('map 존재:', !!map);
+    console.log('route 존재:', !!route);
+    console.log('route:', route);
+    
     // rawData 또는 polylineData 중 하나라도 있으면 처리
     const routeData = route.rawData || route.polylineData;
+    console.log('routeData:', routeData);
+    console.log('routeData.data 존재:', !!routeData?.data);
+    console.log('routeData.data 길이:', routeData?.data?.length);
+    
     if (!routeData) {
+      console.log('❌ 경로 데이터가 없습니다.');
       log.error('경로 데이터가 없습니다.', { hasRawData: !!route.rawData, hasPolylineData: !!route.polylineData });
       return;
     }
 
     if (!map || !window.naver || !window.naver.maps) {
+      console.log('❌ 지도가 초기화되지 않았습니다.');
       log.error('지도가 초기화되지 않았습니다.');
       return;
     }
@@ -198,9 +209,18 @@ export function usePolyline(map: NaverMapInstance | null) {
 
     // JSON 데이터 직접 처리 (MSW 변환 없이)
     if (routeData.data && Array.isArray(routeData.data)) {
-      console.log('JSON 데이터 직접 처리');
+      console.log('=== JSON 데이터 직접 처리 시작 ===');
+      console.log('routeData.data 길이:', routeData.data.length);
+      console.log('routeData.data:', routeData.data);
       
-      routeData.data.forEach((step: any) => {
+      routeData.data.forEach((step: any, index: number) => {
+        console.log(`\n--- Step ${index + 1} 분석 ---`);
+        console.log('step.type:', step.type);
+        console.log('step.lineName:', step.lineName);
+        console.log('step.polyline 존재:', !!step.polyline);
+        console.log('step.polyline 길이:', step.polyline ? step.polyline.length : 0);
+        console.log('step.path 존재:', !!step.path);
+        console.log('step.path 길이:', step.path ? step.path.length : 0);
         let path: any[] = [];
         
         // polyline 배열이 있는 경우 정밀한 폴리라인 생성 (최우선)
@@ -234,6 +254,8 @@ export function usePolyline(map: NaverMapInstance | null) {
         
         // 폴리라인 생성 (polyline 또는 path 데이터가 있는 경우)
         if (path && path.length > 0) {
+          console.log(`✅ 폴리라인 생성 시작: ${path.length}개 좌표`);
+          
           // 교통수단별 색상 결정
           let strokeColor = '#FF0000'; // 기본값
           let strokeWeight = 3;
@@ -243,54 +265,73 @@ export function usePolyline(map: NaverMapInstance | null) {
             strokeColor = SUBWAY_LINE_COLORS[step.lineName as keyof typeof SUBWAY_LINE_COLORS] || SUBWAY_LINE_COLORS['기타'];
             strokeWeight = 6;
             strokeStyle = 'solid';
+            console.log(`지하철 색상: ${strokeColor} (${step.lineName})`);
           } else if (step.type === 'BUS') {
             strokeColor = POLYLINE_STYLES.BUS.strokeColor;
             strokeWeight = 5;
             strokeStyle = 'solid';
+            console.log(`버스 색상: ${strokeColor}`);
           } else if (step.type === 'WALKING') {
             strokeColor = POLYLINE_STYLES.WALK.strokeColor;
             strokeWeight = 3;
             strokeStyle = 'shortdash';
+            console.log(`도보 색상: ${strokeColor}`);
           }
 
           console.log(`폴리라인 스타일: ${strokeColor}, 두께: ${strokeWeight}, 스타일: ${strokeStyle}`);
+          console.log('첫 번째 좌표:', path[0]);
+          console.log('마지막 좌표:', path[path.length - 1]);
 
           // 폴리라인 생성
-          const polyline = new naver.maps.Polyline({
-            map: map,
-            path: path,
-            strokeColor: strokeColor,
-            strokeWeight: strokeWeight,
-            strokeStyle: strokeStyle
-          });
-          
-          newPolylines.push(polyline);
-          console.log(`폴리라인 생성 완료: ${step.type} - ${step.lineName}`);
+          try {
+            const polyline = new naver.maps.Polyline({
+              map: map,
+              path: path,
+              strokeColor: strokeColor,
+              strokeWeight: strokeWeight,
+              strokeStyle: strokeStyle
+            });
+            
+            newPolylines.push(polyline);
+            console.log(`✅ 폴리라인 생성 완료: ${step.type} - ${step.lineName}`);
+          } catch (error) {
+            console.error(`❌ 폴리라인 생성 실패: ${step.type} - ${step.lineName}`, error);
+          }
+        } else {
+          console.log(`❌ 폴리라인 생성 건너뜀: path가 비어있음 (${path ? path.length : 0}개 좌표)`);
         }
         // 도보 구간 처리 (시작점과 끝점 연결) - polyline이나 path가 없는 경우
-        else if (step.type === 'WALKING' && step.startLat && step.startLng && step.endLat && step.endLng) {
-          console.log(`도보 구간 폴리라인 생성: ${step.startLat}, ${step.startLng} -> ${step.endLat}, ${step.endLng}`);
+        if (step.type === 'WALKING' && step.startLat && step.startLng && step.endLat && step.endLng) {
+          console.log(`🚶 도보 구간 폴리라인 생성: ${step.startLat}, ${step.startLng} -> ${step.endLat}, ${step.endLng}`);
           
-          const path = [
+          const walkPath = [
             new naver.maps.LatLng(step.startLat, step.startLng),
             new naver.maps.LatLng(step.endLat, step.endLng)
           ];
 
-          const polyline = new naver.maps.Polyline({
-            map: map,
-            path: path,
-            strokeColor: POLYLINE_STYLES.WALK.strokeColor,
-            strokeWeight: 3,
-            strokeStyle: 'shortdash'
-          });
-          
-          newPolylines.push(polyline);
-          console.log(`도보 폴리라인 생성 완료`);
+          try {
+            const polyline = new naver.maps.Polyline({
+              map: map,
+              path: walkPath,
+              strokeColor: POLYLINE_STYLES.WALK.strokeColor,
+              strokeWeight: 3,
+              strokeStyle: 'shortdash'
+            });
+            
+            newPolylines.push(polyline);
+            console.log(`✅ 도보 폴리라인 생성 완료`);
+          } catch (error) {
+            console.error(`❌ 도보 폴리라인 생성 실패`, error);
+          }
         }
       });
       
       // 참조 저장
       polylinesRef.current = newPolylines;
+      
+      console.log('=== JSON 폴리라인 그리기 완료 ===');
+      console.log('생성된 폴리라인 개수:', newPolylines.length);
+      console.log('polylinesRef.current:', polylinesRef.current);
       
       log.map('JSON 폴리라인 그리기 완료', {
         polylines: newPolylines.length
