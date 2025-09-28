@@ -64,11 +64,13 @@ fun LoginScreen(
                 .padding(bottom = 24.dp)
                 .size(120.dp) // 원하는 크기로 조절
         )
+        // hotfix: 구글 로그인 -> 일반 로그인으로 변경
         // google 로그인 버튼 추가
         Button(
-            onClick = onGoogleSignInClicked
+//            onClick = onGoogleSignInClicked
+            onClick = { onLoginSuccess() }
         ) {
-            Log.d("LoginFlow", "구글 로그인 버튼 클릭")
+            Log.d("LoginFlow", "forceLogin")
             Text("Google로 로그인")
         }
     }

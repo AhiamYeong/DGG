@@ -108,7 +108,7 @@ class HealthViewModel(
             }
 
             // 최초 실행시: 수면 전송
-            sendSleepAndStepsData(activity)
+            // sendSleepAndStepsData(activity)
             // sendActivityData(activity)
 
             // 원시 데이터 찍기

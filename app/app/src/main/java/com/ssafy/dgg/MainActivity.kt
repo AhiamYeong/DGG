@@ -154,10 +154,10 @@ class MainActivity : ComponentActivity() {
                         is LoginState.LoggedIn -> {
                             MainScreen(authViewModel)
                             // 수면 데이터는 최초 실행
-                            healthViewModel.loadHealthData(this)
+                            // healthViewModel.loadHealthData(this)
 
                             // 활동 데이터는 10분마다 반복
-                            healthViewModel.startPeriodicActivitySync(this)
+                            // healthViewModel.startPeriodicActivitySync(this)
 
                             // activity 중단시 반복 멈추기
                             lifecycle.addObserver(object : DefaultLifecycleObserver {
