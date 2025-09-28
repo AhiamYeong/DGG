@@ -1,10 +1,5 @@
 import { useEffect, useCallback, useState } from 'react';
 import { 
-  recentSearchApi, 
-  type RecentSearch, 
-  type AddRecentSearchRequest
-} from '../api/searchHistoryApi';
-import { 
   favoritePlacesApi,
   type FavoritePlace
 } from '../api/favoritePlacesApi';
@@ -12,10 +7,9 @@ import { ERROR_MESSAGES } from '../constants';
 import { log } from '../utils/logger';
 
 /**
- * 검색 내역 관리 훅
+ * 즐겨찾기 장소 관리 훅
  */
 export function useSearchHistory() {
-  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
   const [favoritePlaces, setFavoritePlaces] = useState<FavoritePlace[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,14 +38,6 @@ export function useSearchHistory() {
     }
   }, []);
 
-  // 최근 검색 내역 불러오기
-  const loadRecentSearches = useCallback(async () => {
-    await handleApiCall(
-      recentSearchApi.getRecentSearches,
-      setRecentSearches,
-      ERROR_MESSAGES.SEARCH.LOAD_RECENT_FAILED
-    );
-  }, [handleApiCall]);
 
   // 즐겨찾기 장소 불러오기
   const loadFavoritePlaces = useCallback(async () => {
@@ -62,43 +48,6 @@ export function useSearchHistory() {
     );
   }, [handleApiCall]);
 
-  // 최근 검색 내역 추가
-  const addRecentSearch = useCallback(async (request: AddRecentSearchRequest) => {
-    try {
-      const response = await recentSearchApi.addRecentSearch(request);
-      if (response.success) {
-        // 로컬 상태 업데이트
-        setRecentSearches(prev => [response.data, ...prev]);
-        return { success: true, data: response.data };
-      } else {
-        console.warn('검색 내역 추가 실패:', response.message);
-        return { success: false, error: response.message };
-      }
-    } catch (err) {
-      console.warn('검색 내역 추가 실패 (네트워크 오류):', err);
-      return { success: false, error: 'NETWORK_ERROR' };
-    }
-  }, []);
-
-  // 최근 검색 내역 삭제
-  const removeRecentSearch = useCallback(async (id: string) => {
-    try {
-      const response = await recentSearchApi.deleteRecentSearch(id);
-      if (response.success) {
-        // 로컬 상태 업데이트
-        setRecentSearches(prev => prev.filter(item => item.id !== id));
-        return { success: true };
-      } else {
-        setError(response.message || '알 수 없는 오류가 발생했습니다.');
-        return { success: false, error: response.message };
-      }
-    } catch (err) {
-      const errorMessage = '최근 검색 내역 삭제에 실패했습니다.';
-      setError(errorMessage);
-      console.warn('최근 검색 내역 삭제 실패:', err);
-      return { success: false, error: errorMessage };
-    }
-  }, []);
 
   // 즐겨찾기 장소 추가
   const addFavoritePlace = useCallback(async (request: { placeName: string; address: string }) => {
@@ -115,7 +64,6 @@ export function useSearchHistory() {
     } catch (err) {
       const errorMessage = '즐겨찾기 장소 추가에 실패했습니다.';
       setError(errorMessage);
-      console.warn('즐겨찾기 장소 추가 실패:', err);
       return { success: false, error: errorMessage };
     }
   }, []);
@@ -135,7 +83,6 @@ export function useSearchHistory() {
     } catch (err) {
       const errorMessage = '즐겨찾기 장소 삭제에 실패했습니다.';
       setError(errorMessage);
-      console.warn('즐겨찾기 장소 삭제 실패:', err);
       return { success: false, error: errorMessage };
     }
   }, []);
@@ -157,9 +104,8 @@ export function useSearchHistory() {
 
   // 초기 데이터 로드
   useEffect(() => {
-    loadRecentSearches();
     loadFavoritePlaces();
-  }, [loadRecentSearches, loadFavoritePlaces]);
+  }, [loadFavoritePlaces]);
 
   // 모든 데이터 새로고침
   const refreshAll = useCallback(async () => {
@@ -167,30 +113,23 @@ export function useSearchHistory() {
     setError(null);
     
     try {
-      await Promise.all([
-        loadRecentSearches(),
-        loadFavoritePlaces()
-      ]);
+      await loadFavoritePlaces();
     } catch (err) {
       setError('데이터를 새로고침하는데 실패했습니다.');
       log.warn('데이터 새로고침 실패', err);
     } finally {
       setIsLoading(false);
     }
-  }, [loadRecentSearches, loadFavoritePlaces]);
+  }, [loadFavoritePlaces]);
 
   return {
     // 상태
-    recentSearches,
     favoritePlaces,
     isLoading,
     error,
     
     // 액션
-    loadRecentSearches,
     loadFavoritePlaces,
-    addRecentSearch,
-    removeRecentSearch,
     addFavoritePlace,
     removeFavoritePlace,
     toggleFavoritePlace,

@@ -13,3 +13,6 @@ export { default as EmptyState } from './EmptyState';
 
 // 시간 관련 컴포넌트
 export { default as TimePicker } from './TimePicker';
+
+// 다이얼로그 컴포넌트
+export { default as ConfirmDialog } from './ConfirmDialog';

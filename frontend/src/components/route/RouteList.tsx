@@ -1,5 +1,6 @@
 import { memo, useCallback, useMemo } from 'react';
 import RouteCard from './RouteCard';
+import NavigationRouteCard from './NavigationRouteCard';
 import type { SimpleRoute } from '@/types/route-types';
 
 interface RouteListProps {
@@ -12,6 +13,7 @@ interface RouteListProps {
   actionLabel?: string;
   showEditButton?: boolean;
   className?: string;
+  cardType?: 'favorite' | 'navigation'; // 즐겨찾기용 vs 경로안내용
 }
 
 /**
@@ -31,7 +33,8 @@ const RouteList = memo<RouteListProps>(({
   emptyMessage = '등록된 노선이 없습니다',
   actionLabel = '선택',
   showEditButton = false,
-  className = ''
+  className = '',
+  cardType = 'favorite' // 기본값은 즐겨찾기용
 }) => {
   // 이벤트 핸들러들을 useCallback으로 최적화
   const handleSelectRoute = useCallback(async (route: SimpleRoute) => {
@@ -47,7 +50,6 @@ const RouteList = memo<RouteListProps>(({
   }, [onShowOptions]);
 
   const handleEditRoute = useCallback((route: SimpleRoute) => {
-    console.log('RouteList handleEditRoute 호출됨:', route);
     onEditRoute?.(route);
   }, [onEditRoute]);
 
@@ -68,20 +70,35 @@ const RouteList = memo<RouteListProps>(({
   // 노선 목록 렌더링을 useMemo로 최적화
   const routeItems = useMemo(() => (
     <div className="space-y-3">
-      {routes.map((route) => (
-        <RouteCard
-          key={route.id}
-          route={route}
-          onSelect={handleSelectRoute}
-          onToggleBookmark={handleToggleBookmark}
-          onShowOptions={handleShowOptions}
-          onEdit={handleEditRoute}
-          actionLabel={actionLabel}
-          showEditButton={showEditButton}
-        />
-      ))}
+      {routes.map((route) => {
+        // 카드 타입에 따라 다른 컴포넌트 렌더링
+        if (cardType === 'navigation') {
+          return (
+            <NavigationRouteCard
+              key={route.id}
+              route={route}
+              onSelect={handleSelectRoute}
+              actionLabel={actionLabel}
+            />
+          );
+        }
+        
+        // 기본값: 즐겨찾기용 카드
+        return (
+          <RouteCard
+            key={route.id}
+            route={route}
+            onSelect={handleSelectRoute}
+            onToggleBookmark={handleToggleBookmark}
+            onShowOptions={handleShowOptions}
+            onEdit={handleEditRoute}
+            actionLabel={actionLabel}
+            showEditButton={showEditButton}
+          />
+        );
+      })}
     </div>
-  ), [routes, handleSelectRoute, handleToggleBookmark, handleShowOptions, handleEditRoute, actionLabel, showEditButton]);
+  ), [routes, handleSelectRoute, handleToggleBookmark, handleShowOptions, handleEditRoute, actionLabel, showEditButton, cardType]);
 
   // 새 경로 추가 버튼 제거됨
 

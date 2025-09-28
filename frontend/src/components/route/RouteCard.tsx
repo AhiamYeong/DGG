@@ -1,9 +1,8 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useState } from 'react';
 import type { SimpleRoute } from '@/types/route-types';
-import { Button } from '@/components/ui';
+import { Button, ConfirmDialog } from '@/components/ui';
 import FavoriteStar from '@/components/ui/FavoriteStar';
 import { useRouteBookmark } from '@/hooks/useRouteBookmark';
-import { getFatigueLevel } from '@/constants';
 
 interface RouteCardProps {
   route: SimpleRoute;
@@ -32,54 +31,75 @@ const RouteCard = memo<RouteCardProps>(({
   className = ''
 }) => {
   const bookmark = useRouteBookmark(route);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  
   // 이벤트 핸들러들을 useCallback으로 최적화
   const handleSelect = useCallback(async () => {
-    console.log('[RouteCard] card select', route.id);
     await onSelect(route);
   }, [onSelect, route]);
 
   const handleEdit = useCallback((e: React.MouseEvent) => {
-    console.log('RouteCard 편집 버튼 클릭됨:', route);
     e.stopPropagation(); // 이벤트 버블링 방지
     onEdit?.(route);
   }, [onEdit, route]);
+
+  // 즐겨찾기 해제 확인 핸들러
+  const handleStarClick = useCallback((_next: boolean) => {
+    if (bookmark.isBookmarked) {
+      setShowConfirmDialog(true);
+    } else {
+      bookmark.toggle();
+    }
+  }, [bookmark]);
+
+  // 확인 다이얼로그 핸들러들
+  const handleConfirmRemove = useCallback(() => {
+    bookmark.toggle();
+    setShowConfirmDialog(false);
+  }, [bookmark]);
+
+  const handleCancelRemove = useCallback(() => {
+    setShowConfirmDialog(false);
+  }, []);
 
 
 
   return (
     <div
       className={
-        `relative flex items-center justify-between p-4 bg-gray-50 rounded-lg 
-        hover:bg-secondary hover:bg-opacity-20 transition-colors cursor-pointer ${className}`
+        `p-4 bg-gray-50 rounded-lg 
+        hover:bg-secondary hover:bg-opacity-20 transition-colors ${className}`
       }
-      onClick={handleSelect}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleSelect();
-        }
-      }}
-      aria-label={`${route.name} 노선 선택`}
     >
-      {/* 우상단 즐겨찾기 아이콘 (배경 투명, 커스텀 컴포넌트) */}
-      <FavoriteStar
-        active={bookmark.isBookmarked}
-        onToggle={() => bookmark.toggle()}
-        size={28}
-        className="absolute top-2 right-2 z-10"
-      />
+      {/* 첫 번째 줄: 제목과 즐겨찾기 */}
+      <div className="flex items-center justify-between mb-3">
+        <h4 
+          className="font-medium text-font text-lg cursor-pointer flex-1"
+          onClick={handleSelect}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleSelect();
+            }
+          }}
+          aria-label={`${route.name} 노선 선택`}
+        >
+          {route.name}
+        </h4>
+        <FavoriteStar
+          active={bookmark.isBookmarked}
+          onToggle={handleStarClick}
+          size={24}
+          className="flex-shrink-0"
+        />
+      </div>
 
-      {/* 노선 정보 */}
-      <div className="flex-1 pr-8">
-        {/* 노선명과 즐겨찾기 아이콘 */}
-        <div className="flex items-center gap-2 mb-1">
-          <h4 className="font-medium text-font">{route.name}</h4>
-        </div>
-
-        {/* 출발지 → 도착지 */}
-        <div className="flex items-center gap-2 text-sm text-secondary">
+      {/* 두 번째 줄: 경로 정보와 액션 버튼들 */}
+      <div className="flex items-center justify-between">
+        {/* 경로 정보 */}
+        <div className="flex items-center gap-2 text-sm text-secondary flex-1">
           <span className="font-medium">{route.from.name}</span>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -87,75 +107,49 @@ const RouteCard = memo<RouteCardProps>(({
           <span className="font-medium">{route.to.name}</span>
         </div>
         
+        {/* 액션 버튼들 */}
+        <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+          {/* 편집 버튼 (즐겨찾기 경로인 경우에만 표시) */}
+          {showEditButton && onEdit && (
+            <Button
+              onClick={handleEdit}
+              variant="secondary"
+              size="sm"
+              className="px-3 py-2"
+              aria-label={`${route.name} 편집`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </Button>
+          )}
 
-        {/* 경로 정보 */}
-        <div className="flex items-center gap-4 text-xs text-secondary mt-1">
-          <span>{route.totalDuration}분</span>
-          <span>{Math.round(route.totalDistance / 1000)}km</span>
-          <span>{route.price ? `${route.price.toLocaleString()}원` : '무료'}</span>
-        </div>
-
-        {/* 출발/도착 시간 */}
-        <div className="text-xs text-secondary mt-1">
-          {route.departureTime.hour.toString().padStart(2, '0')}:{route.departureTime.minute.toString().padStart(2, '0')} → {route.arrivalTime.hour.toString().padStart(2, '0')}:{route.arrivalTime.minute.toString().padStart(2, '0')}
-        </div>
-
-        {/* 피로도 표시 */}
-        <div className="mt-2">
-          {(() => {
-            const fatigueInfo = getFatigueLevel(route.fatigueLevel || 50);
-            return (
-              <>
-                <div className="flex items-center justify-between text-xs text-secondary mb-1">
-                  <span>예상 증가 피로도</span>
-                  <span>레벨{fatigueInfo.level} ({fatigueInfo.label})</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="h-2 rounded-full transition-all duration-300"
-                    style={{ 
-                      width: `${route.fatigueLevel || 50}%`,
-                      backgroundColor: fatigueInfo.color
-                    }}
-                  />
-                </div>
-              </>
-            );
-          })()}
-        </div>
-      </div>
-      
-      {/* 액션 버튼들 */}
-      <div className="flex items-center gap-2">
-        {/* 편집 버튼 (즐겨찾기 경로인 경우에만 표시) */}
-        {showEditButton && onEdit && (
+          {/* 선택 버튼 */}
           <Button
-            onClick={handleEdit}
-            variant="secondary"
+            onClick={(e) => {
+              e.stopPropagation(); // 이벤트 버블링 방지
+              handleSelect();
+            }}
+            variant="primary"
             size="sm"
-            className="px-3 py-2"
-            aria-label={`${route.name} 편집`}
+            className="px-4 py-2"
+            aria-label={`${route.name} 노선 ${actionLabel}`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
+            {actionLabel}
           </Button>
-        )}
-
-        {/* 선택 버튼 */}
-        <Button
-          onClick={(e) => {
-            e.stopPropagation(); // 이벤트 버블링 방지
-            handleSelect();
-          }}
-          variant="primary"
-          size="sm"
-          className="px-4 py-2"
-          aria-label={`${route.name} 노선 ${actionLabel}`}
-        >
-          {actionLabel}
-        </Button>
+        </div>
       </div>
+
+      {/* 즐겨찾기 해제 확인 다이얼로그 */}
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title="즐겨찾기 해제"
+        message="즐겨찾기를 해제하시겠습니까?"
+        confirmText="예"
+        cancelText="아니오"
+        onConfirm={handleConfirmRemove}
+        onCancel={handleCancelRemove}
+      />
     </div>
   );
 });

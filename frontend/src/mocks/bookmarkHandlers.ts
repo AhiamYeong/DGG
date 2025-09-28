@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
-const API_BASE_URL = 'https://j13a305.p.ssafy.io/api';
+const API_BASE_URL = 'http://localhost:8080/api';
 
 // 경로 북마크 목록 (메모리 기반)
 let mockRouteBookmarks = [

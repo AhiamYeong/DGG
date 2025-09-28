@@ -199,7 +199,6 @@ export class RouteService {
         id: route.routeKey || `route-${index}`, // routeKey를 id로 사용
         name: route.name || `경로 ${index + 1}`,
         totalDuration: route.timeTaken || 0,
-        totalDistance: 0, // API에서 거리 정보가 없으므로 0으로 설정
         departureTime,
         arrivalTime,
         from: { 
@@ -219,7 +218,6 @@ export class RouteService {
         description: `${route.name || `경로 ${index + 1}`} - ${route.timeTaken || 0}분 소요, 피로도 레벨${fatigueInfo.level} (${fatigueInfo.label})`,
         isBookmarked: false,
         fatigueLevel: route.fatigue,
-        price: 0, // API에서 가격 정보가 없으므로 0으로 설정
         createdAt: new Date(),
         updatedAt: new Date(),
         // routeKey 저장 (안내시작 시 사용)
@@ -318,7 +316,15 @@ export class RouteService {
       return [];
     }
 
-    return detailData.data.map((step: any, index: number) => {
+    // 0분인 도보 단계는 제외 (수도권 도보 노드 포함)
+    const filteredData = detailData.data.filter((step: any) => {
+      if (step.type === 'WALKING' && step.timeTaken === 0) {
+        return false;
+      }
+      return true;
+    });
+
+    return filteredData.map((step: any, index: number) => {
       // 교통수단 타입 변환
       let type: string;
       switch (step.type) {

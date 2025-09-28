@@ -71,7 +71,7 @@
 
 ### API Base URL
 ```
-https://j13a305.p.ssafy.io/api/
+http://localhost:8080/api/
 ```
 
 ### 네이버 지도 API

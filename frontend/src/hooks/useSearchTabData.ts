@@ -1,12 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-import type { ApiResponse, RecentSearchApiResponse, FavoritePlaceApiResponse } from '@/types/api-types';
-import { recentSearchApi } from '@/api/searchHistoryApi';
+import type { FavoritePlaceApiResponse } from '@/types/api-types';
 import { favoritePlacesApi } from '@/api/favoritePlacesApi';
 
-type Tab = 'recent' | 'favorite';
-
-export function useSearchTabData(activeTab: Tab) {
-  const [items, setItems] = useState<RecentSearchApiResponse[] | FavoritePlaceApiResponse[]>([]);
+export function useSearchTabData() {
+  const [items, setItems] = useState<FavoritePlaceApiResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,12 +11,7 @@ export function useSearchTabData(activeTab: Tab) {
     setIsLoading(true);
     setError(null);
     try {
-      let res: ApiResponse<any>;
-      if (activeTab === 'recent') {
-        res = await recentSearchApi.getRecentSearches();
-      } else {
-        res = await favoritePlacesApi.getFavoritePlaces();
-      }
+      const res = await favoritePlacesApi.getFavoritePlaces();
       if (res.success) {
         setItems(res.data || []);
       } else {
@@ -30,7 +22,7 @@ export function useSearchTabData(activeTab: Tab) {
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab]);
+  }, []);
 
   useEffect(() => {
     fetchData();

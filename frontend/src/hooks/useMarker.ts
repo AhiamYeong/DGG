@@ -167,9 +167,11 @@ export function useMarker(map: NaverMapInstance | null) {
     return stationMarkers;
   }, [clearMarkers, createStationMarker]);
 
-  // 선택된 경로의 마커 생성
+  // 선택된 경로의 마커 생성 (출발, 환승, 도착역만)
   const createSelectedRouteMarkers = useCallback((route: SimpleRoute): NaverMarkerInstance[] => {
-    if (!route.rawData || !route.rawData.subPath) {
+    // rawData 또는 polylineData 중 하나라도 있으면 처리
+    const routeData = route.rawData || route.polylineData;
+    if (!routeData) {
       log.error('경로 데이터가 없습니다.');
       return [];
     }
@@ -180,27 +182,89 @@ export function useMarker(map: NaverMapInstance | null) {
     const stationMarkers: NaverMarkerInstance[] = [];
     const stationSet = new Set<string>(); // 중복 방지
 
-    // 모든 subPath에서 지하철역 정보 추출
-    route.rawData.subPath.forEach((subPath: SubPath) => {
-      if (subPath.trafficType === 1 && subPath.passStopList?.stations) { // 지하철
-        subPath.passStopList.stations.forEach((station: Station) => {
-          const stationKey = `${station.stationName}-${station.x}-${station.y}`;
+    // JSON 데이터 형식 처리 (data 배열의 각 단계)
+    if (routeData.data && Array.isArray(routeData.data)) {
+      routeData.data.forEach((step: any, index: number) => {
+        // 출발역 (첫 번째 지하철 구간에서 seq: 1인 역)
+        if (step.type === 'SUBWAY' && step.path && Array.isArray(step.path)) {
+          const startStation = step.path.find((station: any) => station.seq === 1);
+          if (startStation && startStation.lat && startStation.lng && startStation.name) {
+            const stationKey = `${startStation.name}-${startStation.lat}-${startStation.lng}`;
+            if (!stationSet.has(stationKey)) {
+              stationSet.add(stationKey);
+              const marker = createStationMarker(
+                startStation.lat,
+                startStation.lng,
+                startStation.name
+              );
+              if (marker) {
+                stationMarkers.push(marker);
+              }
+            }
+          }
+        }
+        
+        // 환승역 (지하철 구간의 끝역이 다음 구간의 시작역인 경우)
+        if (step.type === 'SUBWAY' && step.endLat && step.endLng && step.endPoint) {
+          const stationKey = `${step.endPoint}-${step.endLat}-${step.endLng}`;
           if (!stationSet.has(stationKey)) {
             stationSet.add(stationKey);
             const marker = createStationMarker(
-              parseFloat(station.y),
-              parseFloat(station.x),
-              station.stationName
+              step.endLat,
+              step.endLng,
+              step.endPoint
             );
             if (marker) {
               stationMarkers.push(marker);
             }
           }
-        });
-      }
-    });
+        }
+      });
+    }
+    // 기존 rawData 형식 처리
+    else if (routeData.subPath && Array.isArray(routeData.subPath)) {
+      routeData.subPath.forEach((subPath: SubPath, index: number) => {
+        if (subPath.trafficType === 1 && subPath.passStopList?.stations) { // 지하철
+          const stations = subPath.passStopList.stations;
+          
+          // 출발역 (첫 번째 구간의 첫 번째 역)
+          if (index === 0 && stations.length > 0) {
+            const firstStation = stations[0];
+            const stationKey = `${firstStation.stationName}-${firstStation.x}-${firstStation.y}`;
+            if (!stationSet.has(stationKey)) {
+              stationSet.add(stationKey);
+              const marker = createStationMarker(
+                parseFloat(firstStation.y),
+                parseFloat(firstStation.x),
+                firstStation.stationName
+              );
+              if (marker) {
+                stationMarkers.push(marker);
+              }
+            }
+          }
+          
+          // 도착역 (마지막 구간의 마지막 역)
+          if (index === routeData.subPath.length - 1 && stations.length > 0) {
+            const lastStation = stations[stations.length - 1];
+            const stationKey = `${lastStation.stationName}-${lastStation.x}-${lastStation.y}`;
+            if (!stationSet.has(stationKey)) {
+              stationSet.add(stationKey);
+              const marker = createStationMarker(
+                parseFloat(lastStation.y),
+                parseFloat(lastStation.x),
+                lastStation.stationName
+              );
+              if (marker) {
+                stationMarkers.push(marker);
+              }
+            }
+          }
+        }
+      });
+    }
 
-    log.map('선택된 경로 마커 생성 완료', {
+    log.map('선택된 경로 마커 생성 완료 (출발/환승/도착역만)', {
       routeName: route.name,
       stationCount: stationMarkers.length
     });

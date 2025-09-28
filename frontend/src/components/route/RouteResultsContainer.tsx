@@ -1,17 +1,14 @@
 import React from 'react';
 import RouteList from './RouteList';
-import { Button, TabButton } from '@/components/ui';
-import { formatTime } from '@/utils/timeUtils';
+import { Button } from '@/components/ui';
 import type { SimpleRoute } from '@/types/route-types';
 
 interface RouteResultsContainerProps {
   isOpen: boolean;
   routes: SimpleRoute[];
   actionLabel: string;
-  selectedDepartureOption: 'now' | 'schedule';
   onSelectRoute: (route: SimpleRoute) => Promise<void>;
   onToggleBookmark?: (id: string) => void;
-  onDepartureOptionChange?: (option: 'now' | 'schedule') => void;
   onClose?: () => void;
   currentOrigin?: string;
   currentDestination?: string;
@@ -19,17 +16,14 @@ interface RouteResultsContainerProps {
 
 /**
  * 경로 검색 결과 컨테이너 컴포넌트
- * - 출발 옵션 탭 (지금 출발하기 / 출발예약)
  * - 경로 목록 (RouteList 컴포넌트 사용)
  */
 export const RouteResultsContainer: React.FC<RouteResultsContainerProps> = ({
   isOpen,
   routes,
   actionLabel,
-  selectedDepartureOption,
   onSelectRoute,
   onToggleBookmark,
-  onDepartureOptionChange,
   onClose
 }) => {
   if (!isOpen) return null;
@@ -38,34 +32,8 @@ export const RouteResultsContainer: React.FC<RouteResultsContainerProps> = ({
     <div className="absolute top-24 bottom-0 left-0 right-0 pointer-events-auto z-[9999] bg-white">
 
 
-      {/* 출발 옵션 탭 */}
-      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-white">
-        <div className="flex items-center justify-center gap-4 flex-1">
-          <TabButton
-            isActive={selectedDepartureOption === 'now'}
-            onClick={() => onDepartureOptionChange?.('now')}
-          >
-            <span className="text-sm font-medium">지금 출발하기</span>
-          </TabButton>
-
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12,6 12,12 16,14"/>
-            </svg>
-          </div>
-
-          <TabButton
-            isActive={selectedDepartureOption === 'schedule'}
-            onClick={() => onDepartureOptionChange?.('schedule')}
-          >
-            <span className="text-sm font-medium">
-              출발예약 {formatTime(new Date())}
-            </span>
-          </TabButton>
-        </div>
-        
-        {/* X 버튼 */}
+      {/* 닫기 버튼 */}
+      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-end bg-white">
         {onClose && (
           <Button
             onClick={onClose}
@@ -80,13 +48,21 @@ export const RouteResultsContainer: React.FC<RouteResultsContainerProps> = ({
       </div>
       
       {/* 경로 목록 */}
-      <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+      <div 
+        className="flex-1 overflow-y-auto scrollbar-hide" 
+        style={{ 
+          maxHeight: 'calc(100vh - 200px)',
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none', // IE/Edge
+        }}
+      >
         {routes.length > 0 ? (
           <RouteList
             routes={routes}
             onSelectRoute={onSelectRoute}
             onToggleBookmark={onToggleBookmark}
             actionLabel={actionLabel}
+            cardType="navigation" // 경로 안내용 상세 카드 사용
           />
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">

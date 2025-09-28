@@ -40,8 +40,10 @@ interface RouteSearchActions {
   startRouteSearch: (
     origin: PlaceInfo,
     destination: PlaceInfo,
-    waypoints?: PlaceInfo[]
+    waypoints?: PlaceInfo[],
+    departureTime?: string
   ) => void;
+  executeRouteSearch: (departureTime: string) => Promise<void>;
   confirmTimeSelection: () => Promise<void>;
   cancelTimeSelection: () => void;
   closeRouteResults: () => void;
@@ -95,9 +97,10 @@ export const useRouteSearchStore = create<
       startRouteSearch: (
         origin: PlaceInfo,
         destination: PlaceInfo,
-        waypoints?: PlaceInfo[]
+        waypoints?: PlaceInfo[],
+        departureTime?: string
       ) => {
-        log.route("길찾기 요청", { origin, destination, waypoints });
+        log.route("길찾기 요청", { origin, destination, waypoints, departureTime });
 
         // 현재 검색 중인 출발지/도착지 저장 (통합된 주소 정보)
         set({
@@ -113,11 +116,63 @@ export const useRouteSearchStore = create<
           waypoints?.map((wp) => wp.name)
         );
 
-        // 출발 옵션 탭 표시 (경로 결과 페이지)
-        set({
-          showDepartureOptions: true,
-          routeResults: [], // 초기에는 빈 배열
-        });
+        // 시간이 제공된 경우 즉시 경로 검색 실행
+        if (departureTime) {
+          get().executeRouteSearch(departureTime);
+        } else {
+          // 출발 옵션 탭 표시 (경로 결과 페이지)
+          set({
+            showDepartureOptions: true,
+            routeResults: [], // 초기에는 빈 배열
+          });
+        }
+      },
+
+      // 경로 검색 실행 (시간 포함)
+      executeRouteSearch: async (departureTime: string) => {
+        const {
+          currentOrigin,
+          currentDestination,
+          currentWaypoints,
+        } = get();
+
+        try {
+          // 현재 검색 중인 출발지/도착지 사용
+          if (!currentOrigin || !currentDestination) {
+            log.error("출발지 또는 도착지가 설정되지 않았습니다");
+            return;
+          }
+
+          // API 호출시에는 도로명 주소를 사용
+          const apiOrigin = currentOrigin.address;
+          const apiDestination = currentDestination.address;
+          const apiWaypoints = currentWaypoints?.map((wp) => wp.address);
+
+          // RouteService를 통한 실제 API 호출
+          const { RouteService } = await import("../api/routeService");
+          const result = await RouteService.executeRouteSearchFlow(
+            apiOrigin,
+            apiDestination,
+            new Date(departureTime),
+            "now", // 현재 시간으로 고정
+            apiWaypoints,
+            currentOrigin.name, // 지명 (표시용)
+            currentDestination.name // 지명 (표시용)
+          );
+
+          log.route("API 호출 결과", result);
+
+          set({
+            routeResults: result.routes,
+            actionLabel: result.actionLabel,
+            showTimePicker: false,
+            showDepartureOptions: true,
+          });
+        } catch (error) {
+          log.error("경로 검색 실패", error);
+          // API 실패시 전역 상태 초기화
+          get().reset();
+        }
       },
 
       // 시간 선택 확인
@@ -208,19 +263,20 @@ export const useRouteSearchStore = create<
         log.route("경로 선택 (안내시작)", route);
 
         try {
-          // routeKey가 있는지 확인
-          if (!route.routeKey) {
-            throw new Error("경로 키가 없습니다. 다시 검색해주세요.");
-          }
-
-          // RouteService를 사용하여 2단계 API 호출
-          const { RouteService } = await import("../api/routeService");
-          const routeDetail = await RouteService.startNavigation(
-            route.routeKey
+          // RouteDetailService를 사용하여 JSON 데이터 로드
+          const { RouteDetailService } = await import("../api/routeDetailService");
+          const routeDetail = await RouteDetailService.loadRouteDetail(route.recommendationType);
+          
+          // 상세 경로 데이터를 SimpleRoute로 변환
+          const detailedRoute = RouteDetailService.convertToSimpleRoute(
+            routeDetail,
+            route.recommendationType,
+            route.from.name || '출발지',
+            route.to.name || '도착지'
           );
 
           // 상세 경로 데이터를 steps로 변환
-          const steps = RouteService.convertDetailDataToSteps(routeDetail);
+          const steps = detailedRoute.steps;
 
           // route 객체에 상세 정보 업데이트
           const updatedRoute: SimpleRoute = {
@@ -334,15 +390,33 @@ export const useRouteSearchStore = create<
       // 즐겨찾기 제거 (API 연동) - bookmarkId 매핑 필요시 목록 갱신으로 대체
       removeBookmarkForRoute: async (routeId: string) => {
         try {
-          const { routeResults } = get();
-          const target = routeResults.find((r) => r.id === routeId);
+          const { routeResults, routeBookmarks } = get();
+          
+          // routeResults에서 먼저 찾기
+          let target = routeResults.find((r) => r.id === routeId);
+          
+          // routeResults에서 찾지 못했으면 routeBookmarks에서 찾기
+          if (!target && routeBookmarks) {
+            const bookmarkRouteId = routeId.replace('bookmark-', '');
+            const bookmark = routeBookmarks.find((b) => b.bookmarkRouteId === parseInt(bookmarkRouteId));
+            if (bookmark) {
+              // bookmarkRouteId만 추출하여 사용
+              target = {
+                id: routeId,
+                bookmarkRouteId: bookmark.bookmarkRouteId
+              } as any; // 타입 에러 방지를 위해 any 사용
+            }
+          }
+          
           if (!target || !target.bookmarkRouteId) {
             // 매핑이 없으면 목록을 갱신만
             await get().fetchBookmarks();
             return;
           }
+          
           const { favoriteRoutesApi } = await import("../api/favoriteRoutes");
           await favoriteRoutesApi.deleteRouteBookmark(target.bookmarkRouteId);
+          
           // 성공 시 로컬 상태 반영
           set({
             routeResults: routeResults.map((r) =>
@@ -354,6 +428,7 @@ export const useRouteSearchStore = create<
           // 목록도 최신화
           await get().fetchBookmarks();
         } catch (e) {
+          console.error('[useRouteSearchStore] 즐겨찾기 제거 실패', e);
           log.error("즐겨찾기 제거 실패", e);
           alert("즐겨찾기 해제에 실패했습니다.");
         }
@@ -362,13 +437,10 @@ export const useRouteSearchStore = create<
       // 즐겨찾기 목록 조회
       fetchBookmarks: async () => {
         try {
-          console.log("useRouteSearchStore: fetchBookmarks 시작");
           const { favoriteRoutesApi } = await import("../api/favoriteRoutes");
           const list = await favoriteRoutesApi.getRouteBookmarks();
-          console.log("useRouteSearchStore: fetchBookmarks 성공", list);
           set({ routeBookmarks: list });
         } catch (e) {
-          console.error("useRouteSearchStore: fetchBookmarks 실패", e);
           log.error("즐겨찾기 목록 조회 실패", e);
         }
       },

@@ -6,7 +6,7 @@
 import { AlarmCreateProps, AlarmProps, AlarmUpdateProps } from "@/api/alarmApi";
 import { http, HttpResponse } from "msw";
 
-const API_BASE_URL = "https://j13a305.p.ssafy.io/api/v1";
+const API_BASE_URL = "http://localhost:8080/api/v1";
 
 // let으로 선언해야 변경 가능
 let MockAlarms: AlarmProps[] = [

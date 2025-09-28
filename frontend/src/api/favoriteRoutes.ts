@@ -28,7 +28,7 @@ export interface AddPostNavigationBookmarkRequest {
 }
 
 // 다른 API 파일들과 동일한 베이스 URL 사용
-const API_BASE_URL = "https://j13a305.p.ssafy.io/api/";
+const API_BASE_URL = "http://localhost:8080/api/";
 const api = createApiClient(API_BASE_URL);
 const BASE = "/v1/bookmarks/routes";
 
