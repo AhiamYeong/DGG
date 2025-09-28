@@ -263,17 +263,17 @@ export function usePolyline(map: NaverMapInstance | null) {
 
           if (step.type === 'SUBWAY') {
             strokeColor = SUBWAY_LINE_COLORS[step.lineName as keyof typeof SUBWAY_LINE_COLORS] || SUBWAY_LINE_COLORS['기타'];
-            strokeWeight = 6;
+            strokeWeight = 8; // 더 두껍게
             strokeStyle = 'solid';
             console.log(`지하철 색상: ${strokeColor} (${step.lineName})`);
           } else if (step.type === 'BUS') {
             strokeColor = POLYLINE_STYLES.BUS.strokeColor;
-            strokeWeight = 5;
+            strokeWeight = 6; // 더 두껍게
             strokeStyle = 'solid';
             console.log(`버스 색상: ${strokeColor}`);
           } else if (step.type === 'WALKING') {
             strokeColor = POLYLINE_STYLES.WALK.strokeColor;
-            strokeWeight = 3;
+            strokeWeight = 4; // 더 두껍게
             strokeStyle = 'shortdash';
             console.log(`도보 색상: ${strokeColor}`);
           }
@@ -332,6 +332,38 @@ export function usePolyline(map: NaverMapInstance | null) {
       console.log('=== JSON 폴리라인 그리기 완료 ===');
       console.log('생성된 폴리라인 개수:', newPolylines.length);
       console.log('polylinesRef.current:', polylinesRef.current);
+      
+      // 폴리라인이 생성되었으면 지도를 폴리라인에 맞게 조정
+      if (newPolylines.length > 0) {
+        console.log('🗺️ 지도 조정 시작');
+        
+        // 모든 폴리라인의 좌표를 수집
+        const allCoordinates: any[] = [];
+        newPolylines.forEach((polyline, index) => {
+          // polyline 객체에서 path 정보 추출 (타입 안전하게)
+          const path = (polyline as any).getPath ? (polyline as any).getPath() : [];
+          console.log(`폴리라인 ${index + 1} 좌표 개수:`, path.length);
+          if (Array.isArray(path)) {
+            allCoordinates.push(...path);
+          }
+        });
+        
+        console.log('전체 좌표 개수:', allCoordinates.length);
+        
+        if (allCoordinates.length > 0) {
+          // 경계 상자 계산 (타입 안전하게)
+          const bounds = new (naver.maps as any).LatLngBounds();
+          allCoordinates.forEach(coord => {
+            bounds.extend(coord);
+          });
+          
+          console.log('경계 상자:', bounds);
+          
+          // 지도를 폴리라인에 맞게 조정 (타입 안전하게)
+          (map as any).fitBounds(bounds, { padding: 50 });
+          console.log('✅ 지도 조정 완료');
+        }
+      }
       
       log.map('JSON 폴리라인 그리기 완료', {
         polylines: newPolylines.length
