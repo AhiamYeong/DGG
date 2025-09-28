@@ -86,18 +86,45 @@ export const alarmHandlers = [
     const { id } = params;
     const body = (await request.json()) as AlarmUpdateProps;
 
-    // Mock 데이터 업데이트
-    MockAlarms = MockAlarms.map((alarm) =>
-      alarm.alarmId === Number(id)
-        ? {
-            ...alarm,
-            eventTitle: body.eventTitle ?? alarm.eventTitle,
-            offsetMinutes: body.offsetMinutesList[0] ?? alarm.offsetMinutes,
-          }
-        : alarm
+    // 1. 수정 대상 원본 알람을 찾아 eventId와 위치(index)를 확보합니다.
+    const originalAlarm = MockAlarms.find(
+      (alarm) => alarm.alarmId === Number(id)
+    );
+    if (!originalAlarm) {
+      return new HttpResponse("Alarm not found", { status: 404 });
+    }
+    const eventIdToUpdate = originalAlarm.eventId;
+    const insertionIndex = MockAlarms.findIndex(
+      (alarm) => alarm.eventId === eventIdToUpdate
     );
 
-    // 전체 리스트 반환
+    // 2. 수정과 관련 없는 기존 알람들만 남깁니다. (순서 유지)
+    const unaffectedAlarms = MockAlarms.filter(
+      (alarm) => alarm.eventId !== eventIdToUpdate
+    );
+
+    // 3. 요청 본문을 기반으로 새 알람들을 생성합니다.
+    const updatedAlarms = body.offsetMinutesList.map((offset, idx) => {
+      const newId =
+        (MockAlarms.length > 0
+          ? Math.max(...MockAlarms.map((a) => a.alarmId))
+          : 0) +
+        1 +
+        idx;
+      return {
+        ...originalAlarm,
+        alarmId: newId,
+        eventId: eventIdToUpdate,
+        eventTitle: body.eventTitle,
+        offsetMinutes: offset,
+        title: `${offset}분 전 알림`,
+      };
+    });
+
+    // 4. 원래 위치에 수정된 알람들을 삽입하여 최종 목록을 만듭니다.
+    unaffectedAlarms.splice(insertionIndex, 0, ...updatedAlarms);
+    MockAlarms = unaffectedAlarms;
+
     return HttpResponse.json(MockAlarms, { status: 200 });
   }),
 
