@@ -22,28 +22,7 @@ export function formatDuration(minutes: number): string {
   return `${hours}시간 ${remainingMinutes}분`;
 }
 
-/**
- * 거리를 포맷팅하는 함수
- * @param meters 미터 단위 거리
- * @returns 포맷된 거리 문자열
- */
-export function formatDistance(meters: number): string {
-  if (meters < 1000) {
-    return `${meters}m`;
-  }
 
-  const kilometers = meters / 1000;
-  return `${kilometers.toFixed(1)}km`;
-}
-
-/**
- * 가격을 포맷팅하는 함수
- * @param price 가격
- * @returns 포맷된 가격 문자열
- */
-export function formatPrice(price: number): string {
-  return `${price.toLocaleString()}원`;
-}
 
 /**
  * 날짜를 포맷팅하는 함수

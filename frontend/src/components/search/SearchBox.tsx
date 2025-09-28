@@ -6,14 +6,10 @@ import { ROUTE_CONSTANTS } from '../../constants';
 import type { PlaceInfo } from '../../types/route-types';
 
 interface SearchBoxProps {
-  onSearch: (origin: PlaceInfo, destination: PlaceInfo, waypoints?: PlaceInfo[]) => void;
-  onDepartureOptionChange?: (option: 'now' | 'schedule') => void;
-  selectedDepartureOption?: 'now' | 'schedule';
-  showDepartureOptions?: boolean;
-  onCloseDepartureOptions?: () => void;
+  onSearch: (origin: PlaceInfo, destination: PlaceInfo, waypoints?: PlaceInfo[], departureTime?: string) => void;
 }
 
-export default function SearchBox({ onSearch, onDepartureOptionChange, selectedDepartureOption = 'now', showDepartureOptions = false, onCloseDepartureOptions }: SearchBoxProps) {
+export default function SearchBox({ onSearch }: SearchBoxProps) {
   const {
     origin,
     destination,
@@ -51,14 +47,13 @@ export default function SearchBox({ onSearch, onDepartureOptionChange, selectedD
         }))
         .filter(wp => wp.name);
       
+      // 현재 시간을 ISO 문자열로 추가
+      const currentTime = new Date().toISOString();
       
-      onSearch(originInfo, destinationInfo, waypointInfos);
+      onSearch(originInfo, destinationInfo, waypointInfos, currentTime);
     }
   };
 
-  const handleDepartureOptionChange = (option: 'now' | 'schedule') => {
-    onDepartureOptionChange?.(option);
-  };
 
   return (
     <div className="w-full bg-white shadow-lg">
@@ -139,60 +134,6 @@ export default function SearchBox({ onSearch, onDepartureOptionChange, selectedD
           </div>
         </div>
 
-        {/* 출발 옵션 탭 - 검색 버튼을 누른 후에만 표시 */}
-        {showDepartureOptions && (
-          <div className="mt-4 flex items-center justify-center gap-4">
-            <button
-              type="button"
-              onClick={() => handleDepartureOptionChange('now')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                selectedDepartureOption === 'now'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              <span className="text-sm font-medium">지금 출발하기</span>
-            </button>
-
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12,6 12,12 16,14"/>
-              </svg>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => handleDepartureOptionChange('schedule')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                selectedDepartureOption === 'schedule'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              <span className="text-sm font-medium">
-                출발예약 {new Date().toLocaleTimeString('ko-KR', { 
-                  hour: '2-digit', 
-                  minute: '2-digit',
-                  hour12: true 
-                })}
-              </span>
-            </button>
-
-            {/* X 버튼 */}
-            {onCloseDepartureOptions && (
-              <Button
-                onClick={onCloseDepartureOptions}
-                className="text-gray-500 hover:text-gray-700 p-2"
-                aria-label="닫기"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </Button>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

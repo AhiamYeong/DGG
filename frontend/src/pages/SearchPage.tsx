@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { RecentSearchList, FavoritePlacesList, SearchResultsList } from '../components/search';
+import { FavoritePlacesList, SearchResultsList } from '../components/search';
 import { ErrorState, LoadingState, EmptyState } from '../components/ui';
 import { useSearchTabData } from '@/hooks/useSearchTabData';
 import { useFavoritePlaceActions } from '@/hooks/useFavoritePlaceActions';
@@ -15,7 +15,6 @@ import { log } from '../utils/logger';
 export default function SearchPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<'recent' | 'favorite'>('recent');
   
   // URL에서 검색 타입과 현재 값 가져오기
   const searchType = location.state?.searchType || 'origin';
@@ -25,8 +24,8 @@ export default function SearchPage() {
   // SearchStore에서 상태와 액션 가져오기
   const { waypoints, setOrigin, setDestination, updateWaypoint } = useSearchStore();
   
-  // 탭 기반 데이터 로딩 훅 사용
-  const { items, isLoading: historyLoading, error: historyError, refetch } = useSearchTabData(activeTab);
+  // 즐겨찾기 데이터 로딩 훅 사용
+  const { items, isLoading: historyLoading, error: historyError, refetch } = useSearchTabData();
   const { deleteFavoritePlace } = useFavoritePlaceActions(refetch);
 
   // 검색 상태 (placeSearchApi 기반)
@@ -48,6 +47,11 @@ export default function SearchPage() {
         setSearchLoading(true);
         setSearchError(null);
         const response = await searchPlaces(query, { display: 10 });
+        
+        if (!response || !response.items) {
+          throw new Error('검색 결과 데이터가 올바르지 않습니다.');
+        }
+        
         const mapped = response.items.map((item, idx) => ({
           id: `${removeBTags(item.title)}-${idx}`,
           name: removeBTags(item.title),
@@ -105,11 +109,6 @@ export default function SearchPage() {
     setQuery(e.target.value);
   }, []);
 
-  // 탭 변경 핸들러
-  const handleTabChange = useCallback((tab: 'recent' | 'favorite') => {
-    setActiveTab(tab);
-  }, []);
-
   // 위치 선택 핸들러
   const handleLocationSelect = useCallback((item: { id: string; name: string; address: string }) => {
     log.search('선택된 위치', searchType, item);
@@ -136,15 +135,6 @@ export default function SearchPage() {
     log.search('위치 설정 완료', `${item.name}이(가) ${searchType === 'origin' ? '출발지' : searchType === 'destination' ? '도착지' : '경유지'}로 설정되었습니다.`);
   }, [navigate, searchType, waypointIndex, waypoints, setOrigin, setDestination, updateWaypoint]);
 
-  // 최근 검색 삭제 핸들러
-  const handleDeleteRecent = useCallback(async (_id: string) => {
-    // 삭제 훅/API 연동 필요 시 구현
-  }, []);
-
-  // 즐겨찾기 토글 핸들러
-  const handleToggleFavorite = useCallback(async (_id: string) => {
-    // 즐겨찾기 토글 훅/API 연동 필요 시 구현
-  }, []);
 
 
   return (
@@ -240,33 +230,10 @@ export default function SearchPage() {
       ) : (
         // 탭 네비게이션과 내용
         <>
-          {/* 탭 네비게이션 */}
+          {/* 즐겨찾기 장소 헤더 */}
           <div className="bg-background border-b border-gray-200">
-            <div className="flex">
-              <button
-                onClick={() => handleTabChange('recent')}
-                className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-                  activeTab === 'recent'
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-                aria-selected={activeTab === 'recent'}
-                role="tab"
-              >
-                최근 내역
-              </button>
-              <button
-                onClick={() => handleTabChange('favorite')}
-                className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-                  activeTab === 'favorite'
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-                aria-selected={activeTab === 'favorite'}
-                role="tab"
-              >
-                즐겨찾는 장소
-              </button>
+            <div className="px-4 py-3">
+              <h2 className="text-lg font-semibold text-font">즐겨찾는 장소</h2>
             </div>
           </div>
 
@@ -279,33 +246,6 @@ export default function SearchPage() {
               ) : historyError ? (
                 /* 에러 상태 */
                 <ErrorState error={historyError} onRetry={refetch} />
-              ) : activeTab === 'recent' ? (
-                /* 최근 검색 내역 */
-                items.length === 0 ? (
-                  <EmptyState
-                    title="최근 검색 내역이 없습니다"
-                    description="검색한 장소가 여기에 표시됩니다"
-                    icon="history"
-                  />
-                ) : (
-                  <RecentSearchList
-                    items={Array.isArray(items) ? items
-                      .filter((item): item is import('@/types/api-types').RecentSearchApiResponse => 'query' in item)
-                      .map(item => ({
-                        id: item.id,
-                        name: item.query,
-                        address: '',
-                        timestamp: new Date(item.timestamp)
-                      })) : []}
-                    onSelect={(item) => handleLocationSelect({
-                      id: item.id,
-                      name: item.name,
-                      address: item.address
-                    })}
-                    onDelete={handleDeleteRecent}
-                    onToggleFavorite={handleToggleFavorite}
-                  />
-                )
               ) : (
                 /* 즐겨찾기 장소 */
                 items.length === 0 ? (

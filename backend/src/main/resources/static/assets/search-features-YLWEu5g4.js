@@ -1,0 +1,2 @@
+import"./react-vendor-Dh2C6iKY.js";import{c as t}from"./map-features-CGBGKqGd.js";const e="http://localhost:8080/api/",c=t(e),n=async(r,a={})=>{const s={query:r.trim(),...a.display&&{display:a.display},...a.start&&{start:a.start},...a.sort&&{sort:a.sort}};return(await c.get("/v1/search/places",{params:s})).data},i=r=>r.replace(/<\/?b>/g,"");export{i as r,n as s};
+//# sourceMappingURL=search-features-YLWEu5g4.js.map

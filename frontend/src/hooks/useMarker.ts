@@ -169,7 +169,9 @@ export function useMarker(map: NaverMapInstance | null) {
 
   // 선택된 경로의 마커 생성
   const createSelectedRouteMarkers = useCallback((route: SimpleRoute): NaverMarkerInstance[] => {
-    if (!route.rawData || !route.rawData.subPath) {
+    // rawData 또는 polylineData 중 하나라도 있으면 처리
+    const routeData = route.rawData || route.polylineData;
+    if (!routeData) {
       log.error('경로 데이터가 없습니다.');
       return [];
     }
@@ -180,25 +182,51 @@ export function useMarker(map: NaverMapInstance | null) {
     const stationMarkers: NaverMarkerInstance[] = [];
     const stationSet = new Set<string>(); // 중복 방지
 
-    // 모든 subPath에서 지하철역 정보 추출
-    route.rawData.subPath.forEach((subPath: SubPath) => {
-      if (subPath.trafficType === 1 && subPath.passStopList?.stations) { // 지하철
-        subPath.passStopList.stations.forEach((station: Station) => {
-          const stationKey = `${station.stationName}-${station.x}-${station.y}`;
-          if (!stationSet.has(stationKey)) {
-            stationSet.add(stationKey);
-            const marker = createStationMarker(
-              parseFloat(station.y),
-              parseFloat(station.x),
-              station.stationName
-            );
-            if (marker) {
-              stationMarkers.push(marker);
+    // JSON 데이터 형식 처리 (data 배열의 각 단계)
+    if (routeData.data && Array.isArray(routeData.data)) {
+      routeData.data.forEach((step: any) => {
+        // 지하철 구간에서 역 정보 추출
+        if (step.type === 'SUBWAY' && step.path && Array.isArray(step.path)) {
+          step.path.forEach((station: any) => {
+            if (station.lat && station.lng && station.name) {
+              const stationKey = `${station.name}-${station.lat}-${station.lng}`;
+              if (!stationSet.has(stationKey)) {
+                stationSet.add(stationKey);
+                const marker = createStationMarker(
+                  station.lat,
+                  station.lng,
+                  station.name
+                );
+                if (marker) {
+                  stationMarkers.push(marker);
+                }
+              }
             }
-          }
-        });
-      }
-    });
+          });
+        }
+      });
+    }
+    // 기존 rawData 형식 처리
+    else if (routeData.subPath && Array.isArray(routeData.subPath)) {
+      routeData.subPath.forEach((subPath: SubPath) => {
+        if (subPath.trafficType === 1 && subPath.passStopList?.stations) { // 지하철
+          subPath.passStopList.stations.forEach((station: Station) => {
+            const stationKey = `${station.stationName}-${station.x}-${station.y}`;
+            if (!stationSet.has(stationKey)) {
+              stationSet.add(stationKey);
+              const marker = createStationMarker(
+                parseFloat(station.y),
+                parseFloat(station.x),
+                station.stationName
+              );
+              if (marker) {
+                stationMarkers.push(marker);
+              }
+            }
+          });
+        }
+      });
+    }
 
     log.map('선택된 경로 마커 생성 완료', {
       routeName: route.name,

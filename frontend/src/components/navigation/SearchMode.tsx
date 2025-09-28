@@ -7,20 +7,13 @@ import type { SimpleRoute, PlaceInfo } from '../../types/route-types';
 
 interface SearchModeProps {
   // 검색 관련 props
-  onSearch: (origin: PlaceInfo, destination: PlaceInfo, waypoints?: PlaceInfo[]) => void;
-  onDepartureOptionChange: (option: 'now' | 'schedule') => void;
-  selectedDepartureOption: 'now' | 'schedule';
-  showDepartureOptions: boolean;
-  onCloseDepartureOptions: () => void;
+  onSearch: (origin: PlaceInfo, destination: PlaceInfo, waypoints?: PlaceInfo[], departureTime?: string) => void;
   
   // 경로 결과 관련 props
   routeResults: SimpleRoute[];
   actionLabel: string;
   onSelectRoute: (route: SimpleRoute) => Promise<void>;
   onCloseRouteResults: () => void;
-  
-  // 시간 선택 관련 props
-  showTimePicker: boolean;
   
   // 지도 컨트롤 관련 props
   onLocationClick: () => void;
@@ -37,15 +30,10 @@ interface SearchModeProps {
  */
 export const SearchMode = memo<SearchModeProps>(({
   onSearch,
-  onDepartureOptionChange,
-  selectedDepartureOption,
-  showDepartureOptions,
-  onCloseDepartureOptions,
   routeResults,
   actionLabel,
   onSelectRoute,
   onCloseRouteResults,
-  showTimePicker,
   onLocationClick,
   currentOrigin,
   currentDestination
@@ -56,21 +44,15 @@ export const SearchMode = memo<SearchModeProps>(({
       <div className="absolute top-0 left-0 w-full pointer-events-auto">
         <SearchBox 
           onSearch={onSearch}
-          onDepartureOptionChange={onDepartureOptionChange}
-          selectedDepartureOption={selectedDepartureOption}
-          showDepartureOptions={false}
-          onCloseDepartureOptions={onCloseDepartureOptions}
         />
       </div>
 
       {/* 경로 결과 컴포넌트 */}
       <RouteResultsContainer
-        isOpen={showDepartureOptions}
+        isOpen={routeResults.length > 0}
         routes={routeResults}
         actionLabel={actionLabel}
-        selectedDepartureOption={selectedDepartureOption}
         onSelectRoute={onSelectRoute}
-        onDepartureOptionChange={onDepartureOptionChange}
         onClose={onCloseRouteResults}
         currentOrigin={currentOrigin?.name}
         currentDestination={currentDestination?.name}
@@ -86,7 +68,7 @@ export const SearchMode = memo<SearchModeProps>(({
 
 
       {/* 하단 즐겨찾기 예약노선 바텀시트 - 처음 지도 화면에서만 표시 */}
-      {routeResults.length === 0 && !showTimePicker && !showDepartureOptions && (
+      {routeResults.length === 0 && (
         <div className="absolute bottom-0 left-0 w-full pointer-events-auto" style={{ zIndex: 20 }}>
           <FavoriteRoutesBottomSheet />
         </div>

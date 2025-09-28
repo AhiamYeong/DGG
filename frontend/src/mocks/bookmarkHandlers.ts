@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
-const API_BASE_URL = 'https://j13a305.p.ssafy.io/api';
+const API_BASE_URL = 'http://localhost:8080/api';
 
 // 경로 북마크 목록 (메모리 기반)
 let mockRouteBookmarks = [
@@ -424,9 +424,13 @@ export const bookmarkHandlers = [
   // 경로 즐겨찾기 삭제
   http.delete(`${API_BASE_URL}/v1/bookmarks/routes/:bookmarkRouteId`, ({ params }) => {
     const { bookmarkRouteId } = params;
+    console.log('[MSW] DELETE 요청 받음', { bookmarkRouteId, currentBookmarks: mockRouteBookmarks.length });
 
     const bookmarkIndex = mockRouteBookmarks.findIndex(bookmark => bookmark.bookmarkRouteId === parseInt(bookmarkRouteId as string));
+    console.log('[MSW] 찾은 bookmarkIndex:', bookmarkIndex);
+    
     if (bookmarkIndex === -1) {
+      console.log('[MSW] 북마크를 찾을 수 없음');
       return HttpResponse.json(
         { success: false, message: "즐겨찾기 경로를 찾을 수 없습니다." },
         { status: 404 }
@@ -434,6 +438,8 @@ export const bookmarkHandlers = [
     }
 
     const deletedBookmark = mockRouteBookmarks.splice(bookmarkIndex, 1)[0];
+    console.log('[MSW] 삭제된 북마크:', deletedBookmark);
+    console.log('[MSW] 삭제 후 남은 북마크 수:', mockRouteBookmarks.length);
 
     return HttpResponse.json({
       success: true,

@@ -1,44 +1,42 @@
 import { http, HttpResponse } from 'msw';
 
-const API_BASE_URL = 'https://j13a305.p.ssafy.io/api';
+const API_BASE_URL = 'http://localhost:8080/api';
 
 // 경로 검색 관련 핸들러
 export const routeHandlers = [
 
   // 경로 검색 API
   http.post(`${API_BASE_URL}/v1/maps/routes`, async ({ request }) => {
-    console.log('🎯 MSW: 경로 검색 API 인터셉트됨');
     const body = await request.json() as any;
-    console.log('경로 검색 요청:', body);
 
-    // 새로운 백엔드 API 형식에 맞는 응답
+    // 실제 백엔드 API 형식에 맞는 응답
     const mockApiResponse = {
-      departureAddress: "서울특별시 강남구 강남대로 396", // 도로명 주소 (API 응답 형식)
-      destinationAddress: "서울특별시 마포구 마포대로 100", // 도로명 주소 (API 응답 형식)
-      stopoverAddresses: body.waypoints && body.waypoints.length > 0 ? body.waypoints.slice(0, 2) : [],
-      departureTime: body.departureTime || "2025-12-12 18:00:00",
-      destinationTime: "2025-12-12 18:50:00", // 50분 후
+      departureAddress: "병점노을1로 14",
+      destinationAddress: "테헤란로 156",
+      stopoverAddresses: [],
+      departureTime: "2025-12-12 17:58:00",
+      destinationTime: "2025-12-12 19:07:00",
       recommendedRoutes: [
         {
-          routeKey: "mock-route-key-1",
+          routeKey: "c271385d8cbd80233b65025c",
           name: "최소 피로도",
-          timeTaken: 48,
-          arrivalTime: "2025-12-12 18:46:00",
-          fatigue: 40
-        },
-        {
-          routeKey: "mock-route-key-2",
-          name: "최소 시간",
-          timeTaken: 38,
-          arrivalTime: "2025-12-12 18:36:00",
-          fatigue: 90
-        },
-        {
-          routeKey: "mock-route-key-3",
-          name: "최소 환승",
-          timeTaken: 45,
-          arrivalTime: "2025-12-12 18:43:00",
+          timeTaken: 71,
+          arrivalTime: "2025-12-12 19:09:00",
           fatigue: 60
+        },
+        {
+          routeKey: "7018a2e1323db5222185dda0",
+          name: "최단 경로",
+          timeTaken: 69,
+          arrivalTime: "2025-12-12 19:07:00",
+          fatigue: 66
+        },
+        {
+          routeKey: "535c39375071cee1daeecb85",
+          name: "최소 환승",
+          timeTaken: 90,
+          arrivalTime: "2025-12-12 19:28:00",
+          fatigue: 65
         }
       ]
     };
@@ -49,7 +47,6 @@ export const routeHandlers = [
   // 경로 상세 정보 조회
   http.get(`${API_BASE_URL}/v1/maps/routes/:routeId`, ({ params }) => {
     const { routeId } = params;
-    console.log('🎯 MSW: 상세 경로 조회 API 인터셉트됨, routeId:', routeId);
     // 백엔드: RouteDetailDTO 반환
     const mockRouteDetail = {
       totalTime: 48, // int totalTime
@@ -185,7 +182,6 @@ export const routeHandlers = [
   // 경로 안내 시작
   http.post(`${API_BASE_URL}/v1/maps/routes/:routeKey/start`, ({ params }) => {
     const { routeKey } = params;
-    console.log('🎯 MSW: 안내시작 API 인터셉트됨, routeKey:', routeKey);
     // 백엔드: ResponseEntity<Long> 반환 (routeId)
     return HttpResponse.json(12345); // Long 타입의 routeId 반환
   })

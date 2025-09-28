@@ -20,28 +20,19 @@ export default function FavoriteRoutesBottomSheet() {
 
   // 컴포넌트 마운트 시 즐겨찾기 목록 로드
   useEffect(() => {
-    console.log('FavoriteRoutesBottomSheet: fetchBookmarks 호출');
     fetchBookmarks();
   }, [fetchBookmarks]);
 
-  // 즐겨찾기 목록 변경 시 로그
-  useEffect(() => {
-    console.log('FavoriteRoutesBottomSheet: routeBookmarks 변경됨', routeBookmarks);
-  }, [routeBookmarks]);
 
   // BookmarkRoute를 SimpleRoute로 변환
   const convertedRoutes = useMemo((): SimpleRoute[] => {
-    console.log('convertedRoutes 생성 중, routeBookmarks:', routeBookmarks);
-    
     return routeBookmarks.map((bookmark: BookmarkRoute): SimpleRoute => {
       const routeKey = `bookmark-${bookmark.bookmarkRouteId}`;
-      console.log('변환 중인 북마크:', bookmark, '생성된 routeKey:', routeKey);
       
       return {
         id: `bookmark-${bookmark.bookmarkRouteId}`,
         name: bookmark.name,
         totalDuration: 0, // API에서 가져올 예정
-        totalDistance: 0, // API에서 가져올 예정
         departureTime: { hour: 0, minute: 0 }, // 현재 시간으로 설정
         arrivalTime: { hour: 0, minute: 0 }, // API에서 계산
         from: {
@@ -60,8 +51,8 @@ export default function FavoriteRoutesBottomSheet() {
         recommendationType: 'minTime',
         description: `${bookmark.departureName} → ${bookmark.destinationName}`,
         isBookmarked: true,
+        bookmarkRouteId: bookmark.bookmarkRouteId, // 삭제 API 호출을 위해 추가
         fatigueLevel: 0, // API에서 가져올 예정
-        price: 0, // API에서 가져올 예정
         createdAt: new Date(),
         updatedAt: new Date(),
         routeKey: routeKey
@@ -114,6 +105,15 @@ export default function FavoriteRoutesBottomSheet() {
       console.error('즐겨찾기 이름 수정 실패:', error);
       throw error;
     }
+  };
+
+  // 즐겨찾기 토글 핸들러 (즐겨찾기 해제 후 리스트 새로고침)
+  const handleToggleBookmark = (id: string) => {
+    console.log('FavoriteRoutesBottomSheet: 즐겨찾기 토글', id);
+    // 즐겨찾기 해제 후 리스트 새로고침
+    setTimeout(() => {
+      fetchBookmarks();
+    }, 100); // 약간의 지연을 두어 상태 업데이트 후 새로고침
   };
 
   const {
@@ -180,7 +180,7 @@ export default function FavoriteRoutesBottomSheet() {
           <RouteList
             routes={convertedRoutes}
             onSelectRoute={selectBookmarkRoute}
-            onToggleBookmark={() => {}} // 즐겨찾기에서 즐겨찾기 토글은 불필요
+            onToggleBookmark={handleToggleBookmark}
             onEditRoute={handleEditRoute}
             actionLabel="선택"
             showEditButton={true}

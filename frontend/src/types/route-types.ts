@@ -32,11 +32,9 @@ export interface RouteStep extends BaseEntity {
 export interface Route extends BaseEntity {
   name: string;
   totalDuration: number; // 분 단위
-  totalDistance: number; // 미터 단위
   steps: RouteStep[];
   departureTime: TimeSlot;
   arrivalTime: TimeSlot;
-  price?: number;
   isFavorite?: boolean;
   isBookmarked?: boolean;
   from: Location;
@@ -124,10 +122,8 @@ export interface RouteHistory extends BaseEntity {
 export interface SimpleRoute extends BaseEntity {
   name: string;
   totalDuration: number; // 분 단위
-  totalDistance: number; // 미터 단위
   departureTime: TimeSlot;
   arrivalTime: TimeSlot;
-  price?: number;
   from: Location;
   to: Location;
   steps: RouteStep[];

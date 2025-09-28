@@ -24,7 +24,7 @@ const mockData = {
   ],
 };
 
-const API_BASE_URL = "https://j13a305.p.ssafy.io/api/v1";
+const API_BASE_URL = "http://localhost:8080/api/v1";
 
 export const mainPageHandler = [
   http.get(`${API_BASE_URL}/home`, () => {

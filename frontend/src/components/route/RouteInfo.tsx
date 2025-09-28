@@ -45,6 +45,7 @@ export const RouteInfo: React.FC<RouteInfoProps> = ({
                 {formatTime(route.departureTime)} ~ {formatTime(route.arrivalTime)}
               </span>
             </div>
+            
           </div>
         </div>
 

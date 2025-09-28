@@ -460,13 +460,75 @@ export const SideSheet: React.FC<SideSheetProps> = ({
                     <span className="text-sm font-medium text-gray-600">총 소요시간</span>
                     <span className="text-lg font-bold text-gray-900">{route.totalDuration || 0}분</span>
                   </div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-600">총 거리</span>
-                    <span className="text-lg font-bold text-gray-900">{((route.totalDistance || 0) / 1000).toFixed(1)}km</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">예상 요금</span>
-                    <span className="text-lg font-bold text-gray-900">{(route.price || 0).toLocaleString()}원</span>
+                </div>
+              </div>
+            )}
+
+            {/* 상세 경로 단계 (확장 상태일 때만 표시) */}
+            {showDetails && route.steps && route.steps.length > 0 && (
+              <div 
+                className="mt-6 transition-all duration-300 ease-out"
+                style={{
+                  opacity: showDetails ? 1 : 0,
+                  transform: showDetails ? 'translateY(0)' : 'translateY(10px)',
+                  willChange: 'opacity, transform'
+                }}
+              >
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">상세 경로</h3>
+                  <div className="space-y-2">
+                    {route.steps.map((step, index) => (
+                      <div key={step.id || `step-${index}`} className="flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200">
+                        {/* 단계 번호 */}
+                        <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                          {index + 1}
+                        </div>
+                        
+                        {/* 경로 정보 */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-medium text-gray-700">
+                              {step.type === 'walk' && '도보'}
+                              {step.type === 'subway' && '지하철'}
+                              {step.type === 'bus' && '버스'}
+                              {step.type === 'transfer' && '환승'}
+                            </span>
+                            {step.lineInfo && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                {step.lineInfo.name}
+                              </span>
+                            )}
+                            {step.duration && (
+                              <span className="text-xs text-gray-500">
+                                {step.duration}분
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="text-sm text-gray-600 mb-1">
+                            {step.description}
+                          </div>
+                          
+                          {/* 출발/도착 정보 */}
+                          {(step.from || step.to) && (
+                            <div className="text-xs text-gray-500 space-y-1">
+                              {step.from && (
+                                <div className="flex items-center gap-1">
+                                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                  <span>출발: {step.from.name}</span>
+                                </div>
+                              )}
+                              {step.to && (
+                                <div className="flex items-center gap-1">
+                                  <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                                  <span>도착: {step.to.name}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
