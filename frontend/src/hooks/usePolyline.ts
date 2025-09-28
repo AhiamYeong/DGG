@@ -225,7 +225,7 @@ export function usePolyline(map: NaverMapInstance | null) {
         
         // polyline 배열이 있는 경우 정밀한 폴리라인 생성 (최우선)
         if (step.polyline && Array.isArray(step.polyline) && step.polyline.length > 0) {
-          console.log(`정밀 폴리라인 생성: ${step.type} - ${step.lineName}`, step.polyline.length, '개 좌표');
+          console.log(`🔍 좌표 분석: ${step.type} - ${step.lineName}`, step.polyline.length, '개 좌표');
           
           // polyline 좌표를 직접 Naver LatLng로 변환
           path = step.polyline.map((coord: any) => {
@@ -236,10 +236,29 @@ export function usePolyline(map: NaverMapInstance | null) {
           }).filter(Boolean);
 
           console.log(`변환된 좌표 개수: ${path.length}`);
+          
+          // 🎯 좌표를 마커로 일일히 찍어서 확인
+          console.log(`📍 마커 생성 시작: ${path.length}개 좌표`);
+          path.forEach((coord: any, index: number) => {
+            if (index < 10 || index % 50 === 0) { // 처음 10개와 50개마다 마커 생성
+              const marker = new naver.maps.Marker({
+                position: coord,
+                map: map,
+                title: `${step.lineName} - 좌표 ${index + 1}`,
+                icon: {
+                  content: `<div style="background: red; color: white; padding: 2px 4px; border-radius: 50%; font-size: 10px;">${index + 1}</div>`,
+                  size: new naver.maps.Size(20, 20),
+                  anchor: new naver.maps.Point(10, 10)
+                }
+              });
+              newPolylines.push(marker as any); // 마커도 polylines 배열에 저장
+              console.log(`📍 마커 ${index + 1}: lat=${coord.lat()}, lng=${coord.lng()}`);
+            }
+          });
         }
         // path 배열이 있는 경우 역들을 연결하는 폴리라인 생성 (폴백)
         else if (step.path && Array.isArray(step.path) && step.path.length > 0) {
-          console.log(`역 연결 폴리라인 생성: ${step.type} - ${step.lineName}`, step.path.length, '개 역');
+          console.log(`🚉 역 연결 폴리라인 생성: ${step.type} - ${step.lineName}`, step.path.length, '개 역');
           
           // path 좌표를 Naver LatLng로 변환
           path = step.path.map((station: any) => {
@@ -250,12 +269,33 @@ export function usePolyline(map: NaverMapInstance | null) {
           }).filter(Boolean);
 
           console.log(`변환된 좌표 개수: ${path.length}`);
+          
+          // 🎯 역 좌표를 마커로 일일히 찍어서 확인
+          console.log(`🚉 역 마커 생성 시작: ${path.length}개 역`);
+          path.forEach((coord: any, index: number) => {
+            const marker = new naver.maps.Marker({
+              position: coord,
+              map: map,
+              title: `${step.lineName} - 역 ${index + 1}`,
+              icon: {
+                content: `<div style="background: blue; color: white; padding: 2px 4px; border-radius: 50%; font-size: 10px;">역${index + 1}</div>`,
+                size: new naver.maps.Size(20, 20),
+                anchor: new naver.maps.Point(10, 10)
+              }
+            });
+            newPolylines.push(marker as any); // 마커도 polylines 배열에 저장
+            console.log(`🚉 역 마커 ${index + 1}: lat=${coord.lat()}, lng=${coord.lng()}`);
+          });
         }
         
-        // 폴리라인 생성 (polyline 또는 path 데이터가 있는 경우)
+        // 🎯 폴리라인 생성 대신 마커만 표시 (좌표 확인용)
         if (path && path.length > 0) {
-          console.log(`✅ 폴리라인 생성 시작: ${path.length}개 좌표`);
+          console.log(`📍 좌표 확인 완료: ${path.length}개 좌표`);
+          console.log('첫 번째 좌표:', path[0]);
+          console.log('마지막 좌표:', path[path.length - 1]);
           
+          // 폴리라인은 주석 처리하고 마커만 표시
+          /*
           // 교통수단별 색상 결정
           let strokeColor = '#FF0000'; // 기본값
           let strokeWeight = 3;
@@ -279,8 +319,6 @@ export function usePolyline(map: NaverMapInstance | null) {
           }
 
           console.log(`폴리라인 스타일: ${strokeColor}, 두께: ${strokeWeight}, 스타일: ${strokeStyle}`);
-          console.log('첫 번째 좌표:', path[0]);
-          console.log('마지막 좌표:', path[path.length - 1]);
 
           // 폴리라인 생성
           try {
@@ -297,8 +335,9 @@ export function usePolyline(map: NaverMapInstance | null) {
           } catch (error) {
             console.error(`❌ 폴리라인 생성 실패: ${step.type} - ${step.lineName}`, error);
           }
+          */
         } else {
-          console.log(`❌ 폴리라인 생성 건너뜀: path가 비어있음 (${path ? path.length : 0}개 좌표)`);
+          console.log(`❌ 좌표 없음: path가 비어있음 (${path ? path.length : 0}개 좌표)`);
         }
         // 도보 구간 처리 (시작점과 끝점 연결) - polyline이나 path가 없는 경우
         if (step.type === 'WALKING' && step.startLat && step.startLng && step.endLat && step.endLng) {
