@@ -321,18 +321,21 @@ export const SideSheet: React.FC<SideSheetProps> = ({
                       backgroundColor: SUBWAY_LINE_COLORS[step.lineInfo.name as keyof typeof SUBWAY_LINE_COLORS] || SUBWAY_LINE_COLORS['기타']
                     } : {}}>
                       {step.type === 'walk' && (
-                        <div className="w-3 h-3 flex items-center justify-center">
-                          <svg width="12" height="12" viewBox="0 0 12 12" className="text-gray-700">
+                        <div className="w-4 h-4 flex items-center justify-center">
+                          <svg width="16" height="16" viewBox="0 0 16 16" className="text-gray-700">
                             {/* 머리 */}
-                            <circle cx="6" cy="2" r="1.5" fill="currentColor"/>
+                            <circle cx="8" cy="3" r="2" fill="currentColor"/>
                             {/* 몸 */}
-                            <line x1="6" y1="3.5" x2="6" y2="8" stroke="currentColor" strokeWidth="1"/>
-                            {/* 팔 */}
-                            <line x1="6" y1="5" x2="4" y2="6" stroke="currentColor" strokeWidth="1"/>
-                            <line x1="6" y1="5" x2="8" y2="6" stroke="currentColor" strokeWidth="1"/>
-                            {/* 다리 */}
-                            <line x1="6" y1="8" x2="4" y2="10" stroke="currentColor" strokeWidth="1"/>
-                            <line x1="6" y1="8" x2="8" y2="10" stroke="currentColor" strokeWidth="1"/>
+                            <line x1="8" y1="5" x2="8" y2="11" stroke="currentColor" strokeWidth="1.5"/>
+                            {/* 팔 - 걷는 모습 */}
+                            <line x1="8" y1="6.5" x2="5.5" y2="8" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="8" y1="6.5" x2="10.5" y2="9" stroke="currentColor" strokeWidth="1.5"/>
+                            {/* 다리 - 걷는 모습 */}
+                            <line x1="8" y1="11" x2="5.5" y2="13.5" stroke="currentColor" strokeWidth="1.5"/>
+                            <line x1="8" y1="11" x2="10.5" y2="14" stroke="currentColor" strokeWidth="1.5"/>
+                            {/* 발 */}
+                            <circle cx="5.5" cy="13.5" r="0.8" fill="currentColor"/>
+                            <circle cx="10.5" cy="14" r="0.8" fill="currentColor"/>
                           </svg>
                         </div>
                       )}
