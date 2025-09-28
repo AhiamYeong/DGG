@@ -33,7 +33,7 @@ export function useMapViewModel() {
     
     const naver = window.naver;
     const newCenter = new naver.maps.LatLng(lat, lng);
-    map.setCenter(newCenter);
+    (map as any).setCenter(newCenter);
     map.setZoom(16);
   }, [map]);
 

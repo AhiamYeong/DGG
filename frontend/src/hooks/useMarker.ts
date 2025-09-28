@@ -1,7 +1,7 @@
 import { useRef, useCallback } from 'react';
 import type { NaverMapInstance, NaverMarkerInstance } from '@/types/map';
 import type { SimpleRoute } from '@/types/route-types';
-import type { SubPath, Station } from '@/types/route-api-types';
+import type { SubPath } from '@/types/route-api-types';
 import { MARKER_ICONS } from '../constants';
 import { log } from '../utils/logger';
 
@@ -184,7 +184,7 @@ export function useMarker(map: NaverMapInstance | null) {
 
     // JSON 데이터 형식 처리 (data 배열의 각 단계)
     if (routeData.data && Array.isArray(routeData.data)) {
-      routeData.data.forEach((step: any, index: number) => {
+      routeData.data.forEach((step: any) => {
         // 출발역 (첫 번째 지하철 구간에서 seq: 1인 역)
         if (step.type === 'SUBWAY' && step.path && Array.isArray(step.path)) {
           const startStation = step.path.find((station: any) => station.seq === 1);

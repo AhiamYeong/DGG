@@ -200,7 +200,7 @@ export function usePolyline(map: NaverMapInstance | null) {
     // JSON 데이터 직접 처리 (MSW 변환 없이)
     if (routeData.data && Array.isArray(routeData.data)) {
       
-      routeData.data.forEach((step: any, index: number) => {
+      routeData.data.forEach((step: any) => {
         let path: any[] = [];
         
         // polyline 배열이 있는 경우 정밀한 폴리라인 생성 (최우선)
@@ -315,7 +315,7 @@ export function usePolyline(map: NaverMapInstance | null) {
         
         // 모든 폴리라인의 좌표를 수집
         const allCoordinates: any[] = [];
-        newPolylines.forEach((polyline, index) => {
+        newPolylines.forEach((polyline) => {
           // polyline 객체에서 path 정보 추출 (타입 안전하게)
           const path = (polyline as any).getPath ? (polyline as any).getPath() : [];
           if (Array.isArray(path)) {

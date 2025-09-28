@@ -99,7 +99,7 @@ export default function FavoriteRoutesBottomSheet() {
   };
 
   // 즐겨찾기 토글 핸들러 (즐겨찾기 해제 후 리스트 새로고침)
-  const handleToggleBookmark = (id: string) => {
+  const handleToggleBookmark = (_id: string) => {
     // 즐겨찾기 해제 후 리스트 새로고침
     setTimeout(() => {
       fetchBookmarks();

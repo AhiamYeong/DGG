@@ -7,7 +7,7 @@ export const routeHandlers = [
 
   // 경로 검색 API
   http.post(`${API_BASE_URL}/v1/maps/routes`, async ({ request }) => {
-    const body = await request.json() as any;
+    await request.json() as any;
 
     // 실제 백엔드 API 형식에 맞는 응답
     const mockApiResponse = {
@@ -46,7 +46,7 @@ export const routeHandlers = [
 
   // 경로 상세 정보 조회
   http.get(`${API_BASE_URL}/v1/maps/routes/:routeId`, ({ params }) => {
-    const { routeId } = params;
+    const { routeId: _routeId } = params;
     // 백엔드: RouteDetailDTO 반환
     const mockRouteDetail = {
       totalTime: 48, // int totalTime
@@ -182,7 +182,7 @@ export const routeHandlers = [
 
   // 경로 안내 시작
   http.post(`${API_BASE_URL}/v1/maps/routes/:routeKey/start`, ({ params }) => {
-    const { routeKey } = params;
+    const { routeKey: _routeKey } = params;
     // 백엔드: ResponseEntity<Long> 반환 (routeId)
     return HttpResponse.json(12345); // Long 타입의 routeId 반환
   })
