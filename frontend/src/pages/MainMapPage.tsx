@@ -19,7 +19,9 @@ export default function MainMapPage() {
     createCurrentLocationMarker,
     drawSelectedRoute,
     createSelectedRouteMarkers,
-    centerMapToRouteStart
+    centerMapToRouteStart,
+    clearPolylinesAndMarkers,
+    moveMapToLocation
   } = useMapViewModel();
 
   // 경로 검색 관련 상태 및 액션 (스토어에서 직접 사용)
@@ -72,6 +74,14 @@ export default function MainMapPage() {
     }
   }, [isNavigating, currentRoute, drawSelectedRoute, createSelectedRouteMarkers, centerMapToRouteStart]);
 
+  // 네비게이션 종료 시 폴리라인과 마커 제거
+  useEffect(() => {
+    if (!isNavigating) {
+      // 폴리라인과 마커 제거
+      clearPolylinesAndMarkers();
+    }
+  }, [isNavigating, clearPolylinesAndMarkers]);
+
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
@@ -96,6 +106,7 @@ export default function MainMapPage() {
             onPositionChange={setSideSheetPosition}
             onClose={closeSideSheet}
             onStopNavigation={stopNavigation}
+            onMapMove={moveMapToLocation}
           />
         ) : (
           <SearchMode

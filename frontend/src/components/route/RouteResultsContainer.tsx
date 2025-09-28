@@ -48,7 +48,14 @@ export const RouteResultsContainer: React.FC<RouteResultsContainerProps> = ({
       </div>
       
       {/* 경로 목록 */}
-      <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+      <div 
+        className="flex-1 overflow-y-auto scrollbar-hide" 
+        style={{ 
+          maxHeight: 'calc(100vh - 200px)',
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none', // IE/Edge
+        }}
+      >
         {routes.length > 0 ? (
           <RouteList
             routes={routes}

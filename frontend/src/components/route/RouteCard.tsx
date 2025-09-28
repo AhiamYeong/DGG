@@ -35,24 +35,19 @@ const RouteCard = memo<RouteCardProps>(({
   
   // 이벤트 핸들러들을 useCallback으로 최적화
   const handleSelect = useCallback(async () => {
-    console.log('[RouteCard] card select', route.id);
     await onSelect(route);
   }, [onSelect, route]);
 
   const handleEdit = useCallback((e: React.MouseEvent) => {
-    console.log('RouteCard 편집 버튼 클릭됨:', route);
     e.stopPropagation(); // 이벤트 버블링 방지
     onEdit?.(route);
   }, [onEdit, route]);
 
   // 즐겨찾기 해제 확인 핸들러
   const handleStarClick = useCallback((_next: boolean) => {
-    console.log('[RouteCard] handleStarClick 호출됨', { isBookmarked: bookmark.isBookmarked });
     if (bookmark.isBookmarked) {
-      console.log('[RouteCard] 확인 다이얼로그 표시');
       setShowConfirmDialog(true);
     } else {
-      console.log('[RouteCard] 즐겨찾기 추가');
       bookmark.toggle();
     }
   }, [bookmark]);

@@ -149,7 +149,15 @@ export class RouteDetailService {
    * 경로 단계 데이터 변환
    */
   private static convertSteps(data: RouteStep[]): any[] {
-    return data.map(step => ({
+    // 0분인 도보 단계는 제외 (수도권 도보 노드 포함)
+    const filteredData = data.filter(step => {
+      if (step.type === 'WALKING' && step.timeTaken === 0) {
+        return false;
+      }
+      return true;
+    });
+    
+    return filteredData.map(step => ({
       id: `step-${step.order}`,
       type: this.convertTransportType(step.type),
       description: this.generateStepDescription(step),

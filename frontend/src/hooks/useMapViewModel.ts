@@ -27,6 +27,16 @@ export function useMapViewModel() {
     clearMarkers();
   }, [clearPolylines, clearMarkers]);
 
+  // 지도 이동 함수
+  const moveMapToLocation = useCallback((lat: number, lng: number) => {
+    if (!map) return;
+    
+    const naver = window.naver;
+    const newCenter = new naver.maps.LatLng(lat, lng);
+    map.setCenter(newCenter);
+    map.setZoom(16);
+  }, [map]);
+
   // currentLocation이 변경될 때 지도 위치 업데이트
   useEffect(() => {
     if (map && isLoaded) {
@@ -59,6 +69,9 @@ export function useMapViewModel() {
     createRouteMarkers,
     createCurrentLocationMarker,
     createGangnamToGongdeokStationMarkers,
-    createSelectedRouteMarkers
+    createSelectedRouteMarkers,
+    
+    // Map Movement
+    moveMapToLocation
   };
 }

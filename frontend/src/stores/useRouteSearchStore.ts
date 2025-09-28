@@ -390,12 +390,10 @@ export const useRouteSearchStore = create<
       // 즐겨찾기 제거 (API 연동) - bookmarkId 매핑 필요시 목록 갱신으로 대체
       removeBookmarkForRoute: async (routeId: string) => {
         try {
-          console.log('[useRouteSearchStore] removeBookmarkForRoute 시작', { routeId });
           const { routeResults, routeBookmarks } = get();
           
           // routeResults에서 먼저 찾기
           let target = routeResults.find((r) => r.id === routeId);
-          console.log('[useRouteSearchStore] routeResults에서 찾은 target:', target);
           
           // routeResults에서 찾지 못했으면 routeBookmarks에서 찾기
           if (!target && routeBookmarks) {
@@ -407,21 +405,17 @@ export const useRouteSearchStore = create<
                 id: routeId,
                 bookmarkRouteId: bookmark.bookmarkRouteId
               } as any; // 타입 에러 방지를 위해 any 사용
-              console.log('[useRouteSearchStore] routeBookmarks에서 찾은 target:', target);
             }
           }
           
           if (!target || !target.bookmarkRouteId) {
-            console.log('[useRouteSearchStore] bookmarkRouteId가 없음, 목록 갱신만 실행');
             // 매핑이 없으면 목록을 갱신만
             await get().fetchBookmarks();
             return;
           }
           
-          console.log('[useRouteSearchStore] 삭제 API 호출 시작', { bookmarkRouteId: target.bookmarkRouteId });
           const { favoriteRoutesApi } = await import("../api/favoriteRoutes");
           await favoriteRoutesApi.deleteRouteBookmark(target.bookmarkRouteId);
-          console.log('[useRouteSearchStore] 삭제 API 호출 완료');
           
           // 성공 시 로컬 상태 반영
           set({

@@ -13,6 +13,7 @@ interface NavigationModeProps {
   onClose: () => void;
   onStopNavigation: () => void;
   headerHeight?: number;
+  onMapMove?: (lat: number, lng: number) => void;
 }
 
 /**
@@ -27,7 +28,8 @@ export const NavigationMode = memo<NavigationModeProps>(({
   onPositionChange,
   onClose,
   onStopNavigation,
-  headerHeight = 200
+  headerHeight = 200,
+  onMapMove
 }) => {
   const headerRef = useRef<HTMLDivElement>(null);
   const [actualHeaderHeight, setActualHeaderHeight] = useState(headerHeight);
@@ -61,6 +63,7 @@ export const NavigationMode = memo<NavigationModeProps>(({
               onPositionChange={onPositionChange}
               onClose={onClose}
               headerHeight={actualHeaderHeight}
+              onMapMove={onMapMove}
             />
           </Suspense>
         </div>

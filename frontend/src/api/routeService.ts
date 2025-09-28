@@ -316,7 +316,15 @@ export class RouteService {
       return [];
     }
 
-    return detailData.data.map((step: any, index: number) => {
+    // 0분인 도보 단계는 제외 (수도권 도보 노드 포함)
+    const filteredData = detailData.data.filter((step: any) => {
+      if (step.type === 'WALKING' && step.timeTaken === 0) {
+        return false;
+      }
+      return true;
+    });
+
+    return filteredData.map((step: any, index: number) => {
       // 교통수단 타입 변환
       let type: string;
       switch (step.type) {

@@ -8,6 +8,7 @@ interface SideSheetProps {
   onPositionChange: (position: number) => void;
   onClose?: () => void; // 선택적 prop으로 변경
   headerHeight?: number; // 헤더 높이 (기본값: 0)
+  onMapMove?: (lat: number, lng: number) => void; // 지도 이동 함수
 }
 
 /**
@@ -21,6 +22,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
   route,
   onPositionChange,
   headerHeight = 0,
+  onMapMove,
 }) => {
   const [startX, setStartX] = useState(0);
   const [startPosition, setStartPosition] = useState(0);
@@ -33,6 +35,18 @@ export const SideSheet: React.FC<SideSheetProps> = ({
   const [isScrollDragging, setIsScrollDragging] = useState(false);
   const [scrollContainer, setScrollContainer] = useState<HTMLDivElement | null>(null);
   const [gestureType, setGestureType] = useState<'none' | 'scroll' | 'resize'>('none');
+
+  // 노드 클릭 핸들러
+  const handleNodeClick = useCallback((step: any) => {
+    if (!onMapMove) return;
+    
+    const lat = step.from?.latitude;
+    const lng = step.from?.longitude;
+    
+    if (lat && lng) {
+      onMapMove(lat, lng);
+    }
+  }, [onMapMove]);
 
   // 드래그 시작 핸들러
   const handleDragStart = useCallback((clientX: number) => {
@@ -244,9 +258,11 @@ export const SideSheet: React.FC<SideSheetProps> = ({
         {/* 경로 다이어그램 */}
         <div 
           ref={setScrollContainer}
-          className={`flex-1 ${showDetails ? 'px-6 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100' : 'flex justify-center items-center'}`} 
+          className={`flex-1 ${showDetails ? 'px-6 py-4 overflow-y-auto scrollbar-hide' : 'flex justify-center items-center'}`}
           style={showDetails ? { 
             maxHeight: 'calc(100vh - 200px)',
+            scrollbarWidth: 'none', // Firefox
+            msOverflowStyle: 'none', // IE/Edge
             touchAction: 'pan-y'
           } : {}}
           onTouchStart={showDetails ? handleScrollTouchStart : undefined}
@@ -256,8 +272,12 @@ export const SideSheet: React.FC<SideSheetProps> = ({
             <div className="flex items-center py-2" style={{ gap: `${nodeSpacing}px` }}>
               {/* 왼쪽: 노드 */}
               <div className="flex flex-col items-center">
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-xs">🏁</span>
+                <div 
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold cursor-pointer hover:scale-110 transition-transform" 
+                  style={{ backgroundColor: '#4CAF50' }}
+                  onClick={() => onMapMove && onMapMove(route.from.latitude, route.from.longitude)}
+                >
+                  출발
                 </div>
               </div>
               
@@ -311,15 +331,19 @@ export const SideSheet: React.FC<SideSheetProps> = ({
                 <div className="flex items-center py-2" style={{ gap: `${nodeSpacing}px` }}>
                   {/* 왼쪽: 노드 */}
                   <div className="flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      step.type === 'walk' ? 'bg-gray-300' :
-                      step.type === 'bus' ? 'bg-green-500' :
-                      step.type === 'subway' ? '' :
-                      step.type === 'transfer' ? 'bg-gray-300' :
-                      'bg-gray-400'
-                    }`} style={step.type === 'subway' && step.lineInfo?.name ? {
-                      backgroundColor: SUBWAY_LINE_COLORS[step.lineInfo.name as keyof typeof SUBWAY_LINE_COLORS] || SUBWAY_LINE_COLORS['기타']
-                    } : {}}>
+                    <div 
+                      className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform ${
+                        step.type === 'walk' ? 'bg-gray-300' :
+                        step.type === 'bus' ? 'bg-green-500' :
+                        step.type === 'subway' ? '' :
+                        step.type === 'transfer' ? 'bg-gray-300' :
+                        'bg-gray-400'
+                      }`} 
+                      style={step.type === 'subway' && step.lineInfo?.name ? {
+                        backgroundColor: SUBWAY_LINE_COLORS[step.lineInfo.name as keyof typeof SUBWAY_LINE_COLORS] || SUBWAY_LINE_COLORS['기타']
+                      } : {}}
+                      onClick={() => handleNodeClick(step)}
+                    >
                       {step.type === 'walk' && (
                         <div className="w-4 h-4 flex items-center justify-center">
                           <svg width="16" height="16" viewBox="0 0 16 16" className="text-gray-700">
@@ -344,7 +368,7 @@ export const SideSheet: React.FC<SideSheetProps> = ({
                       )}
                       {step.type === 'subway' && (
                         <span className="text-xs font-bold text-white">
-                          {step.lineInfo?.name?.replace('호선', '') || '🚇'}
+                          {step.lineInfo?.name?.replace('수도권 ', '').replace('호선', '') || '🚇'}
                         </span>
                       )}
                       {step.type === 'transfer' && (
@@ -440,8 +464,12 @@ export const SideSheet: React.FC<SideSheetProps> = ({
             <div className="flex items-center py-2" style={{ gap: `${nodeSpacing}px` }}>
               {/* 왼쪽: 노드 */}
               <div className="flex flex-col items-center">
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-xs">🎯</span>
+                <div 
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold cursor-pointer hover:scale-110 transition-transform" 
+                  style={{ backgroundColor: '#F44336' }}
+                  onClick={() => onMapMove && onMapMove(route.to.latitude, route.to.longitude)}
+                >
+                  도착
                 </div>
               </div>
               
@@ -480,75 +508,6 @@ export const SideSheet: React.FC<SideSheetProps> = ({
               </div>
             )}
 
-            {/* 상세 경로 단계 (확장 상태일 때만 표시) */}
-            {showDetails && route.steps && route.steps.length > 0 && (
-              <div 
-                className="mt-6 transition-all duration-300 ease-out"
-                style={{
-                  opacity: showDetails ? 1 : 0,
-                  transform: showDetails ? 'translateY(0)' : 'translateY(10px)',
-                  willChange: 'opacity, transform'
-                }}
-              >
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">상세 경로</h3>
-                  <div className="space-y-2">
-                    {route.steps.map((step, index) => (
-                      <div key={step.id || `step-${index}`} className="flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200">
-                        {/* 단계 번호 */}
-                        <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-semibold">
-                          {index + 1}
-                        </div>
-                        
-                        {/* 경로 정보 */}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-medium text-gray-700">
-                              {step.type === 'walk' && '도보'}
-                              {step.type === 'subway' && '지하철'}
-                              {step.type === 'bus' && '버스'}
-                              {step.type === 'transfer' && '환승'}
-                            </span>
-                            {step.lineInfo && (
-                              <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
-                                {step.lineInfo.name}
-                              </span>
-                            )}
-                            {step.duration && (
-                              <span className="text-xs text-gray-500">
-                                {step.duration}분
-                              </span>
-                            )}
-                          </div>
-                          
-                          <div className="text-sm text-gray-600 mb-1">
-                            {step.description}
-                          </div>
-                          
-                          {/* 출발/도착 정보 */}
-                          {(step.from || step.to) && (
-                            <div className="text-xs text-gray-500 space-y-1">
-                              {step.from && (
-                                <div className="flex items-center gap-1">
-                                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                  <span>출발: {step.from.name}</span>
-                                </div>
-                              )}
-                              {step.to && (
-                                <div className="flex items-center gap-1">
-                                  <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                                  <span>도착: {step.to.name}</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
         </div>
       </div>
     );

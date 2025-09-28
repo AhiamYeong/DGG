@@ -62,28 +62,19 @@ export default function FavoriteRoutesBottomSheet() {
 
   // 편집 핸들러
   const handleEditRoute = (route: SimpleRoute) => {
-    console.log('handleEditRoute 호출됨:', route);
-    console.log('현재 routeBookmarks:', routeBookmarks);
     
     // routeKey에서 bookmarkRouteId 추출
     const bookmarkRouteId = route.routeKey?.replace('bookmark-', '');
-    console.log('추출된 bookmarkRouteId:', bookmarkRouteId);
-    
     if (!bookmarkRouteId) {
-      console.log('bookmarkRouteId가 없음');
       return;
     }
 
     // bookmarkRouteId로 직접 찾기
     const bookmark = routeBookmarks.find(b => b.bookmarkRouteId === parseInt(bookmarkRouteId));
-    console.log('찾은 bookmark:', bookmark);
     
     if (bookmark) {
       setEditingBookmark(bookmark);
       setIsEditModalOpen(true);
-      console.log('편집 모달 열기');
-    } else {
-      console.log('북마크를 찾을 수 없음');
     }
   };
 
@@ -109,7 +100,6 @@ export default function FavoriteRoutesBottomSheet() {
 
   // 즐겨찾기 토글 핸들러 (즐겨찾기 해제 후 리스트 새로고침)
   const handleToggleBookmark = (id: string) => {
-    console.log('FavoriteRoutesBottomSheet: 즐겨찾기 토글', id);
     // 즐겨찾기 해제 후 리스트 새로고침
     setTimeout(() => {
       fetchBookmarks();

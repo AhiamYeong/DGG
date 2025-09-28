@@ -50,7 +50,6 @@ const RouteList = memo<RouteListProps>(({
   }, [onShowOptions]);
 
   const handleEditRoute = useCallback((route: SimpleRoute) => {
-    console.log('RouteList handleEditRoute 호출됨:', route);
     onEditRoute?.(route);
   }, [onEditRoute]);
 
