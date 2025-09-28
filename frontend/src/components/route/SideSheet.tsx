@@ -321,7 +321,20 @@ export const SideSheet: React.FC<SideSheetProps> = ({
                       backgroundColor: SUBWAY_LINE_COLORS[step.lineInfo.name as keyof typeof SUBWAY_LINE_COLORS] || SUBWAY_LINE_COLORS['기타']
                     } : {}}>
                       {step.type === 'walk' && (
-                        <span className="text-xs font-bold">👣</span>
+                        <div className="w-3 h-3 flex items-center justify-center">
+                          <svg width="12" height="12" viewBox="0 0 12 12" className="text-gray-700">
+                            {/* 머리 */}
+                            <circle cx="6" cy="2" r="1.5" fill="currentColor"/>
+                            {/* 몸 */}
+                            <line x1="6" y1="3.5" x2="6" y2="8" stroke="currentColor" strokeWidth="1"/>
+                            {/* 팔 */}
+                            <line x1="6" y1="5" x2="4" y2="6" stroke="currentColor" strokeWidth="1"/>
+                            <line x1="6" y1="5" x2="8" y2="6" stroke="currentColor" strokeWidth="1"/>
+                            {/* 다리 */}
+                            <line x1="6" y1="8" x2="4" y2="10" stroke="currentColor" strokeWidth="1"/>
+                            <line x1="6" y1="8" x2="8" y2="10" stroke="currentColor" strokeWidth="1"/>
+                          </svg>
+                        </div>
                       )}
                       {step.type === 'bus' && (
                         <span className="text-xs">🚌</span>
