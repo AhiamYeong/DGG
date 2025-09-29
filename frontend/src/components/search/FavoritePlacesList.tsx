@@ -1,0 +1,92 @@
+import { memo } from 'react';
+
+interface FavoritePlaceItemDto {
+  bookmarkPlaceId: number;
+  placeName: string;
+  address: string;
+}
+
+interface FavoritePlacesListProps {
+  items: FavoritePlaceItemDto[];
+  onSelect: (item: FavoritePlaceItemDto) => void;
+  onDeleteFavorite?: (bookmarkPlaceId: number) => void;
+  className?: string;
+}
+
+/**
+ * 즐겨찾는 장소 리스트 컴포넌트
+ */
+const FavoritePlacesList = memo<FavoritePlacesListProps>(({
+  items,
+  onSelect,
+  onDeleteFavorite,
+  className = ''
+}) => {
+  const handleSelect = (item: FavoritePlaceItemDto) => {
+    onSelect(item);
+  };
+
+  if (items.length === 0) {
+    return (
+      <div className={`text-center py-8 ${className}`}>
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+        </div>
+        <p className="text-gray-500 text-sm">즐겨찾는 장소가 없습니다</p>
+        <p className="text-gray-400 text-xs mt-1">자주 가는 장소를 즐겨찾기에 추가해보세요</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${className}`}>
+      {items.map((item) => (
+        <div
+          key={item.bookmarkPlaceId}
+          onClick={() => handleSelect(item)}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleSelect(item);
+          }}
+          className="flex items-center justify-between py-3 bg-background border-b border-gray-100 hover:bg-primary hover:bg-opacity-5 transition-colors cursor-pointer touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
+        >
+          <div className="flex items-center gap-3 flex-1">
+            {/* 장소 아이콘 */}
+            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+
+            {/* 장소 정보 */}
+            <div className="flex-1 min-w-0">
+              <h4 className="font-medium text-font text-sm truncate">{item.placeName}</h4>
+              <p className="text-xs text-gray-500 truncate">{item.address}</p>
+            </div>
+          </div>
+
+          {/* 삭제 버튼만 노출 */}
+          {onDeleteFavorite && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteFavorite(item.bookmarkPlaceId);
+              }}
+              className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+            >
+              삭제
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+});
+
+FavoritePlacesList.displayName = 'FavoritePlacesList';
+
+export default FavoritePlacesList;

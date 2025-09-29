@@ -1,0 +1,191 @@
+/** @format */
+
+import FatigueProgressbar from "@/components/fatigue/FatigueProgressBar";
+import { useEffect, useState } from "react";
+import character from "../assets/character.png";
+import { fatigueApi } from "@/api/fatigueApi";
+import favoriteRoutesApi from "@/api/favoriteRoutes";
+import { useNavigate } from "react-router-dom";
+import { useNavigationStore } from "@/stores";
+import { SimpleRoute } from "@/types";
+
+export default function Mainpage() {
+  const [nickname, setNickname] = useState<string>("");
+  const [fatigue, setFatigue] = useState<number>(0);
+  const [routes, setRoutes] = useState<{ id: number; name: string }[]>([]);
+  const navigate = useNavigate();
+
+  const fetchFatigue = async () => {
+    try {
+      const resp = await fatigueApi.get(`/fatigues`);
+      const data = resp.data;
+
+      setNickname(data.nickname);
+      setFatigue(data.current_fatigue);
+    } catch (err) {
+      console.error("에러 발생", err);
+    }
+  };
+
+  const fetchFavoriteRoute = async () => {
+    try {
+      const resp = await favoriteRoutesApi.getRouteBookmarks();
+      console.log("🎯 MSW 즐겨찾기 데이터:", resp);
+      
+      const mapped = resp.map((item) => ({
+        id: item.bookmarkRouteId,
+        name: item.name,
+      }));
+      
+      setRoutes(mapped);
+    } catch (error) {
+      console.error("MSW API 호출 실패:", error);
+      const defaultRoute = {
+        id: 13,
+        name: "덜 피곤한 경로"
+      };
+      setRoutes([defaultRoute]);
+    }
+  };
+
+  useEffect(() => {
+    // TODO: 날씨 API
+    fetchFatigue();
+    fetchFavoriteRoute();
+
+    const handleProfileUpdated = () => {
+      fetchFatigue(); // 닉네임 최신화
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdated);
+    return () => {
+      window.removeEventListener("profile-updated", handleProfileUpdated);
+    };
+  }, []);
+
+  const handleClick = (path: string) => {
+    navigate(`/${path}`);
+  };
+
+  const handleRouteClick = async (bookmarkRouteId: number) => {
+    try {
+      console.log("🚀 즐겨찾기 경로 선택:", bookmarkRouteId);
+      
+      const bookmarkDetail = await favoriteRoutesApi.getRouteBookmarkDetail(bookmarkRouteId);
+      
+      console.log("📊 MSW에서 가져온 상세 데이터:", {
+        name: bookmarkDetail.name,
+        totalTime: bookmarkDetail.totalTime,
+        stepsCount: bookmarkDetail.data?.length,
+        arrivalTime: bookmarkDetail.arrivalTime
+      });
+
+      const { RouteService } = await import("../api/routeService");
+      const steps = RouteService.convertDetailDataToSteps(bookmarkDetail.data);
+      const route: SimpleRoute = {
+        routeKey: `bookmark-${bookmarkRouteId}`,
+        name: bookmarkDetail.name,
+        steps: steps,
+        totalDuration: bookmarkDetail.totalTime,
+        fatigueLevel: 0,
+        polylineData: bookmarkDetail.data,
+        rawData: bookmarkDetail.data,
+        departureTime: { hour: new Date().getHours(), minute: new Date().getMinutes() },
+        arrivalTime: bookmarkDetail.arrivalTime,
+        from: bookmarkDetail.data[1]?.startPoint || "병점",
+        to: bookmarkDetail.data[5]?.endPoint || "역삼",
+        recommendationType: "minFatigue",
+        description: "즐겨찾기 경로",
+        id: bookmarkRouteId.toString(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      console.log("🔄 변환된 경로 데이터:", {
+        name: route.name,
+        totalDuration: route.totalDuration,
+        stepsCount: route.steps?.length,
+        fatigueLevel: route.fatigueLevel
+      });
+
+      useNavigationStore.getState().startNavigation(route);
+      navigate("/map", { state: route });
+
+    } catch (err) {
+      console.error("즐겨찾기 상세 조회 실패:", err);
+      alert("경로 상세 정보를 불러오지 못했습니다.");
+    }
+  };
+
+  return (
+    <div>
+      <div className="bg-background p-4">
+        <h1 className="text-2xl font-bold text-font mb-4">메인화면</h1>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-lg font-bold">
+            {/* TOOD: "현재 피로도 관리" 내용 변경하기 */}
+            <span className="font-semibold">{nickname}</span>님, 좋은 아침이예요
+          </h2>
+
+          {/* 현재 피로도 */}
+          <div className="mt-4">
+            <FatigueProgressbar
+              label="현재 피로도"
+              value={fatigue}
+            ></FatigueProgressbar>
+          </div>
+
+          {/* 캐릭터 */}
+          {/* TODO: 동적으로 변경 */}
+          <div className="my-6">
+            <img src={character} alt="캐릭터" className="w-32 mx-auto" />
+          </div>
+
+          {/* TODO: 루트 누르면 경로 이동 */}
+          {/* 루트 목록 */}
+          <div className="relative">
+            <div className="flex flex-row gap-5 overflow-x-auto scrollbar-hide pr-6">
+              {routes.map((route) => (
+                <button
+                  key={route.id}
+                  onClick={() => handleRouteClick(route.id)}
+                  className="rounded-lg bg-green-100 px-3 py-1 flex-shrink-0"
+                >
+                  {route.name}
+                </button>
+              ))}
+            </div>
+
+            {/* 오른쪽 힌트 (그라데이션) */}
+            <div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-gradient-to-l from-white"></div>
+          </div>
+
+          {/* 버튼 */}
+          <div className="grid gap-2 mt-6">
+            <button
+              onClick={() => handleClick("map")}
+              className="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg bg-gray-100"
+            >
+              <span className="font-bold">어디로 갈까요?</span>
+            </button>
+
+            <button
+              onClick={() => handleClick("fatigue")}
+              className="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg bg-gray-100"
+            >
+              <span className="font-bold">피로도 관리</span>
+            </button>
+
+            <button
+              onClick={() => handleClick("plan")}
+              className="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg bg-gray-100"
+            >
+              <span className="font-bold">모임 관리</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

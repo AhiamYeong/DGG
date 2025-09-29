@@ -1,0 +1,2 @@
+import{j as e}from"./ui-vendor-WfEpLrQL.js";import"./react-vendor-Dh2C6iKY.js";function a(){return e.jsxs("div",{className:"min-h-screen bg-background p-4",children:[e.jsx("h1",{className:"text-2xl font-bold text-font mb-4",children:"약속"}),e.jsx("div",{className:"bg-white rounded-lg shadow-md p-6",children:e.jsx("p",{className:"text-secondary",children:"약속 페이지입니다."})})]})}export{a as default};
+//# sourceMappingURL=PlanPage-CoEkIxDx.js.map
